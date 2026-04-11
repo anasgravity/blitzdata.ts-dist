@@ -7229,7 +7229,7 @@ const z = class z {
    * {@link https://semver.org/}
    */
   static get VERSION() {
-    return "1.4.5";
+    return "1.4.11";
   }
   /**
    * Initializes BlitzData with given options.
