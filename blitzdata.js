@@ -7229,7 +7229,7 @@ const z = class z {
    * {@link https://semver.org/}
    */
   static get VERSION() {
-    return "1.4.14";
+    return "1.4.15";
   }
   /**
    * Initializes BlitzData with given options.
@@ -7359,6 +7359,22 @@ const z = class z {
       baseUrl: z.clusterManager.toArray()[0].getNextReadURL(),
       file: t
     });
+  }
+  /**
+   * Runs a server controller by path.
+   *
+   * @param path Controller path (e.g. `/blitzpm/somescript` or `blitzpm/somescript.json`).
+   * @param options Optional request parameters.
+   */
+  static async runController(t, e) {
+    let r = t.startsWith("/") ? t.slice(1) : t;
+    r.includes(".json") || (r += ".json");
+    const a = T.sanitizeBaseUrl(z.clusterManager.toArray()[0].getNextReadURL()), s = new URL(a).origin !== window.location.origin ? r.includes("?") ? "&enableCors=1" : "?enableCors=1" : "", i = F.create().url(a + r + s).method((e == null ? void 0 : e.method) ?? "GET").header("Accept", "application/json");
+    e != null && e.headers && i.headers(e.headers), (e == null ? void 0 : e.body) !== void 0 && i.body(e.body), e != null && e.signal && i.signal(e.signal);
+    const o = await i.send();
+    if (o.error)
+      throw new Error(o.error);
+    return o;
   }
   /**
    * List users for a given project.
