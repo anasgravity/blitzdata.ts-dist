@@ -1628,7 +1628,7 @@ class q {
         return o;
       })()
     };
-    if (((i = e.haspublishingdate) == null ? void 0 : i.value) === "1" && typeof t.data._publishingdate > "u" && typeof t.blitzstamp == "number") {
+    if (["1", !0].includes((i = e.haspublishingdate) == null ? void 0 : i.value) && typeof t.data._publishingdate > "u" && typeof t.blitzstamp == "number") {
       const o = /* @__PURE__ */ new Date();
       o.setTime(t.blitzstamp * 1e3 + (/* @__PURE__ */ new Date("2021-01-01T00:00:00Z")).getTime()), o.setMinutes(o.getMinutes() - o.getTimezoneOffset()), s._publishingdate = o.toISOString().slice(0, 19).replace("T", " ");
     }
@@ -7229,7 +7229,7 @@ const z = class z {
    * {@link https://semver.org/}
    */
   static get VERSION() {
-    return "1.4.15";
+    return "1.4.16";
   }
   /**
    * Initializes BlitzData with given options.
