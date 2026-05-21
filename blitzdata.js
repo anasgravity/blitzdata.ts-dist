@@ -92,16 +92,16 @@ const tt = class tt {
   /**
    * Send the request.
    */
-  async send() {
-    const t = await fetch(this._url, {
+  async send(t = !1) {
+    const e = await fetch(this._url, {
       method: this._method,
       headers: this._headers,
       body: this._body ? this._body instanceof FormData ? this._body : JSON.stringify(this._body) : void 0,
       signal: this._signal ? this._signal : void 0
     });
-    if (!t.ok)
-      throw new Error(`HTTP request failed with status code ${t.status}. Status text: ${t.statusText} and response: ${await t.text()}`);
-    return await t.json();
+    if (!e.ok)
+      throw new Error(`HTTP request failed with status code ${e.status}. Status text: ${e.statusText} and response: ${await e.text()}`);
+    return t ? e : await e.json();
   }
   /**
    * Send request with GET method.
@@ -7229,7 +7229,7 @@ const z = class z {
    * {@link https://semver.org/}
    */
   static get VERSION() {
-    return "1.4.16";
+    return "1.4.17";
   }
   /**
    * Initializes BlitzData with given options.
@@ -7371,8 +7371,8 @@ const z = class z {
     r.includes(".json") || (r += ".json");
     const a = T.sanitizeBaseUrl(z.clusterManager.toArray()[0].getNextReadURL()), s = new URL(a).origin !== window.location.origin ? r.includes("?") ? "&enableCors=1" : "?enableCors=1" : "", i = F.create().url(a + r + s).method((e == null ? void 0 : e.method) ?? "GET").header("Accept", "application/json");
     e != null && e.headers && i.headers(e.headers), (e == null ? void 0 : e.body) !== void 0 && i.body(e.body), e != null && e.signal && i.signal(e.signal);
-    const o = await i.send();
-    if (o.error)
+    const o = await i.send(e == null ? void 0 : e.rawResponse);
+    if (!(e != null && e.rawResponse) && o.error)
       throw new Error(o.error);
     return o;
   }
