@@ -99,8 +99,6 @@ const tt = class tt {
       body: this._body ? this._body instanceof FormData ? this._body : JSON.stringify(this._body) : void 0,
       signal: this._signal ? this._signal : void 0
     });
-    if (!e.ok)
-      throw new Error(`HTTP request failed with status code ${e.status}. Status text: ${e.statusText} and response: ${await e.text()}`);
     return t ? e : await e.json();
   }
   /**
@@ -7229,7 +7227,7 @@ const z = class z {
    * {@link https://semver.org/}
    */
   static get VERSION() {
-    return "1.4.17";
+    return "1.4.18";
   }
   /**
    * Initializes BlitzData with given options.
