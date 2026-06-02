@@ -5739,7 +5739,7 @@ class Ka extends E {
    * @param value Value to be casted.
    */
   unserialize(t) {
-    if (t !== null && typeof t == "object" && t.lat && t.long)
+    if (t !== null && typeof t == "object" && t.lat && t.lng)
       return t;
     if (t !== void 0)
       return null;
@@ -5757,12 +5757,12 @@ class Ka extends E {
     if (typeof t != "object" || t === null)
       return !1;
     const e = t;
-    if (!e.lat || !e.long)
+    if (!e.lat || !e.lng)
       return !1;
     const r = parseFloat(e.lat);
     if (isNaN(r) || r < -90 || r > 90)
       return !1;
-    const a = parseFloat(e.long);
+    const a = parseFloat(e.lng);
     return !(isNaN(a) || a < -180 || a > 180);
   }
   /**
@@ -5772,9 +5772,9 @@ class Ka extends E {
     if (!this._value)
       return "";
     const t = [];
-    this._value.street && t.push(this._value.street), this._value.streetNumber && t.push(this._value.streetNumber);
+    this._value.street && t.push(this._value.street), this._value.street_number && t.push(this._value.street_number);
     const e = [];
-    return this._value.zip && e.push(this._value.zip), this._value.city && e.push(this._value.city), e.length > 0 && t.push(e.join(" ")), this._value.nation && t.push(this._value.nation), t.join(", ");
+    return this._value.postal_code && e.push(this._value.postal_code), this._value.city && e.push(this._value.city), e.length > 0 && t.push(e.join(" ")), this._value.country && t.push(this._value.country), t.join(", ");
   }
   /**
    * Geocode an address to get coordinates
@@ -5793,7 +5793,7 @@ class Ka extends E {
         const s = a.results[0].geometry.location;
         return {
           lat: s.lat.toString(),
-          long: s.lng.toString()
+          lng: s.lng.toString()
         };
       }
       return null;
