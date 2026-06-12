@@ -5739,7 +5739,7 @@ class Ka extends E {
    * @param value Value to be casted.
    */
   unserialize(t) {
-    if (t !== null && typeof t == "object" && t.lat && t.lng)
+    if (t !== null && typeof t == "object")
       return t;
     if (t !== void 0)
       return null;
@@ -7227,7 +7227,7 @@ const z = class z {
    * {@link https://semver.org/}
    */
   static get VERSION() {
-    return "1.4.18";
+    return "1.4.20";
   }
   /**
    * Initializes BlitzData with given options.
