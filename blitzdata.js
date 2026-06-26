@@ -289,12 +289,12 @@ function Xe(n) {
 }
 function Ke(n) {
   return n === IDBDatabase.prototype.transaction && !("objectStoreNames" in IDBTransaction.prototype) ? function(t, ...e) {
-    const r = n.call(kt(this), t, ...e);
+    const r = n.call(Ct(this), t, ...e);
     return pe.set(r, t.sort ? t.sort() : [t]), Q(r);
   } : qe().includes(n) ? function(...t) {
-    return n.apply(kt(this), t), Q(ye.get(this));
+    return n.apply(Ct(this), t), Q(ye.get(this));
   } : function(...t) {
-    return Q(n.apply(kt(this), t));
+    return Q(n.apply(Ct(this), t));
   };
 }
 function Ge(n) {
@@ -308,7 +308,7 @@ function Q(n) {
   const t = Ge(n);
   return t !== n && (Et.set(n, t), Rt.set(t, n)), t;
 }
-const kt = (n) => Rt.get(n);
+const Ct = (n) => Rt.get(n);
 function it(n, t, { blocked: e, upgrade: r, blocking: a, terminated: s } = {}) {
   const i = indexedDB.open(n, t), o = Q(i);
   return r && i.addEventListener("upgradeneeded", (u) => {
@@ -332,12 +332,12 @@ function $t(n, { blocked: t } = {}) {
   )), Q(e).then(() => {
   });
 }
-const Ze = ["get", "getKey", "getAll", "getAllKeys", "count"], tr = ["put", "add", "delete", "clear"], Ct = /* @__PURE__ */ new Map();
+const Ze = ["get", "getKey", "getAll", "getAllKeys", "count"], tr = ["put", "add", "delete", "clear"], kt = /* @__PURE__ */ new Map();
 function Kt(n, t) {
   if (!(n instanceof IDBDatabase && !(t in n) && typeof t == "string"))
     return;
-  if (Ct.get(t))
-    return Ct.get(t);
+  if (kt.get(t))
+    return kt.get(t);
   const e = t.replace(/FromIndex$/, ""), r = t !== e, a = tr.includes(e);
   if (
     // Bail if the target doesn't exist on the target. Eg, getAll isn't in Edge.
@@ -352,7 +352,7 @@ function Kt(n, t) {
       a && u.done
     ]))[0];
   };
-  return Ct.set(t, s), s;
+  return kt.set(t, s), s;
 }
 Xe((n) => ({
   ...n,
@@ -365,7 +365,7 @@ const _ = {
   timeIndex: "time",
   objectIndex: "object"
 };
-var y = /* @__PURE__ */ ((n) => (n.Pending = "pending", n.Completed = "completed", n.Failed = "failed", n.Conflict = "conflict", n))(y || {}), j = /* @__PURE__ */ ((n) => (n.Success = "success", n.Exception = "exception", n.Failed = "failed", n.Conflict = "conflict", n))(j || {}), D = /* @__PURE__ */ ((n) => (n.Add = "add", n.Edit = "edit", n.Delete = "delete", n))(D || {}), Y = "SharedWorker" in globalThis, er = class {
+var b = /* @__PURE__ */ ((n) => (n.Pending = "pending", n.Completed = "completed", n.Failed = "failed", n.Conflict = "conflict", n))(b || {}), j = /* @__PURE__ */ ((n) => (n.Success = "success", n.Exception = "exception", n.Failed = "failed", n.Conflict = "conflict", n))(j || {}), D = /* @__PURE__ */ ((n) => (n.Add = "add", n.Edit = "edit", n.Delete = "delete", n))(D || {}), Y = "SharedWorker" in globalThis, er = class {
   constructor(n) {
     /**
      * The actual worker that is used, depending on browser support it can be either a `SharedWorker` or a normal `Worker`.
@@ -467,40 +467,40 @@ var ve = {};
   })(function(t) {
     t.version = "1.2.2";
     function e() {
-      for (var w = 0, N = new Array(256), b = 0; b != 256; ++b)
-        w = b, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, N[b] = w;
+      for (var w = 0, N = new Array(256), y = 0; y != 256; ++y)
+        w = y, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, N[y] = w;
       return typeof Int32Array < "u" ? new Int32Array(N) : N;
     }
     var r = e();
     function a(w) {
-      var N = 0, b = 0, I = 0, O = typeof Int32Array < "u" ? new Int32Array(4096) : new Array(4096);
+      var N = 0, y = 0, I = 0, O = typeof Int32Array < "u" ? new Int32Array(4096) : new Array(4096);
       for (I = 0; I != 256; ++I)
         O[I] = w[I];
       for (I = 0; I != 256; ++I)
-        for (b = w[I], N = 256 + I; N < 4096; N += 256)
-          b = O[N] = b >>> 8 ^ w[b & 255];
-      var C = [];
+        for (y = w[I], N = 256 + I; N < 4096; N += 256)
+          y = O[N] = y >>> 8 ^ w[y & 255];
+      var k = [];
       for (I = 1; I != 16; ++I)
-        C[I - 1] = typeof Int32Array < "u" ? O.subarray(I * 256, I * 256 + 256) : O.slice(I * 256, I * 256 + 256);
-      return C;
+        k[I - 1] = typeof Int32Array < "u" ? O.subarray(I * 256, I * 256 + 256) : O.slice(I * 256, I * 256 + 256);
+      return k;
     }
-    var s = a(r), i = s[0], o = s[1], u = s[2], c = s[3], l = s[4], d = s[5], h = s[6], f = s[7], g = s[8], v = s[9], M = s[10], P = s[11], k = s[12], A = s[13], V = s[14];
+    var s = a(r), i = s[0], o = s[1], u = s[2], c = s[3], l = s[4], d = s[5], h = s[6], f = s[7], g = s[8], v = s[9], M = s[10], P = s[11], C = s[12], A = s[13], V = s[14];
     function At(w, N) {
-      for (var b = N ^ -1, I = 0, O = w.length; I < O; )
-        b = b >>> 8 ^ r[(b ^ w.charCodeAt(I++)) & 255];
-      return ~b;
+      for (var y = N ^ -1, I = 0, O = w.length; I < O; )
+        y = y >>> 8 ^ r[(y ^ w.charCodeAt(I++)) & 255];
+      return ~y;
     }
     function Le(w, N) {
-      for (var b = N ^ -1, I = w.length - 15, O = 0; O < I; )
-        b = V[w[O++] ^ b & 255] ^ A[w[O++] ^ b >> 8 & 255] ^ k[w[O++] ^ b >> 16 & 255] ^ P[w[O++] ^ b >>> 24] ^ M[w[O++]] ^ v[w[O++]] ^ g[w[O++]] ^ f[w[O++]] ^ h[w[O++]] ^ d[w[O++]] ^ l[w[O++]] ^ c[w[O++]] ^ u[w[O++]] ^ o[w[O++]] ^ i[w[O++]] ^ r[w[O++]];
+      for (var y = N ^ -1, I = w.length - 15, O = 0; O < I; )
+        y = V[w[O++] ^ y & 255] ^ A[w[O++] ^ y >> 8 & 255] ^ C[w[O++] ^ y >> 16 & 255] ^ P[w[O++] ^ y >>> 24] ^ M[w[O++]] ^ v[w[O++]] ^ g[w[O++]] ^ f[w[O++]] ^ h[w[O++]] ^ d[w[O++]] ^ l[w[O++]] ^ c[w[O++]] ^ u[w[O++]] ^ o[w[O++]] ^ i[w[O++]] ^ r[w[O++]];
       for (I += 15; O < I; )
-        b = b >>> 8 ^ r[(b ^ w[O++]) & 255];
-      return ~b;
+        y = y >>> 8 ^ r[(y ^ w[O++]) & 255];
+      return ~y;
     }
     function Ne(w, N) {
-      for (var b = N ^ -1, I = 0, O = w.length, C = 0, Tt = 0; I < O; )
-        C = w.charCodeAt(I++), C < 128 ? b = b >>> 8 ^ r[(b ^ C) & 255] : C < 2048 ? (b = b >>> 8 ^ r[(b ^ (192 | C >> 6 & 31)) & 255], b = b >>> 8 ^ r[(b ^ (128 | C & 63)) & 255]) : C >= 55296 && C < 57344 ? (C = (C & 1023) + 64, Tt = w.charCodeAt(I++) & 1023, b = b >>> 8 ^ r[(b ^ (240 | C >> 8 & 7)) & 255], b = b >>> 8 ^ r[(b ^ (128 | C >> 2 & 63)) & 255], b = b >>> 8 ^ r[(b ^ (128 | Tt >> 6 & 15 | (C & 3) << 4)) & 255], b = b >>> 8 ^ r[(b ^ (128 | Tt & 63)) & 255]) : (b = b >>> 8 ^ r[(b ^ (224 | C >> 12 & 15)) & 255], b = b >>> 8 ^ r[(b ^ (128 | C >> 6 & 63)) & 255], b = b >>> 8 ^ r[(b ^ (128 | C & 63)) & 255]);
-      return ~b;
+      for (var y = N ^ -1, I = 0, O = w.length, k = 0, Tt = 0; I < O; )
+        k = w.charCodeAt(I++), k < 128 ? y = y >>> 8 ^ r[(y ^ k) & 255] : k < 2048 ? (y = y >>> 8 ^ r[(y ^ (192 | k >> 6 & 31)) & 255], y = y >>> 8 ^ r[(y ^ (128 | k & 63)) & 255]) : k >= 55296 && k < 57344 ? (k = (k & 1023) + 64, Tt = w.charCodeAt(I++) & 1023, y = y >>> 8 ^ r[(y ^ (240 | k >> 8 & 7)) & 255], y = y >>> 8 ^ r[(y ^ (128 | k >> 2 & 63)) & 255], y = y >>> 8 ^ r[(y ^ (128 | Tt >> 6 & 15 | (k & 3) << 4)) & 255], y = y >>> 8 ^ r[(y ^ (128 | Tt & 63)) & 255]) : (y = y >>> 8 ^ r[(y ^ (224 | k >> 12 & 15)) & 255], y = y >>> 8 ^ r[(y ^ (128 | k >> 6 & 63)) & 255], y = y >>> 8 ^ r[(y ^ (128 | k & 63)) & 255]);
+      return ~y;
     }
     t.table = r, t.bstr = At, t.buf = Le, t.str = Ne;
   });
@@ -542,7 +542,7 @@ class jt {
         };
       if (i.conflict) {
         const o = Object.keys(t.transaction.data)[0], u = i.conflict[o];
-        if (!u)
+        if (u === void 0)
           throw new Error("No previous value found in conflict result!");
         return {
           status: j.Conflict,
@@ -600,7 +600,7 @@ class _e {
     const e = (s = this._db) == null ? void 0 : s.transaction(_.store, "readonly").store, r = this._currentTimestamp ? IDBKeyRange.lowerBound(this._currentTimestamp, !0) : null;
     let a = await (e == null ? void 0 : e.index(_.timeIndex).openCursor(r, "next"));
     for (; a; ) {
-      if (a.value.status === y.Pending) {
+      if (a.value.status === b.Pending) {
         t = a.value;
         break;
       }
@@ -623,7 +623,7 @@ class _e {
     let i = await (a == null ? void 0 : a.index(_.timeIndex).openCursor(s, "next"));
     for (; i; )
       //Only unresolved jobs
-      i.value.status !== y.Completed && //Same destination
+      i.value.status !== b.Completed && //Same destination
       i.value.url === t.url && //Only same object jobs
       i.value.transaction.blitzID === t.transaction.blitzID && //Only same attribute jobs if both passed job and current job have an edit action
       (i.value.transaction.action !== D.Edit || t.transaction.action !== D.Edit || Object.keys(i.value.transaction.data)[0] === r) && e.push(i.value), i = await i.continue();
@@ -640,11 +640,11 @@ class _e {
   //Handle preceding conflict edit jobs check
   async _checkPrecedingConflictEditJobs(t, e) {
     let r = !1;
-    if (e.find((s) => s.transaction.action === D.Edit && s.status === y.Conflict)) {
+    if (e.find((s) => s.transaction.action === D.Edit && s.status === b.Conflict)) {
       r = !0;
       const s = await this._updateJob({
         ...t,
-        status: y.Conflict
+        status: b.Conflict
       });
       this._sendJobEvent(s);
     }
@@ -654,7 +654,7 @@ class _e {
   async _checkPrecedingFailedEditJobs(t, e) {
     var o, u;
     let r = !1;
-    const a = e.filter((c) => c.transaction.action === D.Edit && (c.status === y.Pending || c.status === y.Failed)), s = Object.keys(t.transaction.data)[0], i = ((o = t.transaction.data) == null ? void 0 : o[s].new) !== void 0 && ((u = t.transaction.data) == null ? void 0 : u[s].prev) !== void 0;
+    const a = e.filter((c) => c.transaction.action === D.Edit && (c.status === b.Pending || c.status === b.Failed)), s = Object.keys(t.transaction.data)[0], i = ((o = t.transaction.data) == null ? void 0 : o[s].new) !== void 0 && ((u = t.transaction.data) == null ? void 0 : u[s].prev) !== void 0;
     return a.length > 0 && i && (r = !0, t.attempts || await this._editAttemptHandler(t, a)), r;
   }
   //Handle merging with future edit jobs
@@ -664,7 +664,7 @@ class _e {
     let i = await (a == null ? void 0 : a.index(_.timeIndex).openCursor(s, "next"));
     for (; i; )
       //Only unresolved jobs
-      (i.value.status === y.Pending || i.value.status === y.Failed) && //Same destination
+      (i.value.status === b.Pending || i.value.status === b.Failed) && //Same destination
       i.value.url === t.url && //Only edit jobs
       i.value.transaction.action === D.Edit && //Only same object jobs
       i.value.transaction.blitzID === t.transaction.blitzID && //Only same attribute jobs
@@ -701,13 +701,13 @@ class _e {
     if (e.status === j.Success) {
       const i = await this._updateJob({
         ...t,
-        status: y.Completed
+        status: b.Completed
       });
       this._sendJobEvent(i);
     } else if (e.status === j.Exception)
       await this._updateJob({
         ...t,
-        status: y.Pending,
+        status: b.Pending,
         attempts: t.attempts + 1,
         priority: t.priority < 5 ? t.priority + 1 : t.priority,
         message: e.message
@@ -716,14 +716,14 @@ class _e {
       if (t.attempts > 0) {
         const i = await this._updateJob({
           ...t,
-          status: y.Failed,
+          status: b.Failed,
           message: e.message
         });
         this._sendJobEvent(i);
       } else
         await this._updateJob({
           ...t,
-          status: y.Pending,
+          status: b.Pending,
           attempts: t.attempts + 1,
           message: e.message
         });
@@ -732,13 +732,13 @@ class _e {
       if (((r = t.transaction.data) == null ? void 0 : r[i].prev) === ((a = t.transaction.data) == null ? void 0 : a[i].new) || e.message === ((s = t.transaction.data) == null ? void 0 : s[i].new)) {
         const o = await this._updateJob({
           ...t,
-          status: y.Completed
+          status: b.Completed
         });
         this._sendJobEvent(o);
       } else {
         const o = await this._updateJob({
           ...t,
-          status: y.Conflict,
+          status: b.Conflict,
           message: e.message
         });
         this._sendJobEvent(o);
@@ -771,12 +771,12 @@ class _e {
     if (s[r].prev === s[r].new ? u = { status: j.Success } : u = await jt.send(o, this._localHeaders ?? pt), u.status === j.Success) {
       o = await this._updateJob({
         ...o,
-        status: y.Completed
+        status: b.Completed
       });
       for (const g of e)
         await this._updateJob({
           ...g,
-          status: y.Completed
+          status: b.Completed
         });
       this._sendJobEvent(o);
     } else if (u.status === j.Exception || u.status === j.Failed)
@@ -790,18 +790,18 @@ class _e {
       if (((d = o.transaction.data) == null ? void 0 : d[r].prev) === ((h = o.transaction.data) == null ? void 0 : h[r].new) || u.message === ((f = o.transaction.data) == null ? void 0 : f[r].new)) {
         o = await this._updateJob({
           ...o,
-          status: y.Completed
+          status: b.Completed
         });
         for (const g of e)
           await this._updateJob({
             ...g,
-            status: y.Completed
+            status: b.Completed
           });
         this._sendJobEvent(o);
       } else {
         o = await this._updateJob({
           ...o,
-          status: y.Conflict,
+          status: b.Conflict,
           message: u.message
         });
         for (const g of e)
@@ -1715,7 +1715,7 @@ class sr {
     let a = await (r == null ? void 0 : r.openCursor(null, "next"));
     for (; a; )
       //Only completed jobs
-      a.value.status === y.Completed && //Not the same destination
+      a.value.status === b.Completed && //Not the same destination
       a.value.url !== t.url && //Only edit jobs
       a.value.transaction.action === D.Edit && //Only same object jobs
       a.value.transaction.blitzID === t.transaction.blitzID && //Only same hash
@@ -1729,7 +1729,7 @@ class sr {
     let i = await (a == null ? void 0 : a.index(_.timeIndex).openCursor(s, "next"));
     for (; i; )
       //Only conflict jobs
-      i.value.status === y.Conflict && //Same destination
+      i.value.status === b.Conflict && //Same destination
       i.value.url === t.url && //Only edit jobs
       i.value.transaction.action === D.Edit && //Only same object jobs
       i.value.transaction.blitzID === t.transaction.blitzID && //Only same attribute jobs
@@ -1776,7 +1776,7 @@ class sr {
     const a = `There was a conflict.
 The data got changed to "${r.message}".
 Do you still want to perform your change to "${(s = r.transaction.data) == null ? void 0 : s[e].new}"?`;
-    confirm(a) ? (r = await this.force(r), await p.queue.updateSyncStatus(r, y.Pending)) : (await this.revert(r), await p.queue.updateSyncStatus(r, y.Completed)), p.dispatchEvent("queue:conflict", r);
+    confirm(a) ? (r = await this.force(r), await p.queue.updateSyncStatus(r, b.Pending)) : (await this.revert(r), await p.queue.updateSyncStatus(r, b.Completed)), p.dispatchEvent("queue:conflict", r);
   }
   //Force the job
   async force(t) {
@@ -1788,7 +1788,7 @@ Do you still want to perform your change to "${(s = r.transaction.data) == null 
       }
     }, s = (/* @__PURE__ */ new Date()).getTime(), i = await this._updateJob({
       ...t,
-      status: y.Pending,
+      status: b.Pending,
       transaction: {
         ...t.transaction,
         data: a,
@@ -1808,7 +1808,7 @@ Do you still want to perform your change to "${(s = r.transaction.data) == null 
     for (const u of r)
       await this._updateJob({
         ...u,
-        status: y.Pending
+        status: b.Pending
       });
     return i;
   }
@@ -1870,7 +1870,7 @@ class ir {
     for (const e of t)
       await this._updateJob({
         ...e,
-        status: y.Pending
+        status: b.Pending
       });
   }
   //Revert jobs
@@ -1921,7 +1921,7 @@ class ir {
     for (; r; ) {
       if (
         //Only unresolved jobs
-        r.value.status !== y.Completed
+        r.value.status !== b.Completed
       ) {
         if (t[r.value.url] || (t[r.value.url] = []), r.value.transaction.action === D.Add || r.value.transaction.action === D.Delete)
           t[r.value.url].push([r.value]);
@@ -1946,7 +1946,7 @@ class or {
   _handleWorkerMessage(t) {
     var r;
     const e = t.data.job;
-    e.status === y.Completed ? p.dispatchEvent("queue:success", e) : e.status === y.Failed ? p.dispatchEvent("queue:failure", e) : e.status === y.Conflict && (document.hidden || (r = p.queue.conflictHandler) == null || r.prompt(e)), p._Model.get(e.transaction.model).then((a) => {
+    e.status === b.Completed ? p.dispatchEvent("queue:success", e) : e.status === b.Failed ? p.dispatchEvent("queue:failure", e) : e.status === b.Conflict && (document.hidden || (r = p.queue.conflictHandler) == null || r.prompt(e)), p._Model.get(e.transaction.model).then((a) => {
       var s;
       return (s = a == null ? void 0 : a.memoryClient().get(e.transaction.blitzID)) == null ? void 0 : s.dispatchEvent("syncStatusChange", e);
     }), p.queue.updateSyncStatus(e);
@@ -1970,9 +1970,9 @@ class or {
           var g;
           return f.transaction.action === D.Edit && ((g = f.transaction.data) == null ? void 0 : g[s]) !== void 0;
         });
-        let c = y.Pending, l;
-        const d = u.find((f) => f.status === y.Failed), h = u.find((f) => f.status === y.Conflict);
-        d ? (c = y.Failed, l = d) : h ? (c = y.Conflict, l = h) : u.every((f) => f.status === y.Completed) && (c = y.Completed), i._syncSignal.set({ status: c, job: l });
+        let c = b.Pending, l;
+        const d = u.find((f) => f.status === b.Failed), h = u.find((f) => f.status === b.Conflict && f.message !== void 0) ?? u.find((f) => f.status === b.Conflict);
+        d ? (c = b.Failed, l = d) : h ? (c = b.Conflict, l = h) : u.every((f) => f.status === b.Completed) && (c = b.Completed), i._syncSignal.set({ status: c, job: l });
       }
   }
   // Initialize queue client
@@ -2003,7 +2003,7 @@ class or {
       id: crypto.randomUUID(),
       url: t,
       transaction: e,
-      status: y.Pending,
+      status: b.Pending,
       createdAt: Date.now(),
       attempts: 0,
       priority: 1
@@ -2685,9 +2685,9 @@ class E {
         var h;
         return d.transaction.action === D.Edit && ((h = d.transaction.data) == null ? void 0 : h[this._name]) !== void 0;
       });
-      let o = y.Pending, u;
-      const c = i.find((d) => d.status === y.Failed), l = i.find((d) => d.status === y.Conflict);
-      c ? (o = y.Failed, u = c) : l ? (o = y.Conflict, u = l) : i.every((d) => d.status === y.Completed) && (o = y.Completed), this._syncSignal.set({ status: o, job: u }, !1), t(this._syncSignal.get());
+      let o = b.Pending, u;
+      const c = i.find((d) => d.status === b.Failed), l = i.find((d) => d.status === b.Conflict && d.message !== void 0) ?? i.find((d) => d.status === b.Conflict);
+      c ? (o = b.Failed, u = c) : l ? (o = b.Conflict, u = l) : i.every((d) => d.status === b.Completed) && (o = b.Completed), this._syncSignal.set({ status: o, job: u }, !1), t(this._syncSignal.get());
     }), r;
   }
   /**
@@ -2976,7 +2976,7 @@ const Pr = {
   tomorrow: "'tomorrow at' p",
   nextWeek: "eeee 'at' p",
   other: "P"
-}, kr = (n, t, e, r) => Er[n];
+}, Cr = (n, t, e, r) => Er[n];
 function J(n) {
   return (t, e) => {
     const r = e != null && e.context ? String(e.context) : "standalone";
@@ -2992,7 +2992,7 @@ function J(n) {
     return a[s];
   };
 }
-const Cr = {
+const kr = {
   narrow: ["B", "A"],
   abbreviated: ["BC", "AD"],
   wide: ["Before Christ", "Anno Domini"]
@@ -3120,7 +3120,7 @@ const Cr = {
 }, Nr = {
   ordinalNumber: Lr,
   era: J({
-    values: Cr,
+    values: kr,
     defaultWidth: "wide"
   }),
   quarter: J({
@@ -3293,7 +3293,7 @@ const Hr = /^(\d+)(th|st|nd|rd)?/i, Br = /\d+/i, Yr = {
   code: "en-US",
   formatDistance: Or,
   formatLong: Tr,
-  formatRelative: kr,
+  formatRelative: Cr,
   localize: Nr,
   match: rn,
   options: {
@@ -3962,26 +3962,26 @@ function Pe(n, t, e) {
   const r = mt(), a = (e == null ? void 0 : e.locale) ?? r.locale ?? ct, s = (e == null ? void 0 : e.firstWeekContainsDate) ?? ((d = (l = e == null ? void 0 : e.locale) == null ? void 0 : l.options) == null ? void 0 : d.firstWeekContainsDate) ?? r.firstWeekContainsDate ?? ((f = (h = r.locale) == null ? void 0 : h.options) == null ? void 0 : f.firstWeekContainsDate) ?? 1, i = (e == null ? void 0 : e.weekStartsOn) ?? ((v = (g = e == null ? void 0 : e.locale) == null ? void 0 : g.options) == null ? void 0 : v.weekStartsOn) ?? r.weekStartsOn ?? ((P = (M = r.locale) == null ? void 0 : M.options) == null ? void 0 : P.weekStartsOn) ?? 0, o = U(n, e == null ? void 0 : e.in);
   if (!wr(o))
     throw new RangeError("Invalid time value");
-  let u = t.match(yn).map((k) => {
-    const A = k[0];
+  let u = t.match(yn).map((C) => {
+    const A = C[0];
     if (A === "p" || A === "P") {
       const V = un[A];
-      return V(k, a.formatLong);
+      return V(C, a.formatLong);
     }
-    return k;
-  }).join("").match(bn).map((k) => {
-    if (k === "''")
+    return C;
+  }).join("").match(bn).map((C) => {
+    if (C === "''")
       return { isToken: !1, value: "'" };
-    const A = k[0];
+    const A = C[0];
     if (A === "'")
-      return { isToken: !1, value: Dn(k) };
+      return { isToken: !1, value: Dn(C) };
     if (re[A])
-      return { isToken: !0, value: k };
+      return { isToken: !0, value: C };
     if (A.match(_n))
       throw new RangeError(
         "Format string contains an unescaped latin alphabet character `" + A + "`"
       );
-    return { isToken: !1, value: k };
+    return { isToken: !1, value: C };
   });
   a.localize.preprocessor && (u = a.localize.preprocessor(o, u));
   const c = {
@@ -3989,10 +3989,10 @@ function Pe(n, t, e) {
     weekStartsOn: i,
     locale: a
   };
-  return u.map((k) => {
-    if (!k.isToken)
-      return k.value;
-    const A = k.value;
+  return u.map((C) => {
+    if (!C.isToken)
+      return C.value;
+    const A = C.value;
     (!(e != null && e.useAdditionalWeekYearTokens) && mn(A) || !(e != null && e.useAdditionalDayOfYearTokens) && fn(A)) && gn(A, t, String(n));
     const V = re[A[0]];
     return V(o, A, a.localize, c);
@@ -4279,7 +4279,7 @@ const ie = {
     "November",
     "Dezember"
   ]
-}, kn = {
+}, Cn = {
   narrow: Ft.narrow,
   abbreviated: [
     "Jan.",
@@ -4296,7 +4296,7 @@ const ie = {
     "Dez."
   ],
   wide: Ft.wide
-}, Cn = {
+}, kn = {
   narrow: ["S", "M", "D", "M", "D", "F", "S"],
   short: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
   abbreviated: ["So.", "Mo.", "Di.", "Mi.", "Do.", "Fr.", "Sa."],
@@ -4384,11 +4384,11 @@ const ie = {
   }),
   month: J({
     values: Ft,
-    formattingValues: kn,
+    formattingValues: Cn,
     defaultWidth: "wide"
   }),
   day: J({
-    values: Cn,
+    values: kn,
     defaultWidth: "wide"
   }),
   dayPeriod: J({
@@ -5048,7 +5048,7 @@ class Ea extends E {
     return this._value ? Math.floor((new Date(this._value).getTime() - (/* @__PURE__ */ new Date("2021-01-01T00:00:00Z")).getTime()) / 1e3) : null;
   }
 }
-class ka extends E {
+class Ca extends E {
   /**
    * Retrieves the linked object.
    * Task: https://alpha.blitzdata.com/blitzpm/log/blitzsifeddine/2025-08-25/Fk%2FMtm%20getObject()/2fbxs4--bt1lfz?proj=1s4dec-3ibnqe
@@ -5077,7 +5077,7 @@ class ka extends E {
     return this._value;
   }
 }
-class Ca extends E {
+class ka extends E {
   /**
    * Retrieves the linked user.
    * Task: https://alpha.blitzdata.com/blitzpm/log/blitzsifeddine/2025-09-03/User%20type/2fra4l--t1g94e?proj=1s4dec-3ibnqe
@@ -5257,9 +5257,9 @@ class Ee {
         var h;
         return d.transaction.action === D.Edit && ((h = d.transaction.data) == null ? void 0 : h[this._name]) !== void 0;
       });
-      let o = y.Pending, u;
-      const c = i.find((d) => d.status === y.Failed), l = i.find((d) => d.status === y.Conflict);
-      c ? (o = y.Failed, u = c) : l ? (o = y.Conflict, u = l) : i.every((d) => d.status === y.Completed) && (o = y.Completed), this._syncSignal.set({ status: o, job: u }, !1), t(this._syncSignal.get());
+      let o = b.Pending, u;
+      const c = i.find((d) => d.status === b.Failed), l = i.find((d) => d.status === b.Conflict && d.message !== void 0) ?? i.find((d) => d.status === b.Conflict);
+      c ? (o = b.Failed, u = c) : l ? (o = b.Conflict, u = l) : i.every((d) => d.status === b.Completed) && (o = b.Completed), this._syncSignal.set({ status: o, job: u }, !1), t(this._syncSignal.get());
     }), r;
   }
   /**
@@ -5811,7 +5811,7 @@ class H {
    * @param value
    */
   static createType(t, e, r) {
-    return t.endsWith("_fk") ? new ka(t, e, r) : t === "_userID" ? new Ca(t, e, r) : e === "int" || ["_blitzstamp"].includes(t) ? new Te(t, "int", r) : e === "tinyint" ? new Ra(t, e, r) : e === "double" ? new $a(t, e, r) : e === "float" ? new Vt(t, e, r) : e === "percentage" ? new Ha(t, e, r) : e === "varchar" ? new Aa(t, e, r) : e === "text" ? new Ae(t, e, r) : e === "htmlText" ? new za(t, e, r) : e === "enum" ? new Na(t, e, r) : e === "json" ? new Ja(t, e, r) : e === "boolean" ? new Me(t, e, r) : e === "datetime" || ["_publishingdate", "_modified", "_expiration"].includes(t) ? new Ea(t, "datetime", r) : e === "date" ? new Pa(t, e, r) : e === "code" ? new La(t, e, r) : e === "email" ? new Ba(t, e, r) : e === "phone" ? new Ya(t, e, r) : e === "url" ? new qa(t, e, r) : e === "image" ? new Va(t, e, r) : e === "video" ? new Qa(t, e, r) : e === "file" ? new Xa(t, e, r) : e === "location" ? new Ka(t, e, r) : new lt(t, e, r);
+    return t.endsWith("_fk") ? new Ca(t, e, r) : t === "_userID" ? new ka(t, e, r) : e === "int" || ["_blitzstamp"].includes(t) ? new Te(t, "int", r) : e === "tinyint" ? new Ra(t, e, r) : e === "double" ? new $a(t, e, r) : e === "float" ? new Vt(t, e, r) : e === "percentage" ? new Ha(t, e, r) : e === "varchar" ? new Aa(t, e, r) : e === "text" ? new Ae(t, e, r) : e === "htmlText" ? new za(t, e, r) : e === "enum" ? new Na(t, e, r) : e === "json" ? new Ja(t, e, r) : e === "boolean" ? new Me(t, e, r) : e === "datetime" || ["_publishingdate", "_modified", "_expiration"].includes(t) ? new Ea(t, "datetime", r) : e === "date" ? new Pa(t, e, r) : e === "code" ? new La(t, e, r) : e === "email" ? new Ba(t, e, r) : e === "phone" ? new Ya(t, e, r) : e === "url" ? new qa(t, e, r) : e === "image" ? new Va(t, e, r) : e === "video" ? new Qa(t, e, r) : e === "file" ? new Xa(t, e, r) : e === "location" ? new Ka(t, e, r) : new lt(t, e, r);
   }
   /**
    * Initializes a new instance of DataType or ManyType with the specified name and type.
@@ -6132,7 +6132,7 @@ const Ga = {
     throw new Error("Setting values directly not supported. Please use `edit` method to change a value for an attribute.");
   }
 };
-class ke {
+class Ce {
   /**
    * Creates new BDObject with supplied type, model and attributes.
    *
@@ -6151,7 +6151,7 @@ class ke {
     return e.memoryClient().update(i);
   }
 }
-class Ce extends at {
+class ke extends at {
   /**
    * Returns the model of the custom object.
    */
@@ -6200,8 +6200,8 @@ class Ce extends at {
 /**
  * Name of the model for custom object.
  */
-m(Ce, "modelName");
-const Ot = class Ot extends Ce {
+m(ke, "modelName");
+const Ot = class Ot extends ke {
   /**
    * Constructor.
    *
@@ -6286,7 +6286,7 @@ const Ot = class Ot extends Ce {
     for (const l of a)
       for (const d of l.options.addURL)
         await p.queue.addJob(d, i.toObject());
-    return this.memoryClient().emit(i), this.setLastTransactionHash(i.hash), ke.create(this.returnType, this, u.data);
+    return this.memoryClient().emit(i), this.setLastTransactionHash(i.hash), Ce.create(this.returnType, this, u.data);
   }
   /**
    * Finds an object by given blitz ID.
@@ -6605,8 +6605,8 @@ function es(n) {
       o[f] = (o[f] << 8 | o[f] >>> 24) & 16711935 | (o[f] << 24 | o[f] >>> 8) & 4278255360;
     o[u >>> 5] |= 128 << u % 32, o[(u + 64 >>> 9 << 4) + 14] = u;
     for (var g = a._ff, v = a._gg, M = a._hh, P = a._ii, f = 0; f < o.length; f += 16) {
-      var k = c, A = l, V = d, At = h;
-      c = g(c, l, d, h, o[f + 0], 7, -680876936), h = g(h, c, l, d, o[f + 1], 12, -389564586), d = g(d, h, c, l, o[f + 2], 17, 606105819), l = g(l, d, h, c, o[f + 3], 22, -1044525330), c = g(c, l, d, h, o[f + 4], 7, -176418897), h = g(h, c, l, d, o[f + 5], 12, 1200080426), d = g(d, h, c, l, o[f + 6], 17, -1473231341), l = g(l, d, h, c, o[f + 7], 22, -45705983), c = g(c, l, d, h, o[f + 8], 7, 1770035416), h = g(h, c, l, d, o[f + 9], 12, -1958414417), d = g(d, h, c, l, o[f + 10], 17, -42063), l = g(l, d, h, c, o[f + 11], 22, -1990404162), c = g(c, l, d, h, o[f + 12], 7, 1804603682), h = g(h, c, l, d, o[f + 13], 12, -40341101), d = g(d, h, c, l, o[f + 14], 17, -1502002290), l = g(l, d, h, c, o[f + 15], 22, 1236535329), c = v(c, l, d, h, o[f + 1], 5, -165796510), h = v(h, c, l, d, o[f + 6], 9, -1069501632), d = v(d, h, c, l, o[f + 11], 14, 643717713), l = v(l, d, h, c, o[f + 0], 20, -373897302), c = v(c, l, d, h, o[f + 5], 5, -701558691), h = v(h, c, l, d, o[f + 10], 9, 38016083), d = v(d, h, c, l, o[f + 15], 14, -660478335), l = v(l, d, h, c, o[f + 4], 20, -405537848), c = v(c, l, d, h, o[f + 9], 5, 568446438), h = v(h, c, l, d, o[f + 14], 9, -1019803690), d = v(d, h, c, l, o[f + 3], 14, -187363961), l = v(l, d, h, c, o[f + 8], 20, 1163531501), c = v(c, l, d, h, o[f + 13], 5, -1444681467), h = v(h, c, l, d, o[f + 2], 9, -51403784), d = v(d, h, c, l, o[f + 7], 14, 1735328473), l = v(l, d, h, c, o[f + 12], 20, -1926607734), c = M(c, l, d, h, o[f + 5], 4, -378558), h = M(h, c, l, d, o[f + 8], 11, -2022574463), d = M(d, h, c, l, o[f + 11], 16, 1839030562), l = M(l, d, h, c, o[f + 14], 23, -35309556), c = M(c, l, d, h, o[f + 1], 4, -1530992060), h = M(h, c, l, d, o[f + 4], 11, 1272893353), d = M(d, h, c, l, o[f + 7], 16, -155497632), l = M(l, d, h, c, o[f + 10], 23, -1094730640), c = M(c, l, d, h, o[f + 13], 4, 681279174), h = M(h, c, l, d, o[f + 0], 11, -358537222), d = M(d, h, c, l, o[f + 3], 16, -722521979), l = M(l, d, h, c, o[f + 6], 23, 76029189), c = M(c, l, d, h, o[f + 9], 4, -640364487), h = M(h, c, l, d, o[f + 12], 11, -421815835), d = M(d, h, c, l, o[f + 15], 16, 530742520), l = M(l, d, h, c, o[f + 2], 23, -995338651), c = P(c, l, d, h, o[f + 0], 6, -198630844), h = P(h, c, l, d, o[f + 7], 10, 1126891415), d = P(d, h, c, l, o[f + 14], 15, -1416354905), l = P(l, d, h, c, o[f + 5], 21, -57434055), c = P(c, l, d, h, o[f + 12], 6, 1700485571), h = P(h, c, l, d, o[f + 3], 10, -1894986606), d = P(d, h, c, l, o[f + 10], 15, -1051523), l = P(l, d, h, c, o[f + 1], 21, -2054922799), c = P(c, l, d, h, o[f + 8], 6, 1873313359), h = P(h, c, l, d, o[f + 15], 10, -30611744), d = P(d, h, c, l, o[f + 6], 15, -1560198380), l = P(l, d, h, c, o[f + 13], 21, 1309151649), c = P(c, l, d, h, o[f + 4], 6, -145523070), h = P(h, c, l, d, o[f + 11], 10, -1120210379), d = P(d, h, c, l, o[f + 2], 15, 718787259), l = P(l, d, h, c, o[f + 9], 21, -343485551), c = c + k >>> 0, l = l + A >>> 0, d = d + V >>> 0, h = h + At >>> 0;
+      var C = c, A = l, V = d, At = h;
+      c = g(c, l, d, h, o[f + 0], 7, -680876936), h = g(h, c, l, d, o[f + 1], 12, -389564586), d = g(d, h, c, l, o[f + 2], 17, 606105819), l = g(l, d, h, c, o[f + 3], 22, -1044525330), c = g(c, l, d, h, o[f + 4], 7, -176418897), h = g(h, c, l, d, o[f + 5], 12, 1200080426), d = g(d, h, c, l, o[f + 6], 17, -1473231341), l = g(l, d, h, c, o[f + 7], 22, -45705983), c = g(c, l, d, h, o[f + 8], 7, 1770035416), h = g(h, c, l, d, o[f + 9], 12, -1958414417), d = g(d, h, c, l, o[f + 10], 17, -42063), l = g(l, d, h, c, o[f + 11], 22, -1990404162), c = g(c, l, d, h, o[f + 12], 7, 1804603682), h = g(h, c, l, d, o[f + 13], 12, -40341101), d = g(d, h, c, l, o[f + 14], 17, -1502002290), l = g(l, d, h, c, o[f + 15], 22, 1236535329), c = v(c, l, d, h, o[f + 1], 5, -165796510), h = v(h, c, l, d, o[f + 6], 9, -1069501632), d = v(d, h, c, l, o[f + 11], 14, 643717713), l = v(l, d, h, c, o[f + 0], 20, -373897302), c = v(c, l, d, h, o[f + 5], 5, -701558691), h = v(h, c, l, d, o[f + 10], 9, 38016083), d = v(d, h, c, l, o[f + 15], 14, -660478335), l = v(l, d, h, c, o[f + 4], 20, -405537848), c = v(c, l, d, h, o[f + 9], 5, 568446438), h = v(h, c, l, d, o[f + 14], 9, -1019803690), d = v(d, h, c, l, o[f + 3], 14, -187363961), l = v(l, d, h, c, o[f + 8], 20, 1163531501), c = v(c, l, d, h, o[f + 13], 5, -1444681467), h = v(h, c, l, d, o[f + 2], 9, -51403784), d = v(d, h, c, l, o[f + 7], 14, 1735328473), l = v(l, d, h, c, o[f + 12], 20, -1926607734), c = M(c, l, d, h, o[f + 5], 4, -378558), h = M(h, c, l, d, o[f + 8], 11, -2022574463), d = M(d, h, c, l, o[f + 11], 16, 1839030562), l = M(l, d, h, c, o[f + 14], 23, -35309556), c = M(c, l, d, h, o[f + 1], 4, -1530992060), h = M(h, c, l, d, o[f + 4], 11, 1272893353), d = M(d, h, c, l, o[f + 7], 16, -155497632), l = M(l, d, h, c, o[f + 10], 23, -1094730640), c = M(c, l, d, h, o[f + 13], 4, 681279174), h = M(h, c, l, d, o[f + 0], 11, -358537222), d = M(d, h, c, l, o[f + 3], 16, -722521979), l = M(l, d, h, c, o[f + 6], 23, 76029189), c = M(c, l, d, h, o[f + 9], 4, -640364487), h = M(h, c, l, d, o[f + 12], 11, -421815835), d = M(d, h, c, l, o[f + 15], 16, 530742520), l = M(l, d, h, c, o[f + 2], 23, -995338651), c = P(c, l, d, h, o[f + 0], 6, -198630844), h = P(h, c, l, d, o[f + 7], 10, 1126891415), d = P(d, h, c, l, o[f + 14], 15, -1416354905), l = P(l, d, h, c, o[f + 5], 21, -57434055), c = P(c, l, d, h, o[f + 12], 6, 1700485571), h = P(h, c, l, d, o[f + 3], 10, -1894986606), d = P(d, h, c, l, o[f + 10], 15, -1051523), l = P(l, d, h, c, o[f + 1], 21, -2054922799), c = P(c, l, d, h, o[f + 8], 6, 1873313359), h = P(h, c, l, d, o[f + 15], 10, -30611744), d = P(d, h, c, l, o[f + 6], 15, -1560198380), l = P(l, d, h, c, o[f + 13], 21, 1309151649), c = P(c, l, d, h, o[f + 4], 6, -145523070), h = P(h, c, l, d, o[f + 11], 10, -1120210379), d = P(d, h, c, l, o[f + 2], 15, 718787259), l = P(l, d, h, c, o[f + 9], 21, -343485551), c = c + C >>> 0, l = l + A >>> 0, d = d + V >>> 0, h = h + At >>> 0;
     }
     return n.endian([c, l, d, h]);
   };
@@ -6750,9 +6750,9 @@ class Je {
                 var c, l, d, h, f, g, v, M;
                 return (
                   // Check single enum and many enum attributes
-                  i.attributes[u].type === "enum" || Array.isArray(i.attributes[u].type) && i.attributes[u].type[0] === "enum" ? (Array.isArray(i.attributes[u].type) ? (l = (c = o.attributes) == null ? void 0 : c[u]) == null ? void 0 : l.type[0] : (h = (d = o.attributes) == null ? void 0 : d[u]) == null ? void 0 : h.type) === "enum" && (i.attributes[u].options ?? []).every((P, k) => {
+                  i.attributes[u].type === "enum" || Array.isArray(i.attributes[u].type) && i.attributes[u].type[0] === "enum" ? (Array.isArray(i.attributes[u].type) ? (l = (c = o.attributes) == null ? void 0 : c[u]) == null ? void 0 : l.type[0] : (h = (d = o.attributes) == null ? void 0 : d[u]) == null ? void 0 : h.type) === "enum" && (i.attributes[u].options ?? []).every((P, C) => {
                     var A, V;
-                    return P === ((V = (A = o.attributes) == null ? void 0 : A[u]) == null ? void 0 : V.options[k]);
+                    return P === ((V = (A = o.attributes) == null ? void 0 : A[u]) == null ? void 0 : V.options[C]);
                   }) : Array.isArray(i.attributes[u].type) ? i.attributes[u].type[0] === ((g = (f = o.attributes) == null ? void 0 : f[u]) == null ? void 0 : g.type[0]) : i.attributes[u].type === ((M = (v = o.attributes) == null ? void 0 : v[u]) == null ? void 0 : M.type)
                 );
               })) && await a.delete("objects", s);
@@ -6969,7 +6969,7 @@ class st {
     var r;
     const e = [];
     for (const a of t)
-      e.push(ke.create(((r = this._query) == null ? void 0 : r.returnType) ?? at, this._model, a));
+      e.push(Ce.create(((r = this._query) == null ? void 0 : r.returnType) ?? at, this._model, a));
     return e;
   }
   /**
@@ -7148,7 +7148,7 @@ class st {
     const e = await p.queue.getJobs(), r = [];
     for (const s of t)
       if (!e.find((i) => i.transaction.action === D.Delete && i.transaction.blitzID === s._blitzID))
-        if (!e.find((i) => i.transaction.action === D.Edit && i.transaction.blitzID === s._blitzID && i.status !== y.Completed))
+        if (!e.find((i) => i.transaction.action === D.Edit && i.transaction.blitzID === s._blitzID && i.status !== b.Completed))
           r.push(s);
         else {
           const i = await ((a = this._model) == null ? void 0 : a.get({ blitzID: s._blitzID, raw: !0, forceLocal: !0 }));
@@ -7227,7 +7227,7 @@ const z = class z {
    * {@link https://semver.org/}
    */
   static get VERSION() {
-    return "1.4.20";
+    return "1.4.21";
   }
   /**
    * Initializes BlitzData with given options.
@@ -7489,13 +7489,13 @@ m(z, "listeners", /* @__PURE__ */ new Map()), /**
 m(z, "initialized", !1);
 let p = z;
 export {
-  Ce as BDCustomObject,
+  ke as BDCustomObject,
   R as BDModel,
   at as BDObject,
   p as BlitzData,
   E as DataType,
   F as HttpRequest,
-  y as JobStatus,
+  b as JobStatus,
   S as LocalStorageRepository,
   Wa as ManyForeignKeyType,
   Ee as ManyType,
