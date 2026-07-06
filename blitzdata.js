@@ -119,7 +119,7 @@ const tt = class tt {
  * This is used primarily for development purposes.
  */
 m(tt, "_globalHeaders", {});
-let F = tt;
+let L = tt;
 class He {
   /**
    * Create a new cluster.
@@ -157,7 +157,7 @@ class He {
     return this.cursors.readURL++, t;
   }
 }
-class be {
+class we {
   constructor() {
     /**
      * cluster instances.
@@ -365,7 +365,7 @@ const _ = {
   timeIndex: "time",
   objectIndex: "object"
 };
-var b = /* @__PURE__ */ ((n) => (n.Pending = "pending", n.Completed = "completed", n.Failed = "failed", n.Conflict = "conflict", n))(b || {}), j = /* @__PURE__ */ ((n) => (n.Success = "success", n.Exception = "exception", n.Failed = "failed", n.Conflict = "conflict", n))(j || {}), D = /* @__PURE__ */ ((n) => (n.Add = "add", n.Edit = "edit", n.Delete = "delete", n))(D || {}), Y = "SharedWorker" in globalThis, er = class {
+var w = /* @__PURE__ */ ((n) => (n.Pending = "pending", n.Completed = "completed", n.Failed = "failed", n.Conflict = "conflict", n))(w || {}), j = /* @__PURE__ */ ((n) => (n.Success = "success", n.Exception = "exception", n.Failed = "failed", n.Conflict = "conflict", n))(j || {}), D = /* @__PURE__ */ ((n) => (n.Add = "add", n.Edit = "edit", n.Delete = "delete", n))(D || {}), Y = "SharedWorker" in globalThis, er = class {
   constructor(n) {
     /**
      * The actual worker that is used, depending on browser support it can be either a `SharedWorker` or a normal `Worker`.
@@ -467,42 +467,42 @@ var ve = {};
   })(function(t) {
     t.version = "1.2.2";
     function e() {
-      for (var w = 0, N = new Array(256), y = 0; y != 256; ++y)
-        w = y, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, N[y] = w;
+      for (var b = 0, N = new Array(256), y = 0; y != 256; ++y)
+        b = y, b = b & 1 ? -306674912 ^ b >>> 1 : b >>> 1, b = b & 1 ? -306674912 ^ b >>> 1 : b >>> 1, b = b & 1 ? -306674912 ^ b >>> 1 : b >>> 1, b = b & 1 ? -306674912 ^ b >>> 1 : b >>> 1, b = b & 1 ? -306674912 ^ b >>> 1 : b >>> 1, b = b & 1 ? -306674912 ^ b >>> 1 : b >>> 1, b = b & 1 ? -306674912 ^ b >>> 1 : b >>> 1, b = b & 1 ? -306674912 ^ b >>> 1 : b >>> 1, N[y] = b;
       return typeof Int32Array < "u" ? new Int32Array(N) : N;
     }
     var r = e();
-    function a(w) {
+    function a(b) {
       var N = 0, y = 0, I = 0, O = typeof Int32Array < "u" ? new Int32Array(4096) : new Array(4096);
       for (I = 0; I != 256; ++I)
-        O[I] = w[I];
+        O[I] = b[I];
       for (I = 0; I != 256; ++I)
-        for (y = w[I], N = 256 + I; N < 4096; N += 256)
-          y = O[N] = y >>> 8 ^ w[y & 255];
+        for (y = b[I], N = 256 + I; N < 4096; N += 256)
+          y = O[N] = y >>> 8 ^ b[y & 255];
       var k = [];
       for (I = 1; I != 16; ++I)
         k[I - 1] = typeof Int32Array < "u" ? O.subarray(I * 256, I * 256 + 256) : O.slice(I * 256, I * 256 + 256);
       return k;
     }
     var s = a(r), i = s[0], o = s[1], u = s[2], c = s[3], l = s[4], d = s[5], h = s[6], f = s[7], g = s[8], v = s[9], M = s[10], P = s[11], C = s[12], A = s[13], V = s[14];
-    function At(w, N) {
-      for (var y = N ^ -1, I = 0, O = w.length; I < O; )
-        y = y >>> 8 ^ r[(y ^ w.charCodeAt(I++)) & 255];
+    function At(b, N) {
+      for (var y = N ^ -1, I = 0, O = b.length; I < O; )
+        y = y >>> 8 ^ r[(y ^ b.charCodeAt(I++)) & 255];
       return ~y;
     }
-    function Le(w, N) {
-      for (var y = N ^ -1, I = w.length - 15, O = 0; O < I; )
-        y = V[w[O++] ^ y & 255] ^ A[w[O++] ^ y >> 8 & 255] ^ C[w[O++] ^ y >> 16 & 255] ^ P[w[O++] ^ y >>> 24] ^ M[w[O++]] ^ v[w[O++]] ^ g[w[O++]] ^ f[w[O++]] ^ h[w[O++]] ^ d[w[O++]] ^ l[w[O++]] ^ c[w[O++]] ^ u[w[O++]] ^ o[w[O++]] ^ i[w[O++]] ^ r[w[O++]];
+    function Je(b, N) {
+      for (var y = N ^ -1, I = b.length - 15, O = 0; O < I; )
+        y = V[b[O++] ^ y & 255] ^ A[b[O++] ^ y >> 8 & 255] ^ C[b[O++] ^ y >> 16 & 255] ^ P[b[O++] ^ y >>> 24] ^ M[b[O++]] ^ v[b[O++]] ^ g[b[O++]] ^ f[b[O++]] ^ h[b[O++]] ^ d[b[O++]] ^ l[b[O++]] ^ c[b[O++]] ^ u[b[O++]] ^ o[b[O++]] ^ i[b[O++]] ^ r[b[O++]];
       for (I += 15; O < I; )
-        y = y >>> 8 ^ r[(y ^ w[O++]) & 255];
+        y = y >>> 8 ^ r[(y ^ b[O++]) & 255];
       return ~y;
     }
-    function Ne(w, N) {
-      for (var y = N ^ -1, I = 0, O = w.length, k = 0, Tt = 0; I < O; )
-        k = w.charCodeAt(I++), k < 128 ? y = y >>> 8 ^ r[(y ^ k) & 255] : k < 2048 ? (y = y >>> 8 ^ r[(y ^ (192 | k >> 6 & 31)) & 255], y = y >>> 8 ^ r[(y ^ (128 | k & 63)) & 255]) : k >= 55296 && k < 57344 ? (k = (k & 1023) + 64, Tt = w.charCodeAt(I++) & 1023, y = y >>> 8 ^ r[(y ^ (240 | k >> 8 & 7)) & 255], y = y >>> 8 ^ r[(y ^ (128 | k >> 2 & 63)) & 255], y = y >>> 8 ^ r[(y ^ (128 | Tt >> 6 & 15 | (k & 3) << 4)) & 255], y = y >>> 8 ^ r[(y ^ (128 | Tt & 63)) & 255]) : (y = y >>> 8 ^ r[(y ^ (224 | k >> 12 & 15)) & 255], y = y >>> 8 ^ r[(y ^ (128 | k >> 6 & 63)) & 255], y = y >>> 8 ^ r[(y ^ (128 | k & 63)) & 255]);
+    function Ne(b, N) {
+      for (var y = N ^ -1, I = 0, O = b.length, k = 0, Tt = 0; I < O; )
+        k = b.charCodeAt(I++), k < 128 ? y = y >>> 8 ^ r[(y ^ k) & 255] : k < 2048 ? (y = y >>> 8 ^ r[(y ^ (192 | k >> 6 & 31)) & 255], y = y >>> 8 ^ r[(y ^ (128 | k & 63)) & 255]) : k >= 55296 && k < 57344 ? (k = (k & 1023) + 64, Tt = b.charCodeAt(I++) & 1023, y = y >>> 8 ^ r[(y ^ (240 | k >> 8 & 7)) & 255], y = y >>> 8 ^ r[(y ^ (128 | k >> 2 & 63)) & 255], y = y >>> 8 ^ r[(y ^ (128 | Tt >> 6 & 15 | (k & 3) << 4)) & 255], y = y >>> 8 ^ r[(y ^ (128 | Tt & 63)) & 255]) : (y = y >>> 8 ^ r[(y ^ (224 | k >> 12 & 15)) & 255], y = y >>> 8 ^ r[(y ^ (128 | k >> 6 & 63)) & 255], y = y >>> 8 ^ r[(y ^ (128 | k & 63)) & 255]);
       return ~y;
     }
-    t.table = r, t.bstr = At, t.buf = Le, t.str = Ne;
+    t.table = r, t.bstr = At, t.buf = Je, t.str = Ne;
   });
 })(ve);
 function rt() {
@@ -565,7 +565,7 @@ class jt {
     }
   }
 }
-var bt = [], pt;
+var wt = [], pt;
 class _e {
   constructor(t, e) {
     //Properties
@@ -590,7 +590,7 @@ class _e {
     if (typeof this._postMessage == "function")
       this._postMessage({ data: { job: t } });
     else
-      for (const e of bt)
+      for (const e of wt)
         e == null || e.postMessage({ job: t });
   }
   //Get next job
@@ -600,7 +600,7 @@ class _e {
     const e = (s = this._db) == null ? void 0 : s.transaction(_.store, "readonly").store, r = this._currentTimestamp ? IDBKeyRange.lowerBound(this._currentTimestamp, !0) : null;
     let a = await (e == null ? void 0 : e.index(_.timeIndex).openCursor(r, "next"));
     for (; a; ) {
-      if (a.value.status === b.Pending) {
+      if (a.value.status === w.Pending) {
         t = a.value;
         break;
       }
@@ -623,7 +623,7 @@ class _e {
     let i = await (a == null ? void 0 : a.index(_.timeIndex).openCursor(s, "next"));
     for (; i; )
       //Only unresolved jobs
-      i.value.status !== b.Completed && //Same destination
+      i.value.status !== w.Completed && //Same destination
       i.value.url === t.url && //Only same object jobs
       i.value.transaction.blitzID === t.transaction.blitzID && //Only same attribute jobs if both passed job and current job have an edit action
       (i.value.transaction.action !== D.Edit || t.transaction.action !== D.Edit || Object.keys(i.value.transaction.data)[0] === r) && e.push(i.value), i = await i.continue();
@@ -640,11 +640,11 @@ class _e {
   //Handle preceding conflict edit jobs check
   async _checkPrecedingConflictEditJobs(t, e) {
     let r = !1;
-    if (e.find((s) => s.transaction.action === D.Edit && s.status === b.Conflict)) {
+    if (e.find((s) => s.transaction.action === D.Edit && s.status === w.Conflict)) {
       r = !0;
       const s = await this._updateJob({
         ...t,
-        status: b.Conflict
+        status: w.Conflict
       });
       this._sendJobEvent(s);
     }
@@ -654,7 +654,7 @@ class _e {
   async _checkPrecedingFailedEditJobs(t, e) {
     var o, u;
     let r = !1;
-    const a = e.filter((c) => c.transaction.action === D.Edit && (c.status === b.Pending || c.status === b.Failed)), s = Object.keys(t.transaction.data)[0], i = ((o = t.transaction.data) == null ? void 0 : o[s].new) !== void 0 && ((u = t.transaction.data) == null ? void 0 : u[s].prev) !== void 0;
+    const a = e.filter((c) => c.transaction.action === D.Edit && (c.status === w.Pending || c.status === w.Failed)), s = Object.keys(t.transaction.data)[0], i = ((o = t.transaction.data) == null ? void 0 : o[s].new) !== void 0 && ((u = t.transaction.data) == null ? void 0 : u[s].prev) !== void 0;
     return a.length > 0 && i && (r = !0, t.attempts || await this._editAttemptHandler(t, a)), r;
   }
   //Handle merging with future edit jobs
@@ -664,7 +664,7 @@ class _e {
     let i = await (a == null ? void 0 : a.index(_.timeIndex).openCursor(s, "next"));
     for (; i; )
       //Only unresolved jobs
-      (i.value.status === b.Pending || i.value.status === b.Failed) && //Same destination
+      (i.value.status === w.Pending || i.value.status === w.Failed) && //Same destination
       i.value.url === t.url && //Only edit jobs
       i.value.transaction.action === D.Edit && //Only same object jobs
       i.value.transaction.blitzID === t.transaction.blitzID && //Only same attribute jobs
@@ -701,13 +701,13 @@ class _e {
     if (e.status === j.Success) {
       const i = await this._updateJob({
         ...t,
-        status: b.Completed
+        status: w.Completed
       });
       this._sendJobEvent(i);
     } else if (e.status === j.Exception)
       await this._updateJob({
         ...t,
-        status: b.Pending,
+        status: w.Pending,
         attempts: t.attempts + 1,
         priority: t.priority < 5 ? t.priority + 1 : t.priority,
         message: e.message
@@ -716,14 +716,14 @@ class _e {
       if (t.attempts > 0) {
         const i = await this._updateJob({
           ...t,
-          status: b.Failed,
+          status: w.Failed,
           message: e.message
         });
         this._sendJobEvent(i);
       } else
         await this._updateJob({
           ...t,
-          status: b.Pending,
+          status: w.Pending,
           attempts: t.attempts + 1,
           message: e.message
         });
@@ -732,13 +732,13 @@ class _e {
       if (((r = t.transaction.data) == null ? void 0 : r[i].prev) === ((a = t.transaction.data) == null ? void 0 : a[i].new) || e.message === ((s = t.transaction.data) == null ? void 0 : s[i].new)) {
         const o = await this._updateJob({
           ...t,
-          status: b.Completed
+          status: w.Completed
         });
         this._sendJobEvent(o);
       } else {
         const o = await this._updateJob({
           ...t,
-          status: b.Conflict,
+          status: w.Conflict,
           message: e.message
         });
         this._sendJobEvent(o);
@@ -771,12 +771,12 @@ class _e {
     if (s[r].prev === s[r].new ? u = { status: j.Success } : u = await jt.send(o, this._localHeaders ?? pt), u.status === j.Success) {
       o = await this._updateJob({
         ...o,
-        status: b.Completed
+        status: w.Completed
       });
       for (const g of e)
         await this._updateJob({
           ...g,
-          status: b.Completed
+          status: w.Completed
         });
       this._sendJobEvent(o);
     } else if (u.status === j.Exception || u.status === j.Failed)
@@ -790,18 +790,18 @@ class _e {
       if (((d = o.transaction.data) == null ? void 0 : d[r].prev) === ((h = o.transaction.data) == null ? void 0 : h[r].new) || u.message === ((f = o.transaction.data) == null ? void 0 : f[r].new)) {
         o = await this._updateJob({
           ...o,
-          status: b.Completed
+          status: w.Completed
         });
         for (const g of e)
           await this._updateJob({
             ...g,
-            status: b.Completed
+            status: w.Completed
           });
         this._sendJobEvent(o);
       } else {
         o = await this._updateJob({
           ...o,
-          status: b.Conflict,
+          status: w.Conflict,
           message: u.message
         });
         for (const g of e)
@@ -848,8 +848,8 @@ class _e {
   }
 }
 function Gt(n) {
-  bt.push(n), n.onmessage = function(t) {
-    t.data.type === "close" ? bt = bt.filter((e) => e !== n) : t.data.type === "headers" && !pt && t.data.data && (pt = t.data.data);
+  wt.push(n), n.onmessage = function(t) {
+    t.data.type === "close" ? wt = wt.filter((e) => e !== n) : t.data.type === "headers" && !pt && t.data.data && (pt = t.data.data);
   };
 }
 ("SharedWorkerGlobalScope" in self || "WorkerGlobalScope" in self) && ("SharedWorkerGlobalScope" in self ? self.onconnect = (n) => Gt(n.ports[0]) : Gt(self), new _e().start());
@@ -1153,7 +1153,7 @@ class et {
   static async list(t, e) {
     if (!t.endpoint && !t.fullUrl)
       throw new Error("Either baseUrl or fullUrl must be provided.");
-    const r = await F.create().url(
+    const r = await L.create().url(
       // We got 2 urls, because it is possible to have a full url.
       // See `BlitzData.list()` and `BlitzData.listRaw()` methods.
       t.fullUrl ? t.fullUrl : T.createListEndpoint(t.endpoint.baseUrl, t.endpoint.modelName, t.endpoint.query)
@@ -1166,7 +1166,7 @@ class et {
    * Performs a get call to the server by provided options.
    */
   static async get(t, e) {
-    const r = await F.create().url(
+    const r = await L.create().url(
       T.createGetEndpoint(t.baseUrl, t.modelName, t.blitzID, t.query)
     ).signal(e).get();
     if (!Array.isArray(r.items) && Array.isArray(r.errors))
@@ -1179,7 +1179,7 @@ class et {
    * @param options Post options.
    */
   static async post(t) {
-    const e = await F.create().url(T.createPostEndpoint(t.baseUrl)).body(t.transactions).post();
+    const e = await L.create().url(T.createPostEndpoint(t.baseUrl)).body(t.transactions).post();
     if ((typeof e.error == "string" || e.errors instanceof Array) && !(e.results instanceof Object))
       throw new Error(e.error ?? e.errors.join(" | "));
     return e;
@@ -1190,7 +1190,7 @@ class et {
    * @param options List logs option.
    */
   static async listLogs(t) {
-    const e = await F.create().url(T.createListLogsEndpoint(t)).get();
+    const e = await L.create().url(T.createListLogsEndpoint(t)).get();
     if (!(e.transactions instanceof Array) && (typeof e.error == "string" || e.errors instanceof Array))
       throw new Error(e.error ?? e.errors.map((r) => (r == null ? void 0 : r.message) ?? r).join(" | "));
     return {
@@ -1208,7 +1208,7 @@ class et {
   static async upload(t) {
     const e = new FormData();
     e.append("image", t.image);
-    const r = await F.create().url(T.createUploaderEndpoint(t.baseUrl)).body(e).header("Accept", "application/json").post(), a = {};
+    const r = await L.create().url(T.createUploaderEndpoint(t.baseUrl)).body(e).header("Accept", "application/json").post(), a = {};
     for (const [s, i] of Object.entries(r ?? {}))
       [
         "base",
@@ -1238,7 +1238,7 @@ class et {
   static async uploadVideo(t) {
     const e = new FormData();
     e.append("fileToUpload", t.video);
-    const r = t.video.name.split("."), a = r.length > 1 ? "." + r.pop() : "", s = crypto.randomUUID() + a, i = await F.create().url(T.createVideoUploaderEndpoint(t.baseUrl, s)).body(e).header("Accept", "application/json").post();
+    const r = t.video.name.split("."), a = r.length > 1 ? "." + r.pop() : "", s = crypto.randomUUID() + a, i = await L.create().url(T.createVideoUploaderEndpoint(t.baseUrl, s)).body(e).header("Accept", "application/json").post();
     if (!i || !i.s)
       throw new Error("Video upload failed: " + ((i == null ? void 0 : i.error) ?? "Unknown error!"));
     return {
@@ -1255,7 +1255,7 @@ class et {
   static async uploadFile(t) {
     const e = new FormData();
     e.append("files[]", t.file);
-    const r = await F.create().url(T.createFileUploaderEndpoint(t.baseUrl)).body(e).header("Accept", "application/json").post();
+    const r = await L.create().url(T.createFileUploaderEndpoint(t.baseUrl)).body(e).header("Accept", "application/json").post();
     if (!r || !r.s)
       throw new Error("File upload failed: " + ((r == null ? void 0 : r.error) ?? "Unknown error!"));
     return {
@@ -1266,7 +1266,7 @@ class et {
    * Performs a ping call to the server by provided base URL.
    */
   static async ping({ baseUrl: t }) {
-    return await F.create().url(T.createPingEndpoint(t)).get();
+    return await L.create().url(T.createPingEndpoint(t)).get();
   }
 }
 class Ht {
@@ -1715,7 +1715,7 @@ class sr {
     let a = await (r == null ? void 0 : r.openCursor(null, "next"));
     for (; a; )
       //Only completed jobs
-      a.value.status === b.Completed && //Not the same destination
+      a.value.status === w.Completed && //Not the same destination
       a.value.url !== t.url && //Only edit jobs
       a.value.transaction.action === D.Edit && //Only same object jobs
       a.value.transaction.blitzID === t.transaction.blitzID && //Only same hash
@@ -1729,7 +1729,7 @@ class sr {
     let i = await (a == null ? void 0 : a.index(_.timeIndex).openCursor(s, "next"));
     for (; i; )
       //Only conflict jobs
-      i.value.status === b.Conflict && //Same destination
+      i.value.status === w.Conflict && //Same destination
       i.value.url === t.url && //Only edit jobs
       i.value.transaction.action === D.Edit && //Only same object jobs
       i.value.transaction.blitzID === t.transaction.blitzID && //Only same attribute jobs
@@ -1776,7 +1776,7 @@ class sr {
     const a = `There was a conflict.
 The data got changed to "${r.message}".
 Do you still want to perform your change to "${(s = r.transaction.data) == null ? void 0 : s[e].new}"?`;
-    confirm(a) ? (r = await this.force(r), await p.queue.updateSyncStatus(r, b.Pending)) : (await this.revert(r), await p.queue.updateSyncStatus(r, b.Completed)), p.dispatchEvent("queue:conflict", r);
+    confirm(a) ? (r = await this.force(r), await p.queue.updateSyncStatus(r, w.Pending)) : (await this.revert(r), await p.queue.updateSyncStatus(r, w.Completed)), p.dispatchEvent("queue:conflict", r);
   }
   //Force the job
   async force(t) {
@@ -1788,7 +1788,7 @@ Do you still want to perform your change to "${(s = r.transaction.data) == null 
       }
     }, s = (/* @__PURE__ */ new Date()).getTime(), i = await this._updateJob({
       ...t,
-      status: b.Pending,
+      status: w.Pending,
       transaction: {
         ...t.transaction,
         data: a,
@@ -1808,7 +1808,7 @@ Do you still want to perform your change to "${(s = r.transaction.data) == null 
     for (const u of r)
       await this._updateJob({
         ...u,
-        status: b.Pending
+        status: w.Pending
       });
     return i;
   }
@@ -1870,7 +1870,7 @@ class ir {
     for (const e of t)
       await this._updateJob({
         ...e,
-        status: b.Pending
+        status: w.Pending
       });
   }
   //Revert jobs
@@ -1921,7 +1921,7 @@ class ir {
     for (; r; ) {
       if (
         //Only unresolved jobs
-        r.value.status !== b.Completed
+        r.value.status !== w.Completed
       ) {
         if (t[r.value.url] || (t[r.value.url] = []), r.value.transaction.action === D.Add || r.value.transaction.action === D.Delete)
           t[r.value.url].push([r.value]);
@@ -1946,7 +1946,7 @@ class or {
   _handleWorkerMessage(t) {
     var r;
     const e = t.data.job;
-    e.status === b.Completed ? p.dispatchEvent("queue:success", e) : e.status === b.Failed ? p.dispatchEvent("queue:failure", e) : e.status === b.Conflict && (document.hidden || (r = p.queue.conflictHandler) == null || r.prompt(e)), p._Model.get(e.transaction.model).then((a) => {
+    e.status === w.Completed ? p.dispatchEvent("queue:success", e) : e.status === w.Failed ? p.dispatchEvent("queue:failure", e) : e.status === w.Conflict && (document.hidden || (r = p.queue.conflictHandler) == null || r.prompt(e)), p._Model.get(e.transaction.model).then((a) => {
       var s;
       return (s = a == null ? void 0 : a.memoryClient().get(e.transaction.blitzID)) == null ? void 0 : s.dispatchEvent("syncStatusChange", e);
     }), p.queue.updateSyncStatus(e);
@@ -1970,9 +1970,9 @@ class or {
           var g;
           return f.transaction.action === D.Edit && ((g = f.transaction.data) == null ? void 0 : g[s]) !== void 0;
         });
-        let c = b.Pending, l;
-        const d = u.find((f) => f.status === b.Failed), h = u.find((f) => f.status === b.Conflict && f.message !== void 0) ?? u.find((f) => f.status === b.Conflict);
-        d ? (c = b.Failed, l = d) : h ? (c = b.Conflict, l = h) : u.every((f) => f.status === b.Completed) && (c = b.Completed), i._syncSignal.set({ status: c, job: l });
+        let c = w.Pending, l;
+        const d = u.find((f) => f.status === w.Failed), h = u.find((f) => f.status === w.Conflict && f.message !== void 0) ?? u.find((f) => f.status === w.Conflict);
+        d ? (c = w.Failed, l = d) : h ? (c = w.Conflict, l = h) : u.every((f) => f.status === w.Completed) && (c = w.Completed), i._syncSignal.set({ status: c, job: l });
       }
   }
   // Initialize queue client
@@ -1992,9 +1992,9 @@ class or {
     return t.onerror = () => {
       console.warn("⚠️ Failed to run the queue's shared worker, please check that the worker path is correct, falling back to running on the same thread!"), new _e(
         (e) => this._handleWorkerMessage(e),
-        F._globalHeaders
+        L._globalHeaders
       ).start();
-    }, t.port.onmessage = this._handleWorkerMessage, window.addEventListener("beforeunload", () => t.port.postMessage({ type: "close" })), F._globalHeaders && t.port.postMessage({ type: "headers", data: F._globalHeaders }), this;
+    }, t.port.onmessage = this._handleWorkerMessage, window.addEventListener("beforeunload", () => t.port.postMessage({ type: "close" })), L._globalHeaders && t.port.postMessage({ type: "headers", data: L._globalHeaders }), this;
   }
   // Add job to queue worker
   async addJob(t, e) {
@@ -2003,7 +2003,7 @@ class or {
       id: crypto.randomUUID(),
       url: t,
       transaction: e,
-      status: b.Pending,
+      status: w.Pending,
       createdAt: Date.now(),
       attempts: 0,
       priority: 1
@@ -2685,9 +2685,9 @@ class E {
         var h;
         return d.transaction.action === D.Edit && ((h = d.transaction.data) == null ? void 0 : h[this._name]) !== void 0;
       });
-      let o = b.Pending, u;
-      const c = i.find((d) => d.status === b.Failed), l = i.find((d) => d.status === b.Conflict && d.message !== void 0) ?? i.find((d) => d.status === b.Conflict);
-      c ? (o = b.Failed, u = c) : l ? (o = b.Conflict, u = l) : i.every((d) => d.status === b.Completed) && (o = b.Completed), this._syncSignal.set({ status: o, job: u }, !1), t(this._syncSignal.get());
+      let o = w.Pending, u;
+      const c = i.find((d) => d.status === w.Failed), l = i.find((d) => d.status === w.Conflict && d.message !== void 0) ?? i.find((d) => d.status === w.Conflict);
+      c ? (o = w.Failed, u = c) : l ? (o = w.Conflict, u = l) : i.every((d) => d.status === w.Completed) && (o = w.Completed), this._syncSignal.set({ status: o, job: u }, !1), t(this._syncSignal.get());
     }), r;
   }
   /**
@@ -2737,7 +2737,7 @@ class Me extends E {
     return typeof this._value == "boolean" ? this._value ? "1" : "0" : this._value;
   }
 }
-const Se = 6048e5, lr = 864e5, wt = 43200, Zt = 1440, te = Symbol.for("constructDateFrom");
+const Se = 6048e5, lr = 864e5, bt = 43200, Zt = 1440, te = Symbol.for("constructDateFrom");
 function K(n, t) {
   return typeof n == "function" ? n(t) : n && typeof n == "object" && te in n ? n[te](t) : n instanceof Date ? new n.constructor(t) : new Date(t);
 }
@@ -2811,10 +2811,10 @@ function mr(n) {
 function gr(n) {
   return n instanceof Date || typeof n == "object" && Object.prototype.toString.call(n) === "[object Date]";
 }
-function wr(n) {
+function br(n) {
   return !(!gr(n) && typeof n != "number" || isNaN(+U(n)));
 }
-function br(n, t, e) {
+function wr(n, t, e) {
   const [r, a] = zt(
     e == null ? void 0 : e.in,
     n,
@@ -2850,7 +2850,7 @@ function Mr(n, t, e) {
     n,
     t
   ), i = yt(a, s), o = Math.abs(
-    br(a, s)
+    wr(a, s)
   );
   if (o < 1)
     return 0;
@@ -2977,7 +2977,7 @@ const Pr = {
   nextWeek: "eeee 'at' p",
   other: "P"
 }, Cr = (n, t, e, r) => Er[n];
-function J(n) {
+function F(n) {
   return (t, e) => {
     const r = e != null && e.context ? String(e.context) : "standalone";
     let a;
@@ -3043,43 +3043,43 @@ const kr = {
     "Friday",
     "Saturday"
   ]
+}, Lr = {
+  narrow: {
+    am: "a",
+    pm: "p",
+    midnight: "mi",
+    noon: "n",
+    morning: "morning",
+    afternoon: "afternoon",
+    evening: "evening",
+    night: "night"
+  },
+  abbreviated: {
+    am: "AM",
+    pm: "PM",
+    midnight: "midnight",
+    noon: "noon",
+    morning: "morning",
+    afternoon: "afternoon",
+    evening: "evening",
+    night: "night"
+  },
+  wide: {
+    am: "a.m.",
+    pm: "p.m.",
+    midnight: "midnight",
+    noon: "noon",
+    morning: "morning",
+    afternoon: "afternoon",
+    evening: "evening",
+    night: "night"
+  }
 }, Fr = {
   narrow: {
     am: "a",
     pm: "p",
     midnight: "mi",
     noon: "n",
-    morning: "morning",
-    afternoon: "afternoon",
-    evening: "evening",
-    night: "night"
-  },
-  abbreviated: {
-    am: "AM",
-    pm: "PM",
-    midnight: "midnight",
-    noon: "noon",
-    morning: "morning",
-    afternoon: "afternoon",
-    evening: "evening",
-    night: "night"
-  },
-  wide: {
-    am: "a.m.",
-    pm: "p.m.",
-    midnight: "midnight",
-    noon: "noon",
-    morning: "morning",
-    afternoon: "afternoon",
-    evening: "evening",
-    night: "night"
-  }
-}, Jr = {
-  narrow: {
-    am: "a",
-    pm: "p",
-    midnight: "mi",
-    noon: "n",
     morning: "in the morning",
     afternoon: "in the afternoon",
     evening: "in the evening",
@@ -3105,7 +3105,7 @@ const kr = {
     evening: "in the evening",
     night: "at night"
   }
-}, Lr = (n, t) => {
+}, Jr = (n, t) => {
   const e = Number(n), r = e % 100;
   if (r > 20 || r < 10)
     switch (r % 10) {
@@ -3118,32 +3118,32 @@ const kr = {
     }
   return e + "th";
 }, Nr = {
-  ordinalNumber: Lr,
-  era: J({
+  ordinalNumber: Jr,
+  era: F({
     values: kr,
     defaultWidth: "wide"
   }),
-  quarter: J({
+  quarter: F({
     values: Wr,
     defaultWidth: "wide",
     argumentCallback: (n) => n - 1
   }),
-  month: J({
+  month: F({
     values: Ur,
     defaultWidth: "wide"
   }),
-  day: J({
+  day: F({
     values: jr,
     defaultWidth: "wide"
   }),
-  dayPeriod: J({
-    values: Fr,
+  dayPeriod: F({
+    values: Lr,
     defaultWidth: "wide",
-    formattingValues: Jr,
+    formattingValues: Fr,
     defaultFormattingWidth: "wide"
   })
 };
-function L(n) {
+function J(n) {
   return (t, e = {}) => {
     const r = e.width, a = r && n.matchPatterns[r] || n.matchPatterns[n.defaultMatchWidth], s = t.match(a);
     if (!s)
@@ -3258,32 +3258,32 @@ const Hr = /^(\d+)(th|st|nd|rd)?/i, Br = /\d+/i, Yr = {
     parsePattern: Br,
     valueCallback: (n) => parseInt(n, 10)
   }),
-  era: L({
+  era: J({
     matchPatterns: Yr,
     defaultMatchWidth: "wide",
     parsePatterns: qr,
     defaultParseWidth: "any"
   }),
-  quarter: L({
+  quarter: J({
     matchPatterns: Vr,
     defaultMatchWidth: "wide",
     parsePatterns: Qr,
     defaultParseWidth: "any",
     valueCallback: (n) => n + 1
   }),
-  month: L({
+  month: J({
     matchPatterns: Xr,
     defaultMatchWidth: "wide",
     parsePatterns: Kr,
     defaultParseWidth: "any"
   }),
-  day: L({
+  day: J({
     matchPatterns: Gr,
     defaultMatchWidth: "wide",
     parsePatterns: Zr,
     defaultParseWidth: "any"
   }),
-  dayPeriod: L({
+  dayPeriod: J({
     matchPatterns: tn,
     defaultMatchWidth: "any",
     parsePatterns: en,
@@ -3948,19 +3948,19 @@ function mn(n) {
   return dn.test(n);
 }
 function gn(n, t, e) {
-  const r = wn(n, t, e);
+  const r = bn(n, t, e);
   if (console.warn(r), hn.includes(n))
     throw new RangeError(r);
 }
-function wn(n, t, e) {
+function bn(n, t, e) {
   const r = n[0] === "Y" ? "years" : "days of the month";
   return `Use \`${n.toLowerCase()}\` instead of \`${n}\` (in \`${t}\`) for formatting ${r} to the input \`${e}\`; see: https://github.com/date-fns/date-fns/blob/master/docs/unicodeTokens.md`;
 }
-const bn = /[yYQqMLwIdDecihHKkms]o|(\w)\1*|''|'(''|[^'])+('|$)|./g, yn = /P+p+|P+|p+|''|'(''|[^'])+('|$)|./g, pn = /^'([^]*?)'?$/, vn = /''/g, _n = /[a-zA-Z]/;
+const wn = /[yYQqMLwIdDecihHKkms]o|(\w)\1*|''|'(''|[^'])+('|$)|./g, yn = /P+p+|P+|p+|''|'(''|[^'])+('|$)|./g, pn = /^'([^]*?)'?$/, vn = /''/g, _n = /[a-zA-Z]/;
 function Pe(n, t, e) {
   var l, d, h, f, g, v, M, P;
   const r = mt(), a = (e == null ? void 0 : e.locale) ?? r.locale ?? ct, s = (e == null ? void 0 : e.firstWeekContainsDate) ?? ((d = (l = e == null ? void 0 : e.locale) == null ? void 0 : l.options) == null ? void 0 : d.firstWeekContainsDate) ?? r.firstWeekContainsDate ?? ((f = (h = r.locale) == null ? void 0 : h.options) == null ? void 0 : f.firstWeekContainsDate) ?? 1, i = (e == null ? void 0 : e.weekStartsOn) ?? ((v = (g = e == null ? void 0 : e.locale) == null ? void 0 : g.options) == null ? void 0 : v.weekStartsOn) ?? r.weekStartsOn ?? ((P = (M = r.locale) == null ? void 0 : M.options) == null ? void 0 : P.weekStartsOn) ?? 0, o = U(n, e == null ? void 0 : e.in);
-  if (!wr(o))
+  if (!br(o))
     throw new RangeError("Invalid time value");
   let u = t.match(yn).map((C) => {
     const A = C[0];
@@ -3969,7 +3969,7 @@ function Pe(n, t, e) {
       return V(C, a.formatLong);
     }
     return C;
-  }).join("").match(bn).map((C) => {
+  }).join("").match(wn).map((C) => {
     if (C === "''")
       return { isToken: !1, value: "'" };
     const A = C[0];
@@ -4026,14 +4026,14 @@ function Mn(n, t, e) {
   } else {
     if (h < s)
       return a.formatDistance("xDays", 1, o);
-    if (h < wt) {
+    if (h < bt) {
       const g = Math.round(h / Zt);
       return a.formatDistance("xDays", g, o);
-    } else if (h < wt * 2)
-      return f = Math.round(h / wt), a.formatDistance("aboutXMonths", f, o);
+    } else if (h < bt * 2)
+      return f = Math.round(h / bt), a.formatDistance("aboutXMonths", f, o);
   }
   if (f = Mr(c, u), f < 12) {
-    const g = Math.round(h / wt);
+    const g = Math.round(h / bt);
     return a.formatDistance("xMonths", g, o);
   } else {
     const g = f % 12, v = Math.trunc(f / 12);
@@ -4249,7 +4249,7 @@ const ie = {
   narrow: ["1", "2", "3", "4"],
   abbreviated: ["Q1", "Q2", "Q3", "Q4"],
   wide: ["1. Quartal", "2. Quartal", "3. Quartal", "4. Quartal"]
-}, Ft = {
+}, Lt = {
   narrow: ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"],
   abbreviated: [
     "Jan",
@@ -4280,7 +4280,7 @@ const ie = {
     "Dezember"
   ]
 }, Cn = {
-  narrow: Ft.narrow,
+  narrow: Lt.narrow,
   abbreviated: [
     "Jan.",
     "Feb.",
@@ -4295,7 +4295,7 @@ const ie = {
     "Nov.",
     "Dez."
   ],
-  wide: Ft.wide
+  wide: Lt.wide
 }, kn = {
   narrow: ["S", "M", "D", "M", "D", "F", "S"],
   short: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
@@ -4371,33 +4371,33 @@ const ie = {
     evening: "abends",
     night: "nachts"
   }
-}, jn = (n) => Number(n) + ".", Fn = {
+}, jn = (n) => Number(n) + ".", Ln = {
   ordinalNumber: jn,
-  era: J({
+  era: F({
     values: Tn,
     defaultWidth: "wide"
   }),
-  quarter: J({
+  quarter: F({
     values: En,
     defaultWidth: "wide",
     argumentCallback: (n) => n - 1
   }),
-  month: J({
-    values: Ft,
+  month: F({
+    values: Lt,
     formattingValues: Cn,
     defaultWidth: "wide"
   }),
-  day: J({
+  day: F({
     values: kn,
     defaultWidth: "wide"
   }),
-  dayPeriod: J({
+  dayPeriod: F({
     values: Wn,
     defaultWidth: "wide",
     formattingValues: Un,
     defaultFormattingWidth: "wide"
   })
-}, Jn = /^(\d+)(\.)?/i, Ln = /\d+/i, Nn = {
+}, Fn = /^(\d+)(\.)?/i, Jn = /\d+/i, Nn = {
   narrow: /^(v\.? ?Chr\.?|n\.? ?Chr\.?)/i,
   abbreviated: /^(v\.? ?Chr\.?|n\.? ?Chr\.?)/i,
   wide: /^(vor Christus|vor unserer Zeitrechnung|nach Christus|unserer Zeitrechnung)/i
@@ -4468,36 +4468,36 @@ const ie = {
   }
 }, Kn = {
   ordinalNumber: qt({
-    matchPattern: Jn,
-    parsePattern: Ln,
+    matchPattern: Fn,
+    parsePattern: Jn,
     valueCallback: (n) => parseInt(n)
   }),
-  era: L({
+  era: J({
     matchPatterns: Nn,
     defaultMatchWidth: "wide",
     parsePatterns: Rn,
     defaultParseWidth: "any"
   }),
-  quarter: L({
+  quarter: J({
     matchPatterns: $n,
     defaultMatchWidth: "wide",
     parsePatterns: Hn,
     defaultParseWidth: "any",
     valueCallback: (n) => n + 1
   }),
-  month: L({
+  month: J({
     matchPatterns: Bn,
     defaultMatchWidth: "wide",
     parsePatterns: Yn,
     defaultParseWidth: "any"
   }),
-  day: L({
+  day: J({
     matchPatterns: qn,
     defaultMatchWidth: "wide",
     parsePatterns: Vn,
     defaultParseWidth: "any"
   }),
-  dayPeriod: L({
+  dayPeriod: J({
     matchPatterns: Qn,
     defaultMatchWidth: "wide",
     parsePatterns: Xn,
@@ -4508,7 +4508,7 @@ const ie = {
   formatDistance: Sn,
   formatLong: Pn,
   formatRelative: An,
-  localize: Fn,
+  localize: Ln,
   match: Kn,
   options: {
     weekStartsOn: 1,
@@ -4711,32 +4711,32 @@ const ie = {
     (r) => r.isToken && r.value === "do" ? { isToken: !0, value: "d" } : r
   ),
   ordinalNumber: da,
-  era: J({
+  era: F({
     values: ia,
     defaultWidth: "wide"
   }),
-  quarter: J({
+  quarter: F({
     values: oa,
     defaultWidth: "wide",
     argumentCallback: (n) => n - 1
   }),
-  month: J({
+  month: F({
     values: ca,
     defaultWidth: "wide"
   }),
-  day: J({
+  day: F({
     values: ua,
     defaultWidth: "wide"
   }),
-  dayPeriod: J({
+  dayPeriod: F({
     values: la,
     defaultWidth: "wide"
   })
-}, ma = /^(\d+)(ième|ère|ème|er|e)?/i, ga = /\d+/i, wa = {
+}, ma = /^(\d+)(ième|ère|ème|er|e)?/i, ga = /\d+/i, ba = {
   narrow: /^(av\.J\.C|ap\.J\.C|ap\.J\.-C)/i,
   abbreviated: /^(av\.J\.-C|av\.J-C|apr\.J\.-C|apr\.J-C|ap\.J-C)/i,
   wide: /^(avant Jésus-Christ|après Jésus-Christ)/i
-}, ba = {
+}, wa = {
   any: [/^av/i, /^ap/i]
 }, ya = {
   narrow: /^T?[1234]/i,
@@ -4805,32 +4805,32 @@ const ie = {
     parsePattern: ga,
     valueCallback: (n) => parseInt(n)
   }),
-  era: L({
-    matchPatterns: wa,
+  era: J({
+    matchPatterns: ba,
     defaultMatchWidth: "wide",
-    parsePatterns: ba,
+    parsePatterns: wa,
     defaultParseWidth: "any"
   }),
-  quarter: L({
+  quarter: J({
     matchPatterns: ya,
     defaultMatchWidth: "wide",
     parsePatterns: pa,
     defaultParseWidth: "any",
     valueCallback: (n) => n + 1
   }),
-  month: L({
+  month: J({
     matchPatterns: va,
     defaultMatchWidth: "wide",
     parsePatterns: _a,
     defaultParseWidth: "any"
   }),
-  day: L({
+  day: J({
     matchPatterns: Da,
     defaultMatchWidth: "wide",
     parsePatterns: Ma,
     defaultParseWidth: "any"
   }),
-  dayPeriod: L({
+  dayPeriod: J({
     matchPatterns: Sa,
     defaultMatchWidth: "any",
     parsePatterns: Ia,
@@ -5257,9 +5257,9 @@ class Ee {
         var h;
         return d.transaction.action === D.Edit && ((h = d.transaction.data) == null ? void 0 : h[this._name]) !== void 0;
       });
-      let o = b.Pending, u;
-      const c = i.find((d) => d.status === b.Failed), l = i.find((d) => d.status === b.Conflict && d.message !== void 0) ?? i.find((d) => d.status === b.Conflict);
-      c ? (o = b.Failed, u = c) : l ? (o = b.Conflict, u = l) : i.every((d) => d.status === b.Completed) && (o = b.Completed), this._syncSignal.set({ status: o, job: u }, !1), t(this._syncSignal.get());
+      let o = w.Pending, u;
+      const c = i.find((d) => d.status === w.Failed), l = i.find((d) => d.status === w.Conflict && d.message !== void 0) ?? i.find((d) => d.status === w.Conflict);
+      c ? (o = w.Failed, u = c) : l ? (o = w.Conflict, u = l) : i.every((d) => d.status === w.Completed) && (o = w.Completed), this._syncSignal.set({ status: o, job: u }, !1), t(this._syncSignal.get());
     }), r;
   }
   /**
@@ -5351,7 +5351,7 @@ function Ua(n) {
 function ja(n) {
   return n;
 }
-function Fa(n, t) {
+function La(n, t) {
   t = t || {};
   const e = t.delimiter || ".", r = t.maxDepth, a = t.transformKey || ja, s = {};
   function i(o, u, c) {
@@ -5364,7 +5364,7 @@ function Fa(n, t) {
   }
   return i(n), s;
 }
-class Ja extends E {
+class Fa extends E {
   /**
    * Returns the unserialized value of given value.
    *
@@ -5404,7 +5404,7 @@ class Ja extends E {
    * Flattens the object.
    */
   flat() {
-    return Fa(this._value ?? {});
+    return La(this._value ?? {});
   }
   /**
    * Groups the object by the result of the given function.
@@ -5415,7 +5415,7 @@ class Ja extends E {
     return Object.groupBy(this._value ?? {}, t);
   }
 }
-class La extends E {
+class Ja extends E {
   /**
    * Returns the unserialized value of given value.
    *
@@ -5811,7 +5811,7 @@ class H {
    * @param value
    */
   static createType(t, e, r) {
-    return t.endsWith("_fk") ? new Ca(t, e, r) : t === "_userID" ? new ka(t, e, r) : e === "int" || ["_blitzstamp"].includes(t) ? new Te(t, "int", r) : e === "tinyint" ? new Ra(t, e, r) : e === "double" ? new $a(t, e, r) : e === "float" ? new Vt(t, e, r) : e === "percentage" ? new Ha(t, e, r) : e === "varchar" ? new Aa(t, e, r) : e === "text" ? new Ae(t, e, r) : e === "htmlText" ? new za(t, e, r) : e === "enum" ? new Na(t, e, r) : e === "json" ? new Ja(t, e, r) : e === "boolean" ? new Me(t, e, r) : e === "datetime" || ["_publishingdate", "_modified", "_expiration"].includes(t) ? new Ea(t, "datetime", r) : e === "date" ? new Pa(t, e, r) : e === "code" ? new La(t, e, r) : e === "email" ? new Ba(t, e, r) : e === "phone" ? new Ya(t, e, r) : e === "url" ? new qa(t, e, r) : e === "image" ? new Va(t, e, r) : e === "video" ? new Qa(t, e, r) : e === "file" ? new Xa(t, e, r) : e === "location" ? new Ka(t, e, r) : new lt(t, e, r);
+    return t.endsWith("_fk") ? new Ca(t, e, r) : t === "_userID" ? new ka(t, e, r) : e === "int" || ["_blitzstamp"].includes(t) ? new Te(t, "int", r) : e === "tinyint" ? new Ra(t, e, r) : e === "double" ? new $a(t, e, r) : e === "float" ? new Vt(t, e, r) : e === "percentage" ? new Ha(t, e, r) : e === "varchar" ? new Aa(t, e, r) : e === "text" ? new Ae(t, e, r) : e === "htmlText" ? new za(t, e, r) : e === "enum" ? new Na(t, e, r) : e === "json" ? new Fa(t, e, r) : e === "boolean" ? new Me(t, e, r) : e === "datetime" || ["_publishingdate", "_modified", "_expiration"].includes(t) ? new Ea(t, "datetime", r) : e === "date" ? new Pa(t, e, r) : e === "code" ? new Ja(t, e, r) : e === "email" ? new Ba(t, e, r) : e === "phone" ? new Ya(t, e, r) : e === "url" ? new qa(t, e, r) : e === "image" ? new Va(t, e, r) : e === "video" ? new Qa(t, e, r) : e === "file" ? new Xa(t, e, r) : e === "location" ? new Ka(t, e, r) : new lt(t, e, r);
   }
   /**
    * Initializes a new instance of DataType or ManyType with the specified name and type.
@@ -5977,7 +5977,7 @@ class at {
       s.push(
         await jt.send(
           { url: o, transaction: a.toObject() },
-          F._globalHeaders
+          L._globalHeaders
         )
       );
     const i = s.find((o) => o.status !== j.Success);
@@ -6043,7 +6043,7 @@ class at {
     });
   }
 }
-class Jt {
+class Ft {
   /**
    * Transforms BlitzData options.
    */
@@ -6067,7 +6067,7 @@ class Jt {
     } : t.queue.workerPath || (t.queue.workerPath = "/queue-worker.js"), t.sync ? typeof t.sync == "string" && (t.sync = {
       level: t.sync
     }) : t.sync = {
-      level: "full"
+      level: "none"
     }, t.sync.level === "partial")
       throw new Error("Partial sync type not supported yet!");
     return t.sync.level === "cache" && (t.sync.ttl || (t.sync.ttl = 30 * 1e3)), t.sync.level === "full" && (t.sync.interval || (t.sync.interval = 30 * 1e3)), t.flush || (t.flush = {
@@ -6440,8 +6440,8 @@ const Ot = class Ot extends ke {
    * @param clusters Clusters to set.
    */
   setClusters(e) {
-    this.clusterManager = new be();
-    const r = Jt.transformClusterOptions(e);
+    this.clusterManager = new we();
+    const r = Ft.transformClusterOptions(e);
     for (const a of Object.keys(r))
       this.clusterManager.register(a, r[a]);
   }
@@ -6463,7 +6463,7 @@ const Ot = class Ot extends ke {
  */
 m(Ot, "modelName", "_Model");
 let R = Ot;
-class Lt {
+class Jt {
   /**
    * Extract model name from the given `list` URL.
    *
@@ -6658,21 +6658,21 @@ const ns = /* @__PURE__ */ nr(rs), as = /^[v^~<>=]*?(\d+)(?:\.([x*]|\d+)(?:\.([x
 }, ge = (n, t, e) => {
   cs(e);
   const r = os(n, t);
-  return Fe[e].includes(r);
-}, Fe = {
+  return Le[e].includes(r);
+}, Le = {
   ">": [1],
   ">=": [0, 1],
   "=": [0],
   "<=": [-1, 0],
   "<": [-1],
   "!=": [-1, 1]
-}, we = Object.keys(Fe), cs = (n) => {
+}, be = Object.keys(Le), cs = (n) => {
   if (typeof n != "string")
     throw new TypeError(`Invalid operator type, expected string but got ${typeof n}`);
-  if (we.indexOf(n) === -1)
-    throw new Error(`Invalid operator, expected one of ${we.join("|")}`);
+  if (be.indexOf(n) === -1)
+    throw new Error(`Invalid operator, expected one of ${be.join("|")}`);
 };
-class Je {
+class Fe {
   /**
    * Constructor
    * @param options Flush options
@@ -6977,9 +6977,11 @@ class st {
    */
   async perform() {
     var e;
-    let t = this._forceHttp && !this._forceLocal ? [] : await this.performIndexedDb();
+    let t = !this.hasLocalDatabase() || this._forceHttp && !this._forceLocal ? [] : await this.performIndexedDb();
     if (!this._forceLocal) {
-      if (p.options.sync.level === "full" && t.length === 0)
+      if (!this.hasLocalDatabase())
+        t = await this.filterQueuedObjects(this.mergeObjects(await this.performHttp())), t = await this.filterExpiredObjects(t);
+      else if (p.options.sync.level === "full" && t.length === 0)
         t = await this.filterQueuedObjects(this.mergeObjects(await this.performHttp())), t = await this.filterExpiredObjects(t), t.length > 0 && await this._model.idbClient().save(t);
       else if (p.options.sync.level === "cache") {
         const r = this._skipCacheUpdateIfFound && t.length > 0 ? !1 : this.shouldSendHttpRequest();
@@ -6999,7 +7001,7 @@ class st {
   performSignal(t = !1) {
     const e = new ht(null);
     return (async () => {
-      var i;
+      var s;
       if (!t) {
         e.set({
           items: await this.perform()
@@ -7007,18 +7009,19 @@ class st {
         return;
       }
       const r = await this.performMemory();
-      e.set({
+      if (e.set({
         items: this._raw ? r : this.convertObjects(r),
-        nextSource: "local database"
-      });
-      const a = await this.performIndexedDb();
-      e.set({
-        items: this._raw ? a : this.convertObjects(a),
-        nextSource: "server"
-      });
-      let s = await this.filterQueuedObjects(this.mergeObjects(await this.performHttp()));
-      s = await this.filterExpiredObjects(s), s.length > 0 && await ((i = this._model) == null ? void 0 : i.idbClient().save(s)), e.set({
-        items: this._raw ? s : this.convertObjects(s)
+        nextSource: this.hasLocalDatabase() ? "local database" : "server"
+      }), this.hasLocalDatabase()) {
+        const i = await this.performIndexedDb();
+        e.set({
+          items: this._raw ? i : this.convertObjects(i),
+          nextSource: "server"
+        });
+      }
+      let a = await this.filterQueuedObjects(this.mergeObjects(await this.performHttp()));
+      a = await this.filterExpiredObjects(a), a.length > 0 && this.hasLocalDatabase() && await ((s = this._model) == null ? void 0 : s.idbClient().save(a)), e.set({
+        items: this._raw ? a : this.convertObjects(a)
       });
     })(), e;
   }
@@ -7057,14 +7060,14 @@ class st {
               query: this._query
             }
           }, this._signal);
-          o = u.items || [], Je.modelCacheUpdate(this._model, u.model);
+          o = u.items || [], Fe.modelCacheUpdate(this._model, u.model);
         }
         for (const u of o) {
           u._clusters = [t.name], u._editURLs = JSON.parse(JSON.stringify(t.options.readURL));
           for (const c in u)
             if (c.endsWith("_fk") && u[c] !== null && typeof u[c] == "object" && u[c]._blitzID) {
               const l = (a = (r = this._model) == null ? void 0 : r.getAttributeDetails(c)) == null ? void 0 : a.type;
-              if (l && l !== "_Model") {
+              if (l && l !== "_Model" && this.hasLocalDatabase()) {
                 const d = await R.get(l);
                 d && await d.idbClient().save([u[c]], !0);
               }
@@ -7103,7 +7106,7 @@ class st {
         var: (r = this._getQuery) == null ? void 0 : r.var,
         manyToMany: (a = this._getQuery) == null ? void 0 : a.manyToMany
       });
-    const e = this._urls ? this._urls.map((s) => Lt.extractConditions(s)).flat() : this._query.conditions;
+    const e = this._urls ? this._urls.map((s) => Jt.extractConditions(s)).flat() : this._query.conditions;
     return await t.query({ ...this._query, conditions: e });
   }
   /**
@@ -7119,7 +7122,7 @@ class st {
         var: (r = this._getQuery) == null ? void 0 : r.var,
         manyToMany: (a = this._getQuery) == null ? void 0 : a.manyToMany
       });
-    const e = this._urls ? this._urls.map((s) => Lt.extractConditions(s)).flat() : this._query.conditions;
+    const e = this._urls ? this._urls.map((s) => Jt.extractConditions(s)).flat() : this._query.conditions;
     return await t.query({ ...this._query, conditions: e });
   }
   /**
@@ -7148,7 +7151,7 @@ class st {
     const e = await p.queue.getJobs(), r = [];
     for (const s of t)
       if (!e.find((i) => i.transaction.action === D.Delete && i.transaction.blitzID === s._blitzID))
-        if (!e.find((i) => i.transaction.action === D.Edit && i.transaction.blitzID === s._blitzID && i.status !== b.Completed))
+        if (!e.find((i) => i.transaction.action === D.Edit && i.transaction.blitzID === s._blitzID && i.status !== w.Completed))
           r.push(s);
         else {
           const i = await ((a = this._model) == null ? void 0 : a.get({ blitzID: s._blitzID, raw: !0, forceLocal: !0 }));
@@ -7177,7 +7180,7 @@ class st {
         ) {
           const i = Date.now(), o = new Date(s._expiration).getTime();
           if (i > o) {
-            await ((a = this._model) == null ? void 0 : a.idbClient().delete(s._blitzID));
+            this.hasLocalDatabase() && await ((a = this._model) == null ? void 0 : a.idbClient().delete(s._blitzID));
             continue;
           }
         }
@@ -7187,6 +7190,14 @@ class st {
       return console.error("Error handling expired objects:", s.stack), t;
     }
     return r;
+  }
+  /**
+   * Whether the current sync level keeps a local database.
+   *
+   * In the none level list calls must never read from or write to IndexedDB.
+   */
+  hasLocalDatabase() {
+    return p.options.sync.level !== "none";
   }
   /**
    * Decides whether to send http request or not.
@@ -7238,8 +7249,8 @@ const z = class z {
       return;
     }
     this.initialized = !0;
-    const e = Jt.transformBlitzDataOptions(t);
-    this.options = e, e.clusters && z.setClusters(e.clusters), await new Je(this.options.flush).perform(), await new Bt().ping(), this.queue = await new or().init(), z._Model = new R({
+    const e = Ft.transformBlitzDataOptions(t);
+    this.options = e, e.clusters && z.setClusters(e.clusters), await new Fe(this.options.flush).perform(), await new Bt().ping(), this.queue = await new or().init(), z._Model = new R({
       model: void 0,
       attributes: {
         _blitzID: new lt("_blitzID", "string", "_Model"),
@@ -7310,7 +7321,7 @@ const z = class z {
    * Registers clusters.
    */
   static setClusters(t) {
-    t = Jt.transformClusterOptions(t);
+    t = Ft.transformClusterOptions(t);
     for (const e of Object.keys(t))
       z.clusterManager.register(e, t[e]);
   }
@@ -7320,7 +7331,7 @@ const z = class z {
    * @param url
    */
   static async list(t) {
-    const e = Lt.extractModelName(t);
+    const e = Jt.extractModelName(t);
     if (!await z._Model.exists(e))
       throw new Error(`Model "${e}" does not exist.`);
     return st.create().model(await z._Model.get(e)).urls([t]).query({}).perform();
@@ -7367,7 +7378,7 @@ const z = class z {
   static async runController(t, e) {
     let r = t.startsWith("/") ? t.slice(1) : t;
     r.includes(".json") || (r += ".json");
-    const a = T.sanitizeBaseUrl(z.clusterManager.toArray()[0].getNextReadURL()), s = new URL(a).origin !== window.location.origin ? r.includes("?") ? "&enableCors=1" : "?enableCors=1" : "", i = F.create().url(a + r + s).method((e == null ? void 0 : e.method) ?? "GET").header("Accept", "application/json");
+    const a = T.sanitizeBaseUrl(z.clusterManager.toArray()[0].getNextReadURL()), s = new URL(a).origin !== window.location.origin ? r.includes("?") ? "&enableCors=1" : "?enableCors=1" : "", i = L.create().url(a + r + s).method((e == null ? void 0 : e.method) ?? "GET").header("Accept", "application/json");
     e != null && e.headers && i.headers(e.headers), (e == null ? void 0 : e.body) !== void 0 && i.body(e.body), e != null && e.signal && i.signal(e.signal);
     const o = await i.send(e == null ? void 0 : e.rawResponse);
     if (!(e != null && e.rawResponse) && o.error)
@@ -7388,7 +7399,7 @@ const z = class z {
       if (o < e.lastSaved + u)
         return e.users;
     }
-    const r = T.sanitizeBaseUrl(z.clusterManager.toArray()[0].getNextReadURL()), a = new URL(r).origin !== window.location.origin ? "?enableCors=1" : "", s = await F.create().url(r + `api/listProjectUsers/${t}.json${a}`).get();
+    const r = T.sanitizeBaseUrl(z.clusterManager.toArray()[0].getNextReadURL()), a = new URL(r).origin !== window.location.origin ? "?enableCors=1" : "", s = await L.create().url(r + `api/listProjectUsers/${t}.json${a}`).get();
     if (s.error)
       throw new Error(s.error);
     if (s.errors instanceof Array && s.errors.length > 0)
@@ -7407,7 +7418,7 @@ const z = class z {
     const t = S.getCurrentUser();
     if (t)
       return t;
-    const e = T.sanitizeBaseUrl(z.clusterManager.toArray()[0].getNextReadURL()), r = new URL(e).origin !== window.location.origin ? "?enableCors=1" : "", a = await F.create().url(e + "api/ping.json" + r).get();
+    const e = T.sanitizeBaseUrl(z.clusterManager.toArray()[0].getNextReadURL()), r = new URL(e).origin !== window.location.origin ? "?enableCors=1" : "", a = await L.create().url(e + "api/ping.json" + r).get();
     if (a.error)
       throw new Error(a.error);
     if (!a.userhash) {
@@ -7465,7 +7476,7 @@ const z = class z {
 /**
  * Cluster manager.
  */
-m(z, "clusterManager", new be()), /**
+m(z, "clusterManager", new we()), /**
  * _Model instance.
  */
 m(z, "_Model"), /**
@@ -7494,8 +7505,8 @@ export {
   at as BDObject,
   p as BlitzData,
   E as DataType,
-  F as HttpRequest,
-  b as JobStatus,
+  L as HttpRequest,
+  w as JobStatus,
   S as LocalStorageRepository,
   Wa as ManyForeignKeyType,
   Ee as ManyType,
