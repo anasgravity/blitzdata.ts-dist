@@ -1,7 +1,7 @@
-var Re = Object.defineProperty;
-var $e = (n, t, e) => t in n ? Re(n, t, { enumerable: !0, configurable: !0, writable: !0, value: e }) : n[t] = e;
-var m = (n, t, e) => ($e(n, typeof t != "symbol" ? t + "" : t, e), e);
-const tt = class tt {
+var Ge = Object.defineProperty;
+var Ze = (n, t, e) => t in n ? Ge(n, t, { enumerable: !0, configurable: !0, writable: !0, value: e }) : n[t] = e;
+var m = (n, t, e) => (Ze(n, typeof t != "symbol" ? t + "" : t, e), e);
+const O = class O {
   constructor() {
     /**
      * Request method.
@@ -16,6 +16,10 @@ const tt = class tt {
      */
     m(this, "_headers", {});
     /**
+     * Whether this request already retried after a 401, to avoid loops.
+     */
+    m(this, "_retriedAfterUnauthorized", !1);
+    /**
      * Request body.
      */
     m(this, "_body");
@@ -28,8 +32,8 @@ const tt = class tt {
    * Create a new request.
    */
   static create() {
-    const t = new tt();
-    return tt._globalHeaders && t.headers(tt._globalHeaders), t;
+    const t = new O();
+    return O._globalHeaders && t.headers(O._globalHeaders), t;
   }
   /**
    * Set the global request headers.
@@ -37,7 +41,63 @@ const tt = class tt {
    * @param headers Global request headers.
    */
   static globalHeaders(t) {
-    tt._globalHeaders = t;
+    O._globalHeaders = t, O._notifyGlobalHeadersChange();
+  }
+  /**
+   * Merge headers into the global request headers.
+   * A null value removes the header.
+   *
+   * @param headers Headers to merge.
+   */
+  static updateGlobalHeaders(t) {
+    for (const e in t) {
+      const r = t[e];
+      r === null ? delete O._globalHeaders[e] : O._globalHeaders[e] = r;
+    }
+    O._notifyGlobalHeadersChange();
+  }
+  /**
+   * Set the headers applied only to requests targeting the given origin.
+   * Passing empty headers removes the scope (e.g. on logout).
+   *
+   * @param origin Exact request origin, e.g. 'https://alpha.blitzdata.com'.
+   * @param headers Headers to attach for that origin.
+   */
+  static setScopedHeaders(t, e) {
+    O._scopedHeaders = O._scopedHeaders.filter((r) => r.origin !== t), Object.keys(e).length > 0 && O._scopedHeaders.push({ origin: t, headers: e }), O._notifyGlobalHeadersChange();
+  }
+  /**
+   * Register a handler to recover from a 401 (typically an OAuth refresh).
+   * The request is retried once if the handler resolves true.
+   */
+  static onUnauthorized(t) {
+    O._unauthorizedHandler = t;
+  }
+  /**
+   * Register a listener called whenever the global or scoped headers change.
+   *
+   * @param listener Change listener.
+   */
+  static onGlobalHeadersChange(t) {
+    O._globalHeadersListeners.push(t);
+  }
+  static _notifyGlobalHeadersChange() {
+    for (const t of O._globalHeadersListeners)
+      t(O._globalHeaders);
+  }
+  /**
+   * Resolve the scoped headers that apply to a request URL.
+   */
+  static _scopedHeadersFor(t) {
+    if (!t)
+      return {};
+    let e;
+    try {
+      e = new URL(t).origin;
+    } catch {
+      return {};
+    }
+    return O._scopedHeaders.filter((r) => r.origin === e).reduce((r, a) => Object.assign(r, a.headers), {});
   }
   /**
    * Set the request method.
@@ -95,11 +155,11 @@ const tt = class tt {
   async send(t = !1) {
     const e = await fetch(this._url, {
       method: this._method,
-      headers: this._headers,
+      headers: { ...this._headers, ...O._scopedHeadersFor(this._url) },
       body: this._body ? this._body instanceof FormData ? this._body : JSON.stringify(this._body) : void 0,
       signal: this._signal ? this._signal : void 0
     });
-    return t ? e : await e.json();
+    return e.status === 401 && !this._retriedAfterUnauthorized && O._unauthorizedHandler && this._url && (this._retriedAfterUnauthorized = !0, await O._unauthorizedHandler(this._url)) ? await this.send(t) : t ? e : await e.json();
   }
   /**
    * Send request with GET method.
@@ -118,9 +178,22 @@ const tt = class tt {
  * Global request headers.
  * This is used primarily for development purposes.
  */
-m(tt, "_globalHeaders", {});
-let L = tt;
-class He {
+m(O, "_globalHeaders", {}), /**
+ * Headers applied only to requests whose URL matches a given origin.
+ * Used to keep a Bearer token scoped to the host that issued it,
+ * so it never leaks to a second cluster on another host.
+ */
+m(O, "_scopedHeaders", []), /**
+ * Handler invoked once on a 401 to try to recover (e.g. refresh the token).
+ * Returning true retries the request with refreshed headers.
+ */
+m(O, "_unauthorizedHandler", null), /**
+ * Listeners notified whenever the global headers change,
+ * used to propagate them to the queue's shared worker.
+ */
+m(O, "_globalHeadersListeners", []);
+let P = O;
+class tr {
   /**
    * Create a new cluster.
    *
@@ -157,7 +230,7 @@ class He {
     return this.cursors.readURL++, t;
   }
 }
-class we {
+class Me {
   constructor() {
     /**
      * cluster instances.
@@ -171,7 +244,7 @@ class we {
    * @param options Options for the cluster.
    */
   register(t, e) {
-    this.clusters[t] = new He(t, e);
+    this.clusters[t] = new tr(t, e);
   }
   /**
    * Get clusters by name(s).
@@ -215,10 +288,10 @@ class we {
     return this.get(e);
   }
 }
-const Be = (n, t) => t.some((e) => n instanceof e);
-let Qt, Xt;
-function Ye() {
-  return Qt || (Qt = [
+const er = (n, t) => t.some((e) => n instanceof e);
+let te, ee;
+function rr() {
+  return te || (te = [
     IDBDatabase,
     IDBObjectStore,
     IDBIndex,
@@ -226,32 +299,32 @@ function Ye() {
     IDBTransaction
   ]);
 }
-function qe() {
-  return Xt || (Xt = [
+function nr() {
+  return ee || (ee = [
     IDBCursor.prototype.advance,
     IDBCursor.prototype.continue,
     IDBCursor.prototype.continuePrimaryKey
   ]);
 }
-const ye = /* @__PURE__ */ new WeakMap(), Wt = /* @__PURE__ */ new WeakMap(), pe = /* @__PURE__ */ new WeakMap(), Et = /* @__PURE__ */ new WeakMap(), Rt = /* @__PURE__ */ new WeakMap();
-function Ve(n) {
+const ke = /* @__PURE__ */ new WeakMap(), Ft = /* @__PURE__ */ new WeakMap(), Te = /* @__PURE__ */ new WeakMap(), Pt = /* @__PURE__ */ new WeakMap(), Yt = /* @__PURE__ */ new WeakMap();
+function ar(n) {
   const t = new Promise((e, r) => {
     const a = () => {
       n.removeEventListener("success", s), n.removeEventListener("error", i);
     }, s = () => {
-      e(Q(n.result)), a();
+      e(X(n.result)), a();
     }, i = () => {
       r(n.error), a();
     };
     n.addEventListener("success", s), n.addEventListener("error", i);
   });
   return t.then((e) => {
-    e instanceof IDBCursor && ye.set(e, n);
+    e instanceof IDBCursor && ke.set(e, n);
   }).catch(() => {
-  }), Rt.set(t, n), t;
+  }), Yt.set(t, n), t;
 }
-function Qe(n) {
-  if (Wt.has(n))
+function sr(n) {
+  if (Ft.has(n))
     return;
   const t = new Promise((e, r) => {
     const a = () => {
@@ -263,19 +336,19 @@ function Qe(n) {
     };
     n.addEventListener("complete", s), n.addEventListener("error", i), n.addEventListener("abort", i);
   });
-  Wt.set(n, t);
+  Ft.set(n, t);
 }
-let Ut = {
+let Jt = {
   get(n, t, e) {
     if (n instanceof IDBTransaction) {
       if (t === "done")
-        return Wt.get(n);
+        return Ft.get(n);
       if (t === "objectStoreNames")
-        return n.objectStoreNames || pe.get(n);
+        return n.objectStoreNames || Te.get(n);
       if (t === "store")
         return e.objectStoreNames[1] ? void 0 : e.objectStore(e.objectStoreNames[0]);
     }
-    return Q(n[t]);
+    return X(n[t]);
   },
   set(n, t, e) {
     return n[t] = e, !0;
@@ -284,88 +357,88 @@ let Ut = {
     return n instanceof IDBTransaction && (t === "done" || t === "store") ? !0 : t in n;
   }
 };
-function Xe(n) {
-  Ut = n(Ut);
+function ir(n) {
+  Jt = n(Jt);
 }
-function Ke(n) {
+function or(n) {
   return n === IDBDatabase.prototype.transaction && !("objectStoreNames" in IDBTransaction.prototype) ? function(t, ...e) {
-    const r = n.call(Ct(this), t, ...e);
-    return pe.set(r, t.sort ? t.sort() : [t]), Q(r);
-  } : qe().includes(n) ? function(...t) {
-    return n.apply(Ct(this), t), Q(ye.get(this));
+    const r = n.call(xt(this), t, ...e);
+    return Te.set(r, t.sort ? t.sort() : [t]), X(r);
+  } : nr().includes(n) ? function(...t) {
+    return n.apply(xt(this), t), X(ke.get(this));
   } : function(...t) {
-    return Q(n.apply(Ct(this), t));
+    return X(n.apply(xt(this), t));
   };
 }
-function Ge(n) {
-  return typeof n == "function" ? Ke(n) : (n instanceof IDBTransaction && Qe(n), Be(n, Ye()) ? new Proxy(n, Ut) : n);
+function cr(n) {
+  return typeof n == "function" ? or(n) : (n instanceof IDBTransaction && sr(n), er(n, rr()) ? new Proxy(n, Jt) : n);
 }
-function Q(n) {
+function X(n) {
   if (n instanceof IDBRequest)
-    return Ve(n);
-  if (Et.has(n))
-    return Et.get(n);
-  const t = Ge(n);
-  return t !== n && (Et.set(n, t), Rt.set(t, n)), t;
+    return ar(n);
+  if (Pt.has(n))
+    return Pt.get(n);
+  const t = cr(n);
+  return t !== n && (Pt.set(n, t), Yt.set(t, n)), t;
 }
-const Ct = (n) => Rt.get(n);
+const xt = (n) => Yt.get(n);
 function it(n, t, { blocked: e, upgrade: r, blocking: a, terminated: s } = {}) {
-  const i = indexedDB.open(n, t), o = Q(i);
-  return r && i.addEventListener("upgradeneeded", (u) => {
-    r(Q(i.result), u.oldVersion, u.newVersion, Q(i.transaction), u);
-  }), e && i.addEventListener("blocked", (u) => e(
+  const i = indexedDB.open(n, t), o = X(i);
+  return r && i.addEventListener("upgradeneeded", (l) => {
+    r(X(i.result), l.oldVersion, l.newVersion, X(i.transaction), l);
+  }), e && i.addEventListener("blocked", (l) => e(
     // Casting due to https://github.com/microsoft/TypeScript-DOM-lib-generator/pull/1405
-    u.oldVersion,
-    u.newVersion,
-    u
-  )), o.then((u) => {
-    s && u.addEventListener("close", () => s()), a && u.addEventListener("versionchange", (c) => a(c.oldVersion, c.newVersion, c));
+    l.oldVersion,
+    l.newVersion,
+    l
+  )), o.then((l) => {
+    s && l.addEventListener("close", () => s()), a && l.addEventListener("versionchange", (c) => a(c.oldVersion, c.newVersion, c));
   }).catch(() => {
   }), o;
 }
-function $t(n, { blocked: t } = {}) {
+function qt(n, { blocked: t } = {}) {
   const e = indexedDB.deleteDatabase(n);
   return t && e.addEventListener("blocked", (r) => t(
     // Casting due to https://github.com/microsoft/TypeScript-DOM-lib-generator/pull/1405
     r.oldVersion,
     r
-  )), Q(e).then(() => {
+  )), X(e).then(() => {
   });
 }
-const Ze = ["get", "getKey", "getAll", "getAllKeys", "count"], tr = ["put", "add", "delete", "clear"], kt = /* @__PURE__ */ new Map();
-function Kt(n, t) {
+const lr = ["get", "getKey", "getAll", "getAllKeys", "count"], ur = ["put", "add", "delete", "clear"], Et = /* @__PURE__ */ new Map();
+function re(n, t) {
   if (!(n instanceof IDBDatabase && !(t in n) && typeof t == "string"))
     return;
-  if (kt.get(t))
-    return kt.get(t);
-  const e = t.replace(/FromIndex$/, ""), r = t !== e, a = tr.includes(e);
+  if (Et.get(t))
+    return Et.get(t);
+  const e = t.replace(/FromIndex$/, ""), r = t !== e, a = ur.includes(e);
   if (
     // Bail if the target doesn't exist on the target. Eg, getAll isn't in Edge.
-    !(e in (r ? IDBIndex : IDBObjectStore).prototype) || !(a || Ze.includes(e))
+    !(e in (r ? IDBIndex : IDBObjectStore).prototype) || !(a || lr.includes(e))
   )
     return;
   const s = async function(i, ...o) {
-    const u = this.transaction(i, a ? "readwrite" : "readonly");
-    let c = u.store;
+    const l = this.transaction(i, a ? "readwrite" : "readonly");
+    let c = l.store;
     return r && (c = c.index(o.shift())), (await Promise.all([
       c[e](...o),
-      a && u.done
+      a && l.done
     ]))[0];
   };
-  return kt.set(t, s), s;
+  return Et.set(t, s), s;
 }
-Xe((n) => ({
+ir((n) => ({
   ...n,
-  get: (t, e, r) => Kt(t, e) || n.get(t, e, r),
-  has: (t, e) => !!Kt(t, e) || n.has(t, e)
+  get: (t, e, r) => re(t, e) || n.get(t, e, r),
+  has: (t, e) => !!re(t, e) || n.has(t, e)
 }));
-const _ = {
+const v = {
   name: "bd-queue",
   store: "jobs",
   timeIndex: "time",
   objectIndex: "object"
 };
-var w = /* @__PURE__ */ ((n) => (n.Pending = "pending", n.Completed = "completed", n.Failed = "failed", n.Conflict = "conflict", n))(w || {}), j = /* @__PURE__ */ ((n) => (n.Success = "success", n.Exception = "exception", n.Failed = "failed", n.Conflict = "conflict", n))(j || {}), D = /* @__PURE__ */ ((n) => (n.Add = "add", n.Edit = "edit", n.Delete = "delete", n))(D || {}), Y = "SharedWorker" in globalThis, er = class {
+var b = /* @__PURE__ */ ((n) => (n.Pending = "pending", n.Completed = "completed", n.Failed = "failed", n.Conflict = "conflict", n))(b || {}), F = /* @__PURE__ */ ((n) => (n.Success = "success", n.Exception = "exception", n.Failed = "failed", n.Conflict = "conflict", n))(F || {}), D = /* @__PURE__ */ ((n) => (n.Add = "add", n.Edit = "edit", n.Delete = "delete", n))(D || {}), q = "SharedWorker" in globalThis, dr = class {
   constructor(n) {
     /**
      * The actual worker that is used, depending on browser support it can be either a `SharedWorker` or a normal `Worker`.
@@ -378,27 +451,27 @@ var w = /* @__PURE__ */ ((n) => (n.Pending = "pending", n.Completed = "completed
    */
   get onmessage() {
     var n;
-    return Y ? (n = this.ActualWorker) == null ? void 0 : n.port.onmessage : this.ActualWorker.onmessage;
+    return q ? (n = this.ActualWorker) == null ? void 0 : n.port.onmessage : this.ActualWorker.onmessage;
   }
   set onmessage(n) {
-    Y ? this.ActualWorker.port.onmessage = n : this.ActualWorker.onmessage = n;
+    q ? this.ActualWorker.port.onmessage = n : this.ActualWorker.onmessage = n;
   }
   /**
    * An EventListener called when a MessageEvent of type MessageError is fired—that is, when it receives a message that cannot be deserialized.
    */
   get onmessageerror() {
     var n;
-    return Y ? (n = this.ActualWorker) == null ? void 0 : n.port.onmessageerror : this.ActualWorker.onmessageerror;
+    return q ? (n = this.ActualWorker) == null ? void 0 : n.port.onmessageerror : this.ActualWorker.onmessageerror;
   }
   set onmessageerror(n) {
-    Y ? this.ActualWorker.port.onmessageerror = n : this.ActualWorker.onmessageerror = n;
+    q ? this.ActualWorker.port.onmessageerror = n : this.ActualWorker.onmessageerror = n;
   }
   /**
    * Starts the sending of messages queued on the port (only needed when using EventTarget.addEventListener; it is implied when using MessagePort.onmessage.)
    */
   start() {
     var n;
-    if (Y)
+    if (q)
       return (n = this.ActualWorker) == null ? void 0 : n.port.start();
   }
   /**
@@ -406,14 +479,14 @@ var w = /* @__PURE__ */ ((n) => (n.Pending = "pending", n.Completed = "completed
    */
   postMessage(n, t) {
     var e;
-    return Y ? (e = this.ActualWorker) == null ? void 0 : e.port.postMessage(n, t) : this.ActualWorker.postMessage(n, t);
+    return q ? (e = this.ActualWorker) == null ? void 0 : e.port.postMessage(n, t) : this.ActualWorker.postMessage(n, t);
   }
   /**
    * Immediately terminates the worker. This does not let worker finish its operations; it is halted at once. ServiceWorker instances do not support this method.
    */
   terminate() {
     var n;
-    return Y ? (n = this.ActualWorker) == null ? void 0 : n.port.close() : this.ActualWorker.terminate();
+    return q ? (n = this.ActualWorker) == null ? void 0 : n.port.close() : this.ActualWorker.terminate();
   }
   /**
    * Disconnects the port, so it is no longer active.
@@ -425,7 +498,7 @@ var w = /* @__PURE__ */ ((n) => (n.Pending = "pending", n.Completed = "completed
    * Returns a MessagePort object used to communicate with and control the shared worker.
    */
   get port() {
-    return Y ? this.ActualWorker.port : this.ActualWorker;
+    return q ? this.ActualWorker.port : this.ActualWorker;
   }
   /**
    * Is an EventListener that is called whenever an ErrorEvent of type error event occurs.
@@ -438,11 +511,11 @@ var w = /* @__PURE__ */ ((n) => (n.Pending = "pending", n.Completed = "completed
   }
   addEventListener(n, t, e) {
     var r;
-    return Y && n !== "error" ? (r = this.ActualWorker) == null ? void 0 : r.port.addEventListener(n, t, e) : this.ActualWorker.addEventListener(n, t, e);
+    return q && n !== "error" ? (r = this.ActualWorker) == null ? void 0 : r.port.addEventListener(n, t, e) : this.ActualWorker.addEventListener(n, t, e);
   }
   removeEventListener(n, t, e) {
     var r;
-    return Y && n !== "error" ? (r = this.ActualWorker) == null ? void 0 : r.port.removeEventListener(n, t, e) : this.ActualWorker.removeEventListener(n, t, e);
+    return q && n !== "error" ? (r = this.ActualWorker) == null ? void 0 : r.port.removeEventListener(n, t, e) : this.ActualWorker.removeEventListener(n, t, e);
   }
   /**
    * Dispatches an event to this EventTarget.
@@ -450,16 +523,16 @@ var w = /* @__PURE__ */ ((n) => (n.Pending = "pending", n.Completed = "completed
   dispatchEvent(n) {
     return this.ActualWorker.dispatchEvent(n);
   }
-}, rr = class extends er {
+}, hr = class extends dr {
   constructor(n, t) {
     let e;
-    Y ? e = new SharedWorker(n, t) : e = new Worker(n, t), super(e);
+    q ? e = new SharedWorker(n, t) : e = new Worker(n, t), super(e);
   }
 };
-function nr(n) {
+function fr(n) {
   return n && n.__esModule && Object.prototype.hasOwnProperty.call(n, "default") ? n.default : n;
 }
-var ve = {};
+var Ie = {};
 /*! crc32.js (C) 2014-present SheetJS -- http://sheetjs.com */
 (function(n) {
   (function(t) {
@@ -467,56 +540,56 @@ var ve = {};
   })(function(t) {
     t.version = "1.2.2";
     function e() {
-      for (var b = 0, N = new Array(256), y = 0; y != 256; ++y)
-        b = y, b = b & 1 ? -306674912 ^ b >>> 1 : b >>> 1, b = b & 1 ? -306674912 ^ b >>> 1 : b >>> 1, b = b & 1 ? -306674912 ^ b >>> 1 : b >>> 1, b = b & 1 ? -306674912 ^ b >>> 1 : b >>> 1, b = b & 1 ? -306674912 ^ b >>> 1 : b >>> 1, b = b & 1 ? -306674912 ^ b >>> 1 : b >>> 1, b = b & 1 ? -306674912 ^ b >>> 1 : b >>> 1, b = b & 1 ? -306674912 ^ b >>> 1 : b >>> 1, N[y] = b;
-      return typeof Int32Array < "u" ? new Int32Array(N) : N;
+      for (var w = 0, H = new Array(256), y = 0; y != 256; ++y)
+        w = y, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, w = w & 1 ? -306674912 ^ w >>> 1 : w >>> 1, H[y] = w;
+      return typeof Int32Array < "u" ? new Int32Array(H) : H;
     }
     var r = e();
-    function a(b) {
-      var N = 0, y = 0, I = 0, O = typeof Int32Array < "u" ? new Int32Array(4096) : new Array(4096);
-      for (I = 0; I != 256; ++I)
-        O[I] = b[I];
-      for (I = 0; I != 256; ++I)
-        for (y = b[I], N = 256 + I; N < 4096; N += 256)
-          y = O[N] = y >>> 8 ^ b[y & 255];
-      var k = [];
-      for (I = 1; I != 16; ++I)
-        k[I - 1] = typeof Int32Array < "u" ? O.subarray(I * 256, I * 256 + 256) : O.slice(I * 256, I * 256 + 256);
-      return k;
+    function a(w) {
+      var H = 0, y = 0, k = 0, I = typeof Int32Array < "u" ? new Int32Array(4096) : new Array(4096);
+      for (k = 0; k != 256; ++k)
+        I[k] = w[k];
+      for (k = 0; k != 256; ++k)
+        for (y = w[k], H = 256 + k; H < 4096; H += 256)
+          y = I[H] = y >>> 8 ^ w[y & 255];
+      var W = [];
+      for (k = 1; k != 16; ++k)
+        W[k - 1] = typeof Int32Array < "u" ? I.subarray(k * 256, k * 256 + 256) : I.slice(k * 256, k * 256 + 256);
+      return W;
     }
-    var s = a(r), i = s[0], o = s[1], u = s[2], c = s[3], l = s[4], d = s[5], h = s[6], f = s[7], g = s[8], v = s[9], M = s[10], P = s[11], C = s[12], A = s[13], V = s[14];
-    function At(b, N) {
-      for (var y = N ^ -1, I = 0, O = b.length; I < O; )
-        y = y >>> 8 ^ r[(y ^ b.charCodeAt(I++)) & 255];
+    var s = a(r), i = s[0], o = s[1], l = s[2], c = s[3], d = s[4], u = s[5], h = s[6], f = s[7], g = s[8], _ = s[9], S = s[10], A = s[11], L = s[12], x = s[13], Q = s[14];
+    function At(w, H) {
+      for (var y = H ^ -1, k = 0, I = w.length; k < I; )
+        y = y >>> 8 ^ r[(y ^ w.charCodeAt(k++)) & 255];
       return ~y;
     }
-    function Je(b, N) {
-      for (var y = N ^ -1, I = b.length - 15, O = 0; O < I; )
-        y = V[b[O++] ^ y & 255] ^ A[b[O++] ^ y >> 8 & 255] ^ C[b[O++] ^ y >> 16 & 255] ^ P[b[O++] ^ y >>> 24] ^ M[b[O++]] ^ v[b[O++]] ^ g[b[O++]] ^ f[b[O++]] ^ h[b[O++]] ^ d[b[O++]] ^ l[b[O++]] ^ c[b[O++]] ^ u[b[O++]] ^ o[b[O++]] ^ i[b[O++]] ^ r[b[O++]];
-      for (I += 15; O < I; )
-        y = y >>> 8 ^ r[(y ^ b[O++]) & 255];
+    function Xe(w, H) {
+      for (var y = H ^ -1, k = w.length - 15, I = 0; I < k; )
+        y = Q[w[I++] ^ y & 255] ^ x[w[I++] ^ y >> 8 & 255] ^ L[w[I++] ^ y >> 16 & 255] ^ A[w[I++] ^ y >>> 24] ^ S[w[I++]] ^ _[w[I++]] ^ g[w[I++]] ^ f[w[I++]] ^ h[w[I++]] ^ u[w[I++]] ^ d[w[I++]] ^ c[w[I++]] ^ l[w[I++]] ^ o[w[I++]] ^ i[w[I++]] ^ r[w[I++]];
+      for (k += 15; I < k; )
+        y = y >>> 8 ^ r[(y ^ w[I++]) & 255];
       return ~y;
     }
-    function Ne(b, N) {
-      for (var y = N ^ -1, I = 0, O = b.length, k = 0, Tt = 0; I < O; )
-        k = b.charCodeAt(I++), k < 128 ? y = y >>> 8 ^ r[(y ^ k) & 255] : k < 2048 ? (y = y >>> 8 ^ r[(y ^ (192 | k >> 6 & 31)) & 255], y = y >>> 8 ^ r[(y ^ (128 | k & 63)) & 255]) : k >= 55296 && k < 57344 ? (k = (k & 1023) + 64, Tt = b.charCodeAt(I++) & 1023, y = y >>> 8 ^ r[(y ^ (240 | k >> 8 & 7)) & 255], y = y >>> 8 ^ r[(y ^ (128 | k >> 2 & 63)) & 255], y = y >>> 8 ^ r[(y ^ (128 | Tt >> 6 & 15 | (k & 3) << 4)) & 255], y = y >>> 8 ^ r[(y ^ (128 | Tt & 63)) & 255]) : (y = y >>> 8 ^ r[(y ^ (224 | k >> 12 & 15)) & 255], y = y >>> 8 ^ r[(y ^ (128 | k >> 6 & 63)) & 255], y = y >>> 8 ^ r[(y ^ (128 | k & 63)) & 255]);
+    function Ke(w, H) {
+      for (var y = H ^ -1, k = 0, I = w.length, W = 0, zt = 0; k < I; )
+        W = w.charCodeAt(k++), W < 128 ? y = y >>> 8 ^ r[(y ^ W) & 255] : W < 2048 ? (y = y >>> 8 ^ r[(y ^ (192 | W >> 6 & 31)) & 255], y = y >>> 8 ^ r[(y ^ (128 | W & 63)) & 255]) : W >= 55296 && W < 57344 ? (W = (W & 1023) + 64, zt = w.charCodeAt(k++) & 1023, y = y >>> 8 ^ r[(y ^ (240 | W >> 8 & 7)) & 255], y = y >>> 8 ^ r[(y ^ (128 | W >> 2 & 63)) & 255], y = y >>> 8 ^ r[(y ^ (128 | zt >> 6 & 15 | (W & 3) << 4)) & 255], y = y >>> 8 ^ r[(y ^ (128 | zt & 63)) & 255]) : (y = y >>> 8 ^ r[(y ^ (224 | W >> 12 & 15)) & 255], y = y >>> 8 ^ r[(y ^ (128 | W >> 6 & 63)) & 255], y = y >>> 8 ^ r[(y ^ (128 | W & 63)) & 255]);
       return ~y;
     }
-    t.table = r, t.bstr = At, t.buf = Je, t.str = Ne;
+    t.table = r, t.bstr = At, t.buf = Xe, t.str = Ke;
   });
-})(ve);
+})(Ie);
 function rt() {
   return Math.floor(((/* @__PURE__ */ new Date()).getTime() - (/* @__PURE__ */ new Date("2021-01-01T00:00:00Z")).getTime()) / 1e3);
 }
 function ot(n) {
-  return rt().toString(36) + "-" + ve.str(JSON.stringify(n)).toString(36);
+  return rt().toString(36) + "-" + Ie.str(JSON.stringify(n)).toString(36);
 }
-function ar(n) {
+function mr(n) {
   return new Promise((t) => {
     setTimeout(t, n);
   });
 }
-class jt {
+class Nt {
   //Send the job's transaction to its designated server
   static async send(t, e) {
     try {
@@ -538,69 +611,81 @@ class jt {
         throw new Error("No result returned for this job!");
       if (i.s || i.s0 || i.s1 || i.n)
         return {
-          status: j.Success
+          status: F.Success
         };
       if (i.conflict) {
-        const o = Object.keys(t.transaction.data)[0], u = i.conflict[o];
-        if (u === void 0)
+        const o = Object.keys(t.transaction.data)[0], l = i.conflict[o];
+        if (l === void 0)
           throw new Error("No previous value found in conflict result!");
         return {
-          status: j.Conflict,
-          message: u
+          status: F.Conflict,
+          message: l
         };
       } else if (i.e)
         return {
-          status: j.Failed,
+          status: F.Failed,
           message: i.e
         };
       return {
-        status: j.Exception,
+        status: F.Exception,
         message: s.error ?? (Array.isArray(s.errors) ? s.errors.map((o) => (o == null ? void 0 : o.message) ?? o).join(" | ") : "Unknown error!")
       };
     } catch (r) {
       return {
-        status: j.Exception,
+        status: F.Exception,
         message: r.message
       };
     }
   }
 }
-var wt = [], pt;
-class _e {
-  constructor(t, e) {
+var bt = [], Oe, Vt = [];
+function ne(n, t) {
+  const e = { ...t ?? Oe ?? {} };
+  let r;
+  try {
+    r = new URL(n).origin;
+  } catch {
+    return e;
+  }
+  for (const a of Vt)
+    a.origin === r && Object.assign(e, a.headers);
+  return e;
+}
+class Ae {
+  constructor(t, e, r) {
     //Properties
     m(this, "_db", null);
     m(this, "_currentTimestamp", null);
     m(this, "_localHeaders");
     m(this, "_postMessage");
-    this._postMessage = t, this._localHeaders = e;
+    this._postMessage = t, this._localHeaders = e, r && (Vt = r);
   }
   //Update job
   async _updateJob(t) {
     var e;
-    return await ((e = this._db) == null ? void 0 : e.put(_.store, t)), t;
+    return await ((e = this._db) == null ? void 0 : e.put(v.store, t)), t;
   }
   //Delete job
   async _deleteJob(t) {
     var e;
-    await ((e = this._db) == null ? void 0 : e.delete(_.store, t.id));
+    await ((e = this._db) == null ? void 0 : e.delete(v.store, t.id));
   }
   //Send job to clients
   _sendJobEvent(t) {
     if (typeof this._postMessage == "function")
       this._postMessage({ data: { job: t } });
     else
-      for (const e of wt)
+      for (const e of bt)
         e == null || e.postMessage({ job: t });
   }
   //Get next job
   async _getNextJob() {
     var s;
     let t = null;
-    const e = (s = this._db) == null ? void 0 : s.transaction(_.store, "readonly").store, r = this._currentTimestamp ? IDBKeyRange.lowerBound(this._currentTimestamp, !0) : null;
-    let a = await (e == null ? void 0 : e.index(_.timeIndex).openCursor(r, "next"));
+    const e = (s = this._db) == null ? void 0 : s.transaction(v.store, "readonly").store, r = this._currentTimestamp ? IDBKeyRange.lowerBound(this._currentTimestamp, !0) : null;
+    let a = await (e == null ? void 0 : e.index(v.timeIndex).openCursor(r, "next"));
     for (; a; ) {
-      if (a.value.status === w.Pending) {
+      if (a.value.status === b.Pending) {
         t = a.value;
         break;
       }
@@ -619,11 +704,11 @@ class _e {
   //Get preceding unresolved jobs
   async _getPrecedingUnresolvedJobs(t) {
     var o;
-    const e = [], r = t.transaction.action === D.Edit ? Object.keys(t.transaction.data)[0] : null, a = (o = this._db) == null ? void 0 : o.transaction(_.store, "readonly").store, s = IDBKeyRange.upperBound(t.createdAt, !0);
-    let i = await (a == null ? void 0 : a.index(_.timeIndex).openCursor(s, "next"));
+    const e = [], r = t.transaction.action === D.Edit ? Object.keys(t.transaction.data)[0] : null, a = (o = this._db) == null ? void 0 : o.transaction(v.store, "readonly").store, s = IDBKeyRange.upperBound(t.createdAt, !0);
+    let i = await (a == null ? void 0 : a.index(v.timeIndex).openCursor(s, "next"));
     for (; i; )
       //Only unresolved jobs
-      i.value.status !== w.Completed && //Same destination
+      i.value.status !== b.Completed && //Same destination
       i.value.url === t.url && //Only same object jobs
       i.value.transaction.blitzID === t.transaction.blitzID && //Only same attribute jobs if both passed job and current job have an edit action
       (i.value.transaction.action !== D.Edit || t.transaction.action !== D.Edit || Object.keys(i.value.transaction.data)[0] === r) && e.push(i.value), i = await i.continue();
@@ -640,11 +725,11 @@ class _e {
   //Handle preceding conflict edit jobs check
   async _checkPrecedingConflictEditJobs(t, e) {
     let r = !1;
-    if (e.find((s) => s.transaction.action === D.Edit && s.status === w.Conflict)) {
+    if (e.find((s) => s.transaction.action === D.Edit && s.status === b.Conflict)) {
       r = !0;
       const s = await this._updateJob({
         ...t,
-        status: w.Conflict
+        status: b.Conflict
       });
       this._sendJobEvent(s);
     }
@@ -652,31 +737,31 @@ class _e {
   }
   //Handle preceding failed edit jobs check
   async _checkPrecedingFailedEditJobs(t, e) {
-    var o, u;
+    var o, l;
     let r = !1;
-    const a = e.filter((c) => c.transaction.action === D.Edit && (c.status === w.Pending || c.status === w.Failed)), s = Object.keys(t.transaction.data)[0], i = ((o = t.transaction.data) == null ? void 0 : o[s].new) !== void 0 && ((u = t.transaction.data) == null ? void 0 : u[s].prev) !== void 0;
+    const a = e.filter((c) => c.transaction.action === D.Edit && (c.status === b.Pending || c.status === b.Failed)), s = Object.keys(t.transaction.data)[0], i = ((o = t.transaction.data) == null ? void 0 : o[s].new) !== void 0 && ((l = t.transaction.data) == null ? void 0 : l[s].prev) !== void 0;
     return a.length > 0 && i && (r = !0, t.attempts || await this._editAttemptHandler(t, a)), r;
   }
   //Handle merging with future edit jobs
   async _mergeWithFutureEditJobs(t) {
-    var u, c, l;
-    const e = [], r = Object.keys(t.transaction.data)[0], a = (u = this._db) == null ? void 0 : u.transaction(_.store, "readonly").store, s = IDBKeyRange.lowerBound(t.createdAt, !0);
-    let i = await (a == null ? void 0 : a.index(_.timeIndex).openCursor(s, "next"));
+    var l, c, d;
+    const e = [], r = Object.keys(t.transaction.data)[0], a = (l = this._db) == null ? void 0 : l.transaction(v.store, "readonly").store, s = IDBKeyRange.lowerBound(t.createdAt, !0);
+    let i = await (a == null ? void 0 : a.index(v.timeIndex).openCursor(s, "next"));
     for (; i; )
       //Only unresolved jobs
-      (i.value.status === w.Pending || i.value.status === w.Failed) && //Same destination
+      (i.value.status === b.Pending || i.value.status === b.Failed) && //Same destination
       i.value.url === t.url && //Only edit jobs
       i.value.transaction.action === D.Edit && //Only same object jobs
       i.value.transaction.blitzID === t.transaction.blitzID && //Only same attribute jobs
       Object.keys(i.value.transaction.data)[0] === r && e.push(i.value), i = await i.continue();
     var o = t;
     if (e.length > 0) {
-      const d = e[e.length - 1];
-      if (d && ((c = d.transaction.data) == null ? void 0 : c[r].new) !== void 0 && ((l = t.transaction.data) == null ? void 0 : l[r].prev) !== void 0) {
+      const u = e[e.length - 1];
+      if (u && ((c = u.transaction.data) == null ? void 0 : c[r].new) !== void 0 && ((d = t.transaction.data) == null ? void 0 : d[r].prev) !== void 0) {
         const h = {
           [r]: {
             prev: t.transaction.data[r].prev,
-            new: d.transaction.data[r].new
+            new: u.transaction.data[r].new
           }
         }, f = (/* @__PURE__ */ new Date()).getTime();
         o = await this._updateJob({
@@ -698,47 +783,47 @@ class _e {
   //Handle job's status response
   async _statusHandler(t, e) {
     var r, a, s;
-    if (e.status === j.Success) {
+    if (e.status === F.Success) {
       const i = await this._updateJob({
         ...t,
-        status: w.Completed
+        status: b.Completed
       });
       this._sendJobEvent(i);
-    } else if (e.status === j.Exception)
+    } else if (e.status === F.Exception)
       await this._updateJob({
         ...t,
-        status: w.Pending,
+        status: b.Pending,
         attempts: t.attempts + 1,
         priority: t.priority < 5 ? t.priority + 1 : t.priority,
         message: e.message
       });
-    else if (e.status === j.Failed)
+    else if (e.status === F.Failed)
       if (t.attempts > 0) {
         const i = await this._updateJob({
           ...t,
-          status: w.Failed,
+          status: b.Failed,
           message: e.message
         });
         this._sendJobEvent(i);
       } else
         await this._updateJob({
           ...t,
-          status: w.Pending,
+          status: b.Pending,
           attempts: t.attempts + 1,
           message: e.message
         });
-    else if (e.status === j.Conflict) {
+    else if (e.status === F.Conflict) {
       const i = Object.keys(t.transaction.data)[0];
       if (((r = t.transaction.data) == null ? void 0 : r[i].prev) === ((a = t.transaction.data) == null ? void 0 : a[i].new) || e.message === ((s = t.transaction.data) == null ? void 0 : s[i].new)) {
         const o = await this._updateJob({
           ...t,
-          status: w.Completed
+          status: b.Completed
         });
         this._sendJobEvent(o);
       } else {
         const o = await this._updateJob({
           ...t,
-          status: w.Conflict,
+          status: b.Conflict,
           message: e.message
         });
         this._sendJobEvent(o);
@@ -747,14 +832,14 @@ class _e {
   }
   //Handle edit job attempt
   async _editAttemptHandler(t, e) {
-    var c, l, d, h, f;
+    var c, d, u, h, f;
     const r = Object.keys(t.transaction.data)[0], a = e[0];
     if (((c = a.transaction.data) == null ? void 0 : c[r].prev) === void 0)
       return;
     const s = {
       [r]: {
         prev: a.transaction.data[r].prev,
-        new: (l = t.transaction.data) == null ? void 0 : l[r].new
+        new: (d = t.transaction.data) == null ? void 0 : d[r].new
       }
     }, i = (/* @__PURE__ */ new Date()).getTime();
     var o = {
@@ -767,42 +852,42 @@ class _e {
       },
       dataHistory: [...t.dataHistory ?? [], { timestamp: i, type: "worker-attempt", data: t.transaction.data }]
     };
-    let u;
-    if (s[r].prev === s[r].new ? u = { status: j.Success } : u = await jt.send(o, this._localHeaders ?? pt), u.status === j.Success) {
+    let l;
+    if (s[r].prev === s[r].new ? l = { status: F.Success } : l = await Nt.send(o, ne(o.url, this._localHeaders)), l.status === F.Success) {
       o = await this._updateJob({
         ...o,
-        status: w.Completed
+        status: b.Completed
       });
       for (const g of e)
         await this._updateJob({
           ...g,
-          status: w.Completed
+          status: b.Completed
         });
       this._sendJobEvent(o);
-    } else if (u.status === j.Exception || u.status === j.Failed)
+    } else if (l.status === F.Exception || l.status === F.Failed)
       await this._updateJob({
         ...t,
         status: a.status,
         attempts: t.attempts + 1,
-        message: u.message
+        message: l.message
       });
-    else if (u.status === j.Conflict)
-      if (((d = o.transaction.data) == null ? void 0 : d[r].prev) === ((h = o.transaction.data) == null ? void 0 : h[r].new) || u.message === ((f = o.transaction.data) == null ? void 0 : f[r].new)) {
+    else if (l.status === F.Conflict)
+      if (((u = o.transaction.data) == null ? void 0 : u[r].prev) === ((h = o.transaction.data) == null ? void 0 : h[r].new) || l.message === ((f = o.transaction.data) == null ? void 0 : f[r].new)) {
         o = await this._updateJob({
           ...o,
-          status: w.Completed
+          status: b.Completed
         });
         for (const g of e)
           await this._updateJob({
             ...g,
-            status: w.Completed
+            status: b.Completed
           });
         this._sendJobEvent(o);
       } else {
         o = await this._updateJob({
           ...o,
-          status: w.Conflict,
-          message: u.message
+          status: b.Conflict,
+          message: l.message
         });
         for (const g of e)
           await this._deleteJob(g);
@@ -812,7 +897,7 @@ class _e {
   //Start processing queue
   async start() {
     var r, a;
-    for (this._db = await it(_.name, 1); ; ) {
+    for (this._db = await it(v.name, 1); ; ) {
       try {
         var t = await this._getNextJob();
         if (!t)
@@ -830,11 +915,11 @@ class _e {
           t = await this._mergeWithFutureEditJobs(t);
           const c = Object.keys(t.transaction.data)[0];
           if (((r = t.transaction.data) == null ? void 0 : r[c].prev) !== void 0 && ((a = t.transaction.data) == null ? void 0 : a[c].new) !== void 0 && t.transaction.data[c].prev === t.transaction.data[c].new) {
-            const l = { status: j.Success };
-            throw await this._statusHandler(t, l), new Error("SKIP");
+            const d = { status: F.Success };
+            throw await this._statusHandler(t, d), new Error("SKIP");
           }
         }
-        const i = await jt.send(t, this._localHeaders ?? pt);
+        const i = await Nt.send(t, ne(t.url, this._localHeaders));
         await this._statusHandler(t, i);
       } catch (s) {
         if (s.message !== "SKIP") {
@@ -847,12 +932,12 @@ class _e {
     this._db && this._db.close(), this.start();
   }
 }
-function Gt(n) {
-  wt.push(n), n.onmessage = function(t) {
-    t.data.type === "close" ? wt = wt.filter((e) => e !== n) : t.data.type === "headers" && !pt && t.data.data && (pt = t.data.data);
+function ae(n) {
+  bt.push(n), n.onmessage = function(t) {
+    t.data.type === "close" ? bt = bt.filter((e) => e !== n) : t.data.type === "headers" ? t.data.data && (Oe = t.data.data) : t.data.type === "scopedHeaders" && t.data.data && (Vt = t.data.data);
   };
 }
-("SharedWorkerGlobalScope" in self || "WorkerGlobalScope" in self) && ("SharedWorkerGlobalScope" in self ? self.onconnect = (n) => Gt(n.ports[0]) : Gt(self), new _e().start());
+("SharedWorkerGlobalScope" in self || "WorkerGlobalScope" in self) && ("SharedWorkerGlobalScope" in self ? self.onconnect = (n) => ae(n.ports[0]) : ae(self), new Ae().start());
 class $ {
   /**
    * Constructor.
@@ -944,8 +1029,8 @@ class $ {
     });
   }
 }
-var W = /* @__PURE__ */ ((n) => (n.Success = "success", n.Notice = "notice", n.Error = "error", n.Exception = "exception", n))(W || {});
-class B {
+var C = /* @__PURE__ */ ((n) => (n.Success = "success", n.Notice = "notice", n.Error = "error", n.Exception = "exception", n))(C || {});
+class Y {
   /**
    * Constructor.
    *
@@ -998,7 +1083,7 @@ class B {
     return typeof this.conflict < "u" && this.conflict !== null;
   }
 }
-class vt extends Array {
+class pt extends Array {
   /**
    * Returns the transaction result with given hash.
    *
@@ -1045,16 +1130,16 @@ class vt extends Array {
    * Returns new transaction result collection that only contains successful transaction results.
    */
   successful() {
-    return new vt(...this.filter((t) => t.status));
+    return new pt(...this.filter((t) => t.status));
   }
   /**
    * Returns new transaction result collection that only contains failed transaction results.
    */
   failed() {
-    return new vt(...this.filter((t) => !t.status));
+    return new pt(...this.filter((t) => !t.status));
   }
 }
-class T {
+class E {
   /**
    * Create a list endpoint.
    *
@@ -1064,7 +1149,7 @@ class T {
    */
   static createListEndpoint(t, e, r) {
     var i;
-    const a = `${T.sanitizeBaseUrl(t)}api/list/${e}.json`, s = new URLSearchParams();
+    const a = `${E.sanitizeBaseUrl(t)}api/list/${e}.json`, s = new URLSearchParams();
     return new URL(t).origin !== window.location.origin && s.append("enableCors", "1"), s.append("fkOptions", JSON.stringify({ _userID: "blitzID" })), (i = r.conditions) != null && i.length && s.append("conditions", JSON.stringify(r.conditions)), r.limit && s.append("limit", r.limit.toString()), r.customSort && s.append("customSort", r.customSort), r.customSortDirection && s.append("customSortDirection", r.customSortDirection), r.pagination && s.append("pagination", r.pagination.toString()), r.var && r.var.length > 0 && s.append("var", JSON.stringify(r.var)), r.manyToMany && s.append("manyToMany", r.manyToMany), `${a}?${s.toString()}`;
   }
   /**
@@ -1076,7 +1161,7 @@ class T {
    * @param query Query parameters to be appended to endpoint.
    */
   static createGetEndpoint(t, e, r, a) {
-    const s = `${T.sanitizeBaseUrl(t)}api/list/${e}/_blitzID/${r}.json`, i = new URLSearchParams();
+    const s = `${E.sanitizeBaseUrl(t)}api/list/${e}/_blitzID/${r}.json`, i = new URLSearchParams();
     return new URL(t).origin !== window.location.origin && i.append("enableCors", "1"), i.append("fkOptions", JSON.stringify({ _userID: "blitzID" })), a.var && a.var.length > 0 && i.append("var", JSON.stringify(a.var)), a.manyToMany && i.append("manyToMany", a.manyToMany), `${s}?${i.toString()}`;
   }
   /**
@@ -1085,7 +1170,7 @@ class T {
    * @param baseUrl Base URL.
    */
   static createPostEndpoint(t) {
-    return `${T.sanitizeBaseUrl(t)}api/post.json`;
+    return `${E.sanitizeBaseUrl(t)}api/post.json`;
   }
   /**
    * Create a ping endpoint.
@@ -1093,7 +1178,7 @@ class T {
    * @param baseUrl Base URL.
    */
   static createPingEndpoint(t) {
-    return `${T.sanitizeBaseUrl(t)}api/ping.json`;
+    return `${E.sanitizeBaseUrl(t)}api/ping.json`;
   }
   /**
    * Create a list logs endpoint.
@@ -1104,7 +1189,7 @@ class T {
    */
   static createListLogsEndpoint(t) {
     var s, i;
-    const e = t.type === "delete" ? "listDeletedLogs" : "listLogs", r = t.model ? `${T.sanitizeBaseUrl(t.baseUrl)}api/${e}/${t.model}.json` : `${T.sanitizeBaseUrl(t.baseUrl)}api/${e}.json`, a = new URLSearchParams();
+    const e = t.type === "delete" ? "listDeletedLogs" : "listLogs", r = t.model ? `${E.sanitizeBaseUrl(t.baseUrl)}api/${e}/${t.model}.json` : `${E.sanitizeBaseUrl(t.baseUrl)}api/${e}.json`, a = new URLSearchParams();
     return ((s = t.query) == null ? void 0 : s.from) !== void 0 && a.append("from", t.query.from.toString()), (i = t.query) != null && i.models && !t.model && a.append("models", JSON.stringify(t.query.models)), `${r}?${a.toString()}`;
   }
   /**
@@ -1114,7 +1199,7 @@ class T {
    */
   static createUploaderEndpoint(t) {
     const e = new URL(t).origin !== window.location.origin ? "?enableCors=1" : "";
-    return `${T.sanitizeBaseUrl(t)}uploader/index` + e;
+    return `${E.sanitizeBaseUrl(t)}uploader/index` + e;
   }
   /**
    * Create a video uploader endpoint.
@@ -1123,7 +1208,7 @@ class T {
    */
   static createVideoUploaderEndpoint(t, e) {
     const r = new URL(t).origin !== window.location.origin ? "?enableCors=1" : "", a = (r ? r + "&" : "?") + `filename=${e}`;
-    return `${T.sanitizeBaseUrl(t)}uploadervideo/index` + a;
+    return `${E.sanitizeBaseUrl(t)}uploadervideo/index` + a;
   }
   /**
    * Create a file uploader endpoint.
@@ -1132,7 +1217,7 @@ class T {
    */
   static createFileUploaderEndpoint(t) {
     const e = new URL(t).origin !== window.location.origin ? "?enableCors=1" : "";
-    return `${T.sanitizeBaseUrl(t)}uploaderfile/index` + e;
+    return `${E.sanitizeBaseUrl(t)}uploaderfile/index` + e;
   }
   /**
    * Sanitize the base URL.
@@ -1153,10 +1238,10 @@ class et {
   static async list(t, e) {
     if (!t.endpoint && !t.fullUrl)
       throw new Error("Either baseUrl or fullUrl must be provided.");
-    const r = await L.create().url(
+    const r = await P.create().url(
       // We got 2 urls, because it is possible to have a full url.
       // See `BlitzData.list()` and `BlitzData.listRaw()` methods.
-      t.fullUrl ? t.fullUrl : T.createListEndpoint(t.endpoint.baseUrl, t.endpoint.modelName, t.endpoint.query)
+      t.fullUrl ? t.fullUrl : E.createListEndpoint(t.endpoint.baseUrl, t.endpoint.modelName, t.endpoint.query)
     ).signal(e).get();
     if (!Array.isArray(r.items) && Array.isArray(r.errors))
       throw new Error(r.errors.map((a) => (a == null ? void 0 : a.message) ?? a).join(" | "));
@@ -1166,8 +1251,8 @@ class et {
    * Performs a get call to the server by provided options.
    */
   static async get(t, e) {
-    const r = await L.create().url(
-      T.createGetEndpoint(t.baseUrl, t.modelName, t.blitzID, t.query)
+    const r = await P.create().url(
+      E.createGetEndpoint(t.baseUrl, t.modelName, t.blitzID, t.query)
     ).signal(e).get();
     if (!Array.isArray(r.items) && Array.isArray(r.errors))
       throw new Error(r.errors.map((a) => (a == null ? void 0 : a.message) ?? a).join(" | "));
@@ -1179,7 +1264,7 @@ class et {
    * @param options Post options.
    */
   static async post(t) {
-    const e = await L.create().url(T.createPostEndpoint(t.baseUrl)).body(t.transactions).post();
+    const e = await P.create().url(E.createPostEndpoint(t.baseUrl)).body(t.transactions).post();
     if ((typeof e.error == "string" || e.errors instanceof Array) && !(e.results instanceof Object))
       throw new Error(e.error ?? e.errors.join(" | "));
     return e;
@@ -1190,7 +1275,7 @@ class et {
    * @param options List logs option.
    */
   static async listLogs(t) {
-    const e = await L.create().url(T.createListLogsEndpoint(t)).get();
+    const e = await P.create().url(E.createListLogsEndpoint(t)).get();
     if (!(e.transactions instanceof Array) && (typeof e.error == "string" || e.errors instanceof Array))
       throw new Error(e.error ?? e.errors.map((r) => (r == null ? void 0 : r.message) ?? r).join(" | "));
     return {
@@ -1208,7 +1293,7 @@ class et {
   static async upload(t) {
     const e = new FormData();
     e.append("image", t.image);
-    const r = await L.create().url(T.createUploaderEndpoint(t.baseUrl)).body(e).header("Accept", "application/json").post(), a = {};
+    const r = await P.create().url(E.createUploaderEndpoint(t.baseUrl)).body(e).header("Accept", "application/json").post(), a = {};
     for (const [s, i] of Object.entries(r ?? {}))
       [
         "base",
@@ -1238,7 +1323,7 @@ class et {
   static async uploadVideo(t) {
     const e = new FormData();
     e.append("fileToUpload", t.video);
-    const r = t.video.name.split("."), a = r.length > 1 ? "." + r.pop() : "", s = crypto.randomUUID() + a, i = await L.create().url(T.createVideoUploaderEndpoint(t.baseUrl, s)).body(e).header("Accept", "application/json").post();
+    const r = t.video.name.split("."), a = r.length > 1 ? "." + r.pop() : "", s = crypto.randomUUID() + a, i = await P.create().url(E.createVideoUploaderEndpoint(t.baseUrl, s)).body(e).header("Accept", "application/json").post();
     if (!i || !i.s)
       throw new Error("Video upload failed: " + ((i == null ? void 0 : i.error) ?? "Unknown error!"));
     return {
@@ -1255,7 +1340,7 @@ class et {
   static async uploadFile(t) {
     const e = new FormData();
     e.append("files[]", t.file);
-    const r = await L.create().url(T.createFileUploaderEndpoint(t.baseUrl)).body(e).header("Accept", "application/json").post();
+    const r = await P.create().url(E.createFileUploaderEndpoint(t.baseUrl)).body(e).header("Accept", "application/json").post();
     if (!r || !r.s)
       throw new Error("File upload failed: " + ((r == null ? void 0 : r.error) ?? "Unknown error!"));
     return {
@@ -1266,10 +1351,10 @@ class et {
    * Performs a ping call to the server by provided base URL.
    */
   static async ping({ baseUrl: t }) {
-    return await L.create().url(T.createPingEndpoint(t)).get();
+    return await P.create().url(E.createPingEndpoint(t)).get();
   }
 }
-class Ht {
+class Qt {
   constructor() {
     /**
      * Query parameters for the call.
@@ -1288,7 +1373,7 @@ class Ht {
    * Creates a list logs call instance.
    */
   static create() {
-    return new Ht();
+    return new Qt();
   }
   /**
    * Sets the query parameters.
@@ -1330,7 +1415,7 @@ class Ht {
     };
   }
 }
-class Bt {
+class Xt {
   /**
    * Pings the database, ensuring it's correctly set up.
    */
@@ -1338,7 +1423,7 @@ class Bt {
     const t = await this.openConnection(), e = ["sync_transactions", "evaluated_transactions"];
     for (const r of e)
       if (!t.objectStoreNames.contains(r))
-        return t.close(), console.log(`There's missing stores, recreating the database. Available stores: ${t.objectStoreNames}`), await $t("db_master"), await this.ping();
+        return t.close(), console.log(`There's missing stores, recreating the database. Available stores: ${t.objectStoreNames}`), await qt("db_master"), await this.ping();
     t.close();
   }
   /**
@@ -1360,7 +1445,7 @@ class Bt {
     });
   }
 }
-class S {
+class M {
   /**
    * Generates a new local storage key by provided key.
    *
@@ -1478,18 +1563,18 @@ class S {
     this.set(`cache.listCall.${t}.lastTimeStamp`, String(e));
   }
 }
-class Pt {
+class It {
   constructor() {
     /**
      * Master indexed db client.
      */
-    m(this, "client", new Bt());
+    m(this, "client", new Xt());
   }
   /**
    * Creates a new instance of the SyncTransactionRepository class.
    */
   static create() {
-    return new Pt();
+    return new It();
   }
   /**
    * Returns all waited transactions from the indexed db.
@@ -1531,30 +1616,48 @@ class dt {
    * Runs the synchronization process.
    */
   async run(t, e) {
+    var d;
     if (!navigator.onLine)
       return;
-    const r = p.options.sync.startDate instanceof Date && t !== "_Model" ? Math.floor(p.options.sync.startDate.getTime() / 1e3) : 0, a = S.getLastSyncedAt(t) ?? r, { transactions: s, lastTimestamp: i } = await Ht.create().type(e).query({
+    const r = p.options.sync.startDate instanceof Date && t !== "_Model" ? Math.floor(p.options.sync.startDate.getTime() / 1e3) : 0, a = M.getLastSyncedAt(t) ?? r, { transactions: s, lastTimestamp: i } = await Qt.create().type(e).query({
       from: a,
       models: t ? [t] : p.options.sync.models ?? [
         "_Project",
         ...(await R.list()).map((u) => u.getName()).filter((u) => u.startsWith("bdt") && !["bdt24prszej_appfiles", "bdt24prszej_apps"].includes(u))
       ]
-    }).perform(), o = Pt.create();
-    await o.putMultiple(s), S.setLastSyncedAt(i ?? Math.floor(Date.now() / 1e3), t), await q.create().run(
-      (await o.all()).map((u) => $.fromObject(u))
-    ), a !== i && await this.run(t, e);
+    }).perform(), o = It.create();
+    await o.putMultiple(s), M.setLastSyncedAt(i ?? Math.floor(Date.now() / 1e3), t);
+    const l = (await o.all()).map((u) => $.fromObject(u)), c = await V.create().run(l);
+    if (p.options.sync.live === !0) {
+      const u = /* @__PURE__ */ new Set();
+      for (const h of l)
+        if (((d = c.get(h.hash)) == null ? void 0 : d.status) === C.Success)
+          try {
+            const f = await R.get(h.model), g = `${h.model}:${h.blitzID}:${h.action}`;
+            await (f == null ? void 0 : f.memoryClient().applyTransaction(h, !u.has(g))), u.add(g);
+          } catch (f) {
+            console.error(`Live emission failed for transaction ${h.hash}:`, (f == null ? void 0 : f.stack) ?? (f == null ? void 0 : f.message) ?? f);
+          }
+    }
+    a !== i && await this.run(t, e);
   }
   async runAtInterval(t) {
-    for (; ; )
-      await ar(t), await this.run();
+    for (; ; ) {
+      await mr(t);
+      try {
+        await this.run();
+      } catch (e) {
+        console.error("Sync run failed:", (e == null ? void 0 : e.stack) ?? (e == null ? void 0 : e.message) ?? e);
+      }
+    }
   }
 }
-class q {
+class V {
   /**
    * Creates new transaction evaluator.
    */
   static create() {
-    return new q();
+    return new V();
   }
   /**
    * Runs the transaction evaluator with supplied transactions.
@@ -1562,7 +1665,7 @@ class q {
    * @param transactions Transactions to be processed.
    */
   async run(t) {
-    const e = new vt(), r = Pt.create(), a = { add: 1, edit: 2, delete: 3 }, s = await new Bt().openConnection();
+    const e = new pt(), r = It.create(), a = { add: 1, edit: 2, delete: 3 }, s = await new Xt().openConnection();
     t = t.sort((i, o) => a[i.action] - a[o.action]);
     for (const i of t) {
       let o;
@@ -1577,12 +1680,12 @@ class q {
         else
           throw new Error(`Unknown action "${i.action}" on transaction ${i.hash}`);
         await s.put("evaluated_transactions", i.toObject());
-      } catch (u) {
-        o = new B(
+      } catch (l) {
+        o = new Y(
           i.blitzID,
           i.hash,
-          W.Error,
-          u.message
+          C.Error,
+          l.message
         );
       }
       e.push(o), await r.delete(i.hash);
@@ -1598,10 +1701,10 @@ class q {
     var i;
     const e = await R.get(t.model), r = e.idbClient();
     if (await r.find(t.hash))
-      return new B(
+      return new Y(
         t.hash,
         t.hash,
-        W.Error,
+        C.Error,
         `Object with ${t.hash} already exists on ${t.model} model.`
       );
     const a = e.getClusterManager(), s = {
@@ -1612,16 +1715,16 @@ class q {
       _editURLs: a.toArray().map((o) => o.options.addURL).flat(),
       ...(() => {
         const o = {};
-        for (const [u, c] of Object.entries(t.data)) {
-          const l = e.getAttributeDetails(u);
-          if (l && Array.isArray(l.type) && c !== void 0) {
-            const d = typeof c == "string" ? JSON.parse(c) : c;
-            u.endsWith("_mtm") ? o[u] = d.map((f, g) => ({
+        for (const [l, c] of Object.entries(t.data)) {
+          const d = e.getAttributeDetails(l);
+          if (d && Array.isArray(d.type) && c !== void 0) {
+            const u = typeof c == "string" ? JSON.parse(c) : c;
+            l.endsWith("_mtm") ? o[l] = u.map((f, g) => ({
               _blitzID: typeof f == "string" ? f : f._blitzID,
-              _mtmSort: typeof f == "string" ? (d.length - g) * 15 : f._mtmSort
-            })) : o[u] = d;
+              _mtmSort: typeof f == "string" ? (u.length - g) * 15 : f._mtmSort
+            })) : o[l] = u;
           } else
-            o[u] = c;
+            o[l] = c;
         }
         return o;
       })()
@@ -1630,7 +1733,7 @@ class q {
       const o = /* @__PURE__ */ new Date();
       o.setTime(t.blitzstamp * 1e3 + (/* @__PURE__ */ new Date("2021-01-01T00:00:00Z")).getTime()), o.setMinutes(o.getMinutes() - o.getTimezoneOffset()), s._publishingdate = o.toISOString().slice(0, 19).replace("T", " ");
     }
-    return !s._userID && t.userhash && (s._userID = t.userhash), t.data = s, await r.create(s), new B(t.hash, t.hash, W.Success);
+    return !s._userID && t.userhash && (s._userID = t.userhash), t.data = s, await r.create(s), new Y(t.hash, t.hash, C.Success);
   }
   /**
    * Processes the `edit` transaction.
@@ -1641,45 +1744,45 @@ class q {
     var c;
     const r = await R.get(t.model), a = r.idbClient(), s = Object.keys(t.data);
     if (s.length !== 1)
-      return new B(
+      return new Y(
         t.blitzID,
         t.hash,
-        W.Error,
+        C.Error,
         s.length > 1 ? "Can not edit more than one attribute at once." : "Attribute not provided to perform edit."
       );
     if (await e.get("evaluated_transactions", t.hash))
-      return new B(
+      return new Y(
         t.blitzID,
         t.hash,
-        W.Notice,
+        C.Notice,
         `Transaction ${t.hash} already processed.`
       );
     const i = await a.find(t.blitzID);
     if (!i)
-      return new B(t.blitzID, t.hash, W.Notice, `Object with ${t.blitzID} does not exists.`);
+      return new Y(t.blitzID, t.hash, C.Notice, `Object with ${t.blitzID} does not exists.`);
     if (i._savetimestamp && i._savetimestamp > t.blitzstamp)
-      return new B(t.blitzID, t.hash, W.Notice, "Old transaction.");
-    const o = s.shift(), u = (c = r.getAttributeDetails(o)) == null ? void 0 : c.type;
-    if (Array.isArray(u))
+      return new Y(t.blitzID, t.hash, C.Notice, "Old transaction.");
+    const o = s.shift(), l = (c = r.getAttributeDetails(o)) == null ? void 0 : c.type;
+    if (Array.isArray(l))
       if (Object.hasOwn(t.data[o], "add")) {
         i[o] = Array.isArray(i[o]) ? i[o] : [];
-        const l = t.data[o].add;
+        const d = t.data[o].add;
         o.endsWith("_mtm") ? i[o].push({
-          _blitzID: typeof l == "string" ? l : l._blitzID,
-          _mtmSort: typeof l == "string" ? i[o].length ? Math.max(...i[o].map((h) => h._mtmSort)) + 15 : 15 : l._mtmSort
-        }) : i[o].push(l);
+          _blitzID: typeof d == "string" ? d : d._blitzID,
+          _mtmSort: typeof d == "string" ? i[o].length ? Math.max(...i[o].map((h) => h._mtmSort)) + 15 : 15 : d._mtmSort
+        }) : i[o].push(d);
       } else if (Object.hasOwn(t.data[o], "remove") && Array.isArray(i[o])) {
-        const l = t.data[o].remove;
-        o.endsWith("_mtm") ? i[o].splice(i[o].findIndex((h) => h._blitzID === l), 1) : i[o].splice(i[o].findIndex((h) => h === l), 1);
+        const d = t.data[o].remove;
+        o.endsWith("_mtm") ? i[o].splice(i[o].findIndex((h) => h._blitzID === d), 1) : i[o].splice(i[o].findIndex((h) => h === d), 1);
       } else
-        return new B(t.blitzID, t.hash, W.Error, `Invalid operation for array attribute ${o}.`);
+        return new Y(t.blitzID, t.hash, C.Error, `Invalid operation for array attribute ${o}.`);
     else {
-      const l = t.data[o];
-      if (i[o] === l.new)
-        return new B(t.blitzID, t.hash, W.Notice, "Conflict");
-      i[o] = l.new;
+      const d = t.data[o];
+      if (i[o] === d.new)
+        return new Y(t.blitzID, t.hash, C.Notice, "Conflict");
+      i[o] = d.new;
     }
-    return await a.update(i), new B(t.blitzID, t.hash, W.Success);
+    return await a.update(i), new Y(t.blitzID, t.hash, C.Success);
   }
   /**
    * Processes the `delete` transaction.
@@ -1688,10 +1791,10 @@ class q {
    */
   async processDeleteTransaction(t) {
     const r = (await R.get(t.model)).idbClient();
-    return await r.find(t.blitzID) ? (await r.delete(t.blitzID), new B(t.blitzID, t.hash, W.Success)) : new B(t.blitzID, t.hash, W.Error, `Object with ${t.blitzID} does not exists.`);
+    return await r.find(t.blitzID) ? (await r.delete(t.blitzID), new Y(t.blitzID, t.hash, C.Success)) : new Y(t.blitzID, t.hash, C.Error, `Object with ${t.blitzID} does not exists.`);
   }
 }
-class sr {
+class gr {
   //Constructor
   constructor(t) {
     //Properties
@@ -1701,21 +1804,21 @@ class sr {
   //Update job
   async _updateJob(t) {
     var e;
-    return await ((e = this._db) == null ? void 0 : e.put(_.store, t)), t;
+    return await ((e = this._db) == null ? void 0 : e.put(v.store, t)), t;
   }
   //Delete job
   async _deleteJob(t) {
     var e;
-    await ((e = this._db) == null ? void 0 : e.delete(_.store, t.id));
+    await ((e = this._db) == null ? void 0 : e.delete(v.store, t.id));
   }
   //Get completed replicated jobs
   async _getCompletedReplicatedJobs(t) {
     var s;
-    const e = [], r = (s = this._db) == null ? void 0 : s.transaction(_.store, "readonly").store;
+    const e = [], r = (s = this._db) == null ? void 0 : s.transaction(v.store, "readonly").store;
     let a = await (r == null ? void 0 : r.openCursor(null, "next"));
     for (; a; )
       //Only completed jobs
-      a.value.status === w.Completed && //Not the same destination
+      a.value.status === b.Completed && //Not the same destination
       a.value.url !== t.url && //Only edit jobs
       a.value.transaction.action === D.Edit && //Only same object jobs
       a.value.transaction.blitzID === t.transaction.blitzID && //Only same hash
@@ -1725,11 +1828,11 @@ class sr {
   //Get future jobs
   async _getFutureJobs(t, e) {
     var o;
-    const r = [], a = (o = this._db) == null ? void 0 : o.transaction(_.store, "readonly").store, s = IDBKeyRange.lowerBound(t.createdAt, !0);
-    let i = await (a == null ? void 0 : a.index(_.timeIndex).openCursor(s, "next"));
+    const r = [], a = (o = this._db) == null ? void 0 : o.transaction(v.store, "readonly").store, s = IDBKeyRange.lowerBound(t.createdAt, !0);
+    let i = await (a == null ? void 0 : a.index(v.timeIndex).openCursor(s, "next"));
     for (; i; )
       //Only conflict jobs
-      i.value.status === w.Conflict && //Same destination
+      i.value.status === b.Conflict && //Same destination
       i.value.url === t.url && //Only edit jobs
       i.value.transaction.action === D.Edit && //Only same object jobs
       i.value.transaction.blitzID === t.transaction.blitzID && //Only same attribute jobs
@@ -1744,7 +1847,7 @@ class sr {
     if (r.length > 0) {
       const o = r[r.length - 1];
       if (o && ((s = o.transaction.data) == null ? void 0 : s[e].new) !== void 0 && ((i = t.transaction.data) == null ? void 0 : i[e].prev) !== void 0) {
-        const u = {
+        const l = {
           [e]: {
             prev: t.transaction.data[e].prev,
             new: o.transaction.data[e].new
@@ -1754,14 +1857,14 @@ class sr {
           ...t,
           transaction: {
             ...t.transaction,
-            data: u,
+            data: l,
             blitzstamp: rt(),
-            hash: ot({ ...u, blitzID: t.transaction.blitzID, timestamp: c })
+            hash: ot({ ...l, blitzID: t.transaction.blitzID, timestamp: c })
           },
           dataHistory: [...t.dataHistory ?? [], { timestamp: c, type: "conflict-succeeding", data: t.transaction.data }]
         });
-        for (const l of r)
-          await this._deleteJob(l);
+        for (const d of r)
+          await this._deleteJob(d);
       }
     }
     return a;
@@ -1776,7 +1879,7 @@ class sr {
     const a = `There was a conflict.
 The data got changed to "${r.message}".
 Do you still want to perform your change to "${(s = r.transaction.data) == null ? void 0 : s[e].new}"?`;
-    confirm(a) ? (r = await this.force(r), await p.queue.updateSyncStatus(r, w.Pending)) : (await this.revert(r), await p.queue.updateSyncStatus(r, w.Completed)), p.dispatchEvent("queue:conflict", r);
+    confirm(a) ? (r = await this.force(r), await p.queue.updateSyncStatus(r, b.Pending)) : (await this.revert(r), await p.queue.updateSyncStatus(r, b.Completed)), p.dispatchEvent("queue:conflict", r);
   }
   //Force the job
   async force(t) {
@@ -1788,7 +1891,7 @@ Do you still want to perform your change to "${(s = r.transaction.data) == null 
       }
     }, s = (/* @__PURE__ */ new Date()).getTime(), i = await this._updateJob({
       ...t,
-      status: w.Pending,
+      status: b.Pending,
       transaction: {
         ...t.transaction,
         data: a,
@@ -1797,7 +1900,7 @@ Do you still want to perform your change to "${(s = r.transaction.data) == null 
       },
       dataHistory: [...t.dataHistory ?? [], { timestamp: s, type: "conflict-force", data: t.transaction.data }]
     });
-    await q.create().run([
+    await V.create().run([
       new $({
         action: "edit",
         model: i.transaction.model,
@@ -1805,10 +1908,10 @@ Do you still want to perform your change to "${(s = r.transaction.data) == null 
         data: i.transaction.data
       })
     ]);
-    for (const u of r)
+    for (const l of r)
       await this._updateJob({
-        ...u,
-        status: w.Pending
+        ...l,
+        status: b.Pending
       });
     return i;
   }
@@ -1826,18 +1929,18 @@ Do you still want to perform your change to "${(s = r.transaction.data) == null 
         }
       }
     });
-    await q.create().run([r]);
+    await V.create().run([r]);
     const a = await this._getFutureJobs(t, e), s = await this._getCompletedReplicatedJobs(t);
     for (const o of [t, ...a])
       await this._deleteJob(o);
     if (s.length > 0) {
-      const o = s.map((u) => u.url).filter((u, c, l) => l.findIndex((d) => d === u) === c);
-      for (const u of o)
-        await p.queue.addJob(u, r.toObject());
+      const o = s.map((l) => l.url).filter((l, c, d) => d.findIndex((u) => u === l) === c);
+      for (const l of o)
+        await p.queue.addJob(l, r.toObject());
     }
   }
 }
-class ir {
+class wr {
   //Constructor
   constructor(t) {
     //Properties
@@ -1847,18 +1950,18 @@ class ir {
   //Update job
   async _updateJob(t) {
     var e;
-    return await ((e = this._db) == null ? void 0 : e.put(_.store, t)), t;
+    return await ((e = this._db) == null ? void 0 : e.put(v.store, t)), t;
   }
   //Delete job
   async _deleteJob(t) {
     var e;
-    await ((e = this._db) == null ? void 0 : e.delete(_.store, t.id));
+    await ((e = this._db) == null ? void 0 : e.delete(v.store, t.id));
   }
   //Get future jobs
   async _getFutureJobs(t) {
     var i;
-    const e = [], r = (i = this._db) == null ? void 0 : i.transaction(_.store, "readonly").store, a = IDBKeyRange.lowerBound(t.createdAt, !0);
-    let s = await (r == null ? void 0 : r.index(_.timeIndex).openCursor(a, "next"));
+    const e = [], r = (i = this._db) == null ? void 0 : i.transaction(v.store, "readonly").store, a = IDBKeyRange.lowerBound(t.createdAt, !0);
+    let s = await (r == null ? void 0 : r.index(v.timeIndex).openCursor(a, "next"));
     for (; s; )
       //Same destination
       s.value.url === t.url && //Only same object jobs
@@ -1870,7 +1973,7 @@ class ir {
     for (const e of t)
       await this._updateJob({
         ...e,
-        status: w.Pending
+        status: b.Pending
       });
   }
   //Revert jobs
@@ -1880,7 +1983,7 @@ class ir {
     const e = t[0];
     if (e) {
       if (e.transaction.action === D.Add) {
-        await q.create().run([
+        await V.create().run([
           new $({
             action: "delete",
             model: e.transaction.model,
@@ -1907,7 +2010,7 @@ class ir {
             }
           }
         });
-        await q.create().run([i]);
+        await V.create().run([i]);
         for (const o of t)
           await this._deleteJob(o);
       }
@@ -1916,17 +2019,17 @@ class ir {
   //Get all failed/conflict jobs grouped by server URL
   async getAll() {
     var a;
-    const t = {}, e = (a = this._db) == null ? void 0 : a.transaction(_.store, "readonly").store;
-    let r = await (e == null ? void 0 : e.index(_.timeIndex).openCursor(null, "next"));
+    const t = {}, e = (a = this._db) == null ? void 0 : a.transaction(v.store, "readonly").store;
+    let r = await (e == null ? void 0 : e.index(v.timeIndex).openCursor(null, "next"));
     for (; r; ) {
       if (
         //Only unresolved jobs
-        r.value.status !== w.Completed
+        r.value.status !== b.Completed
       ) {
         if (t[r.value.url] || (t[r.value.url] = []), r.value.transaction.action === D.Add || r.value.transaction.action === D.Delete)
           t[r.value.url].push([r.value]);
         else if (r.value.transaction.action === D.Edit) {
-          const s = Object.keys(r.value.transaction.data ?? {})[0], i = r.value.transaction.blitzID, o = t[r.value.url].findIndex((u) => u[0].transaction.action === D.Edit && u[0].transaction.blitzID === i && Object.keys(u[0].transaction.data ?? {})[0] === s);
+          const s = Object.keys(r.value.transaction.data ?? {})[0], i = r.value.transaction.blitzID, o = t[r.value.url].findIndex((l) => l[0].transaction.action === D.Edit && l[0].transaction.blitzID === i && Object.keys(l[0].transaction.data ?? {})[0] === s);
           o === -1 ? t[r.value.url].push([r.value]) : t[r.value.url][o].push(r.value);
         }
       }
@@ -1935,7 +2038,7 @@ class ir {
     return t;
   }
 }
-class or {
+class br {
   constructor() {
     // Properties
     m(this, "_db", null);
@@ -1946,7 +2049,7 @@ class or {
   _handleWorkerMessage(t) {
     var r;
     const e = t.data.job;
-    e.status === w.Completed ? p.dispatchEvent("queue:success", e) : e.status === w.Failed ? p.dispatchEvent("queue:failure", e) : e.status === w.Conflict && (document.hidden || (r = p.queue.conflictHandler) == null || r.prompt(e)), p._Model.get(e.transaction.model).then((a) => {
+    e.status === b.Completed ? p.dispatchEvent("queue:success", e) : e.status === b.Failed ? p.dispatchEvent("queue:failure", e) : e.status === b.Conflict && (document.hidden || (r = p.queue.conflictHandler) == null || r.prompt(e)), p._Model.get(e.transaction.model).then((a) => {
       var s;
       return (s = a == null ? void 0 : a.memoryClient().get(e.transaction.blitzID)) == null ? void 0 : s.dispatchEvent("syncStatusChange", e);
     }), p.queue.updateSyncStatus(e);
@@ -1966,35 +2069,40 @@ class or {
       if (e)
         i._syncSignal.set({ status: e });
       else {
-        const u = (await p.queue.getJobsForObject(t.transaction.blitzID)).filter((f) => {
+        const l = (await p.queue.getJobsForObject(t.transaction.blitzID)).filter((f) => {
           var g;
           return f.transaction.action === D.Edit && ((g = f.transaction.data) == null ? void 0 : g[s]) !== void 0;
         });
-        let c = w.Pending, l;
-        const d = u.find((f) => f.status === w.Failed), h = u.find((f) => f.status === w.Conflict && f.message !== void 0) ?? u.find((f) => f.status === w.Conflict);
-        d ? (c = w.Failed, l = d) : h ? (c = w.Conflict, l = h) : u.every((f) => f.status === w.Completed) && (c = w.Completed), i._syncSignal.set({ status: c, job: l });
+        let c = b.Pending, d;
+        const u = l.find((f) => f.status === b.Failed), h = l.find((f) => f.status === b.Conflict && f.message !== void 0) ?? l.find((f) => f.status === b.Conflict);
+        u ? (c = b.Failed, d = u) : h ? (c = b.Conflict, d = h) : l.every((f) => f.status === b.Completed) && (c = b.Completed), i._syncSignal.set({ status: c, job: d });
       }
   }
   // Initialize queue client
   async init() {
-    if (this._db = await it(_.name, 1, {
-      upgrade: (e) => {
-        const r = e.createObjectStore(_.store, { keyPath: "id" });
-        r.createIndex(_.timeIndex, "createdAt"), r.createIndex(_.objectIndex, "transaction.blitzID");
+    if (this._db = await it(v.name, 1, {
+      upgrade: (r) => {
+        const a = r.createObjectStore(v.store, { keyPath: "id" });
+        a.createIndex(v.timeIndex, "createdAt"), a.createIndex(v.objectIndex, "transaction.blitzID");
       }
-    }), !this._db.objectStoreNames.contains(_.store))
-      return await $t(_.name), await this.init();
-    this.conflictHandler = new sr(this._db), this.failedHandler = new ir(this._db);
-    const t = new rr(
+    }), !this._db.objectStoreNames.contains(v.store))
+      return await qt(v.name), await this.init();
+    this.conflictHandler = new gr(this._db), this.failedHandler = new wr(this._db);
+    const t = new hr(
       p.options.queue.workerPath,
       { name: "bd-queue-worker" }
     );
-    return t.onerror = () => {
-      console.warn("⚠️ Failed to run the queue's shared worker, please check that the worker path is correct, falling back to running on the same thread!"), new _e(
-        (e) => this._handleWorkerMessage(e),
-        L._globalHeaders
+    t.onerror = () => {
+      console.warn("⚠️ Failed to run the queue's shared worker, please check that the worker path is correct, falling back to running on the same thread!"), new Ae(
+        (r) => this._handleWorkerMessage(r),
+        P._globalHeaders,
+        P._scopedHeaders
       ).start();
-    }, t.port.onmessage = this._handleWorkerMessage, window.addEventListener("beforeunload", () => t.port.postMessage({ type: "close" })), L._globalHeaders && t.port.postMessage({ type: "headers", data: L._globalHeaders }), this;
+    }, t.port.onmessage = this._handleWorkerMessage, window.addEventListener("beforeunload", () => t.port.postMessage({ type: "close" }));
+    const e = () => {
+      t.port.postMessage({ type: "headers", data: P._globalHeaders }), t.port.postMessage({ type: "scopedHeaders", data: P._scopedHeaders });
+    };
+    return e(), P.onGlobalHeadersChange(e), this;
   }
   // Add job to queue worker
   async addJob(t, e) {
@@ -2003,31 +2111,31 @@ class or {
       id: crypto.randomUUID(),
       url: t,
       transaction: e,
-      status: w.Pending,
+      status: b.Pending,
       createdAt: Date.now(),
       attempts: 0,
       priority: 1
     };
-    await ((a = this._db) == null ? void 0 : a.add(_.store, r)), await this.updateSyncStatus(r, r.status);
+    await ((a = this._db) == null ? void 0 : a.add(v.store, r)), await this.updateSyncStatus(r, r.status);
   }
   // Delete job from queue worker
   async deleteJob(t) {
     var e;
-    await ((e = this._db) == null ? void 0 : e.delete(_.store, t.id));
+    await ((e = this._db) == null ? void 0 : e.delete(v.store, t.id));
   }
   // Get all jobs
   async getJobs() {
     var t;
-    return await ((t = this._db) == null ? void 0 : t.getAll(_.store));
+    return await ((t = this._db) == null ? void 0 : t.getAll(v.store));
   }
   // Get all jobs for an object
   async getJobsForObject(t) {
     var r;
-    const e = await ((r = this._db) == null ? void 0 : r.getAllFromIndex(_.store, _.objectIndex, t));
+    const e = await ((r = this._db) == null ? void 0 : r.getAllFromIndex(v.store, v.objectIndex, t));
     return e.sort((a, s) => a.createdAt - s.createdAt), e;
   }
 }
-const ut = {
+const lt = {
   a: ["à", "á", "â", "ä"],
   c: ["ç"],
   e: ["è", "é", "ê"],
@@ -2044,7 +2152,7 @@ class gt {
     this.children = {}, this.isEndOfWord = !1, this.items = [];
   }
 }
-class cr {
+class yr {
   /**
    * Constructor for the Trie.
    *
@@ -2095,8 +2203,8 @@ class cr {
       a == null || a.forEach((i) => {
         if (!s[i])
           return;
-        s[i].toString().toLowerCase().split(" ").forEach((u) => {
-          u !== "" && (r[u] ? r[u].items.push(s._blitzID) : r[u] = {
+        s[i].toString().toLowerCase().split(" ").forEach((l) => {
+          l !== "" && (r[l] ? r[l].items.push(s._blitzID) : r[l] = {
             items: [s._blitzID]
           });
         });
@@ -2104,7 +2212,7 @@ class cr {
     }), r;
   }
   getVariants(t) {
-    const e = ut[t], r = [t];
+    const e = lt[t], r = [t];
     return e && r.push(...e), r;
   }
   generateAllPermutations(t, e, r, a, s) {
@@ -2113,7 +2221,7 @@ class cr {
       return;
     }
     const i = r[e], o = e !== r.length - 1 ? i + r[e + 1] : void 0;
-    if (!ut[i] && !(o && ut[o])) {
+    if (!lt[i] && !(o && lt[o])) {
       this.generateAllPermutations(
         t + i,
         e + 1,
@@ -2123,9 +2231,9 @@ class cr {
       );
       return;
     }
-    if (ut[i]) {
-      const u = a[i];
-      for (const c of u)
+    if (lt[i]) {
+      const l = a[i];
+      for (const c of l)
         this.generateAllPermutations(
           t + c,
           e + 1,
@@ -2134,9 +2242,9 @@ class cr {
           s
         );
     }
-    if (o && ut[o]) {
-      const u = a[o];
-      for (const c of u)
+    if (o && lt[o]) {
+      const l = a[o];
+      for (const c of l)
         this.generateAllPermutations(
           t + c,
           e + 2,
@@ -2198,39 +2306,39 @@ class cr {
     }
   }
 }
-function De(n, t, e) {
+function ze(n, t, e) {
   var a;
   let r = !0;
   for (const s of t) {
     if (!r)
       return !1;
-    const [i, o, u] = s, c = (a = e == null ? void 0 : e[i]) == null ? void 0 : a.type;
-    let l = n[i], d = u;
-    switch (typeof l == "string" && (c === "datetime" || c === "date" || i === "_publishingdate") && (l = new Date(l).getTime()), typeof d == "string" && (c === "datetime" || c === "date" || i === "_publishingdate") && (d = new Date(d).getTime()), o) {
+    const [i, o, l] = s, c = (a = e == null ? void 0 : e[i]) == null ? void 0 : a.type;
+    let d = n[i], u = l;
+    switch (typeof d == "string" && (c === "datetime" || c === "date" || i === "_publishingdate") && (d = new Date(d).getTime()), typeof u == "string" && (c === "datetime" || c === "date" || i === "_publishingdate") && (u = new Date(u).getTime()), o) {
       case "LIKE":
-        const h = `${d}`.startsWith("%"), f = `${d}`.endsWith("%"), g = `${d}`.replaceAll("%", "");
-        h === f ? r = `${l}`.includes(g) : h ? r = `${l}`.endsWith(g) : f && (r = `${l}`.startsWith(g));
+        const h = `${u}`.startsWith("%"), f = `${u}`.endsWith("%"), g = `${u}`.replaceAll("%", "");
+        h === f ? r = `${d}`.includes(g) : h ? r = `${d}`.endsWith(g) : f && (r = `${d}`.startsWith(g));
         break;
       case "IN":
-        r = (Array.isArray(d) ? d : [d]).includes(l);
+        r = (Array.isArray(u) ? u : [u]).includes(d);
         break;
       case "=":
-        r = l === d;
+        r = d === u;
         break;
       case "!=":
-        r = l !== d;
+        r = d !== u;
         break;
       case ">":
-        r = l > d;
+        r = d > u;
         break;
       case "<":
-        r = l < d;
+        r = d < u;
         break;
       case ">=":
-        r = l >= d;
+        r = d >= u;
         break;
       case "<=":
-        r = l <= d;
+        r = d <= u;
         break;
       default:
         r = !0;
@@ -2239,7 +2347,7 @@ function De(n, t, e) {
   }
   return r;
 }
-class ur {
+class pr {
   /**
    * Constructor for the BDModelClient.
    */
@@ -2265,26 +2373,26 @@ class ur {
    * @return a promise that resolves to an array of filtered items
    */
   async query(t, e) {
-    const r = await this.connect(), a = r.transaction("objects", "readonly").store, s = Array.from(a.indexNames), i = t.customSort && s.includes(t.customSort) ? t.customSort : s.includes("_projectsort") && (t.conditions ?? []).find((f) => f[0] === "project_fk" && f[1] === "=") ? "_projectsort" : s.includes("_sort") ? "_sort" : "_blitzstamp", o = t.customSortDirection === "ASC" ? "next" : "prev", u = t.pagination !== void 0 ? o === "next" ? IDBKeyRange.lowerBound(t.pagination.toString(), !0) : IDBKeyRange.upperBound(t.pagination.toString(), !0) : null;
-    let c = await a.index(i).openCursor(u, o);
-    const l = this.model.getAttributesDetails() ?? void 0;
-    let d = [];
+    const r = await this.connect(), a = r.transaction("objects", "readonly").store, s = Array.from(a.indexNames), i = t.customSort && s.includes(t.customSort) ? t.customSort : s.includes("_projectsort") && (t.conditions ?? []).find((f) => f[0] === "project_fk" && f[1] === "=") ? "_projectsort" : s.includes("_sort") ? "_sort" : "_blitzstamp", o = t.customSortDirection === "ASC" ? "next" : "prev", l = t.pagination !== void 0 ? o === "next" ? IDBKeyRange.lowerBound(t.pagination.toString(), !0) : IDBKeyRange.upperBound(t.pagination.toString(), !0) : null;
+    let c = await a.index(i).openCursor(l, o);
+    const d = this.model.getAttributesDetails() ?? void 0;
+    let u = [];
     for (; c; ) {
       if (e && !e.includes(c.value.blitzID)) {
         c = await c.continue();
         continue;
       }
-      if (De(c.value, t.conditions ?? [], l) && (d.push(c.value), t.limit && d.length >= t.limit))
+      if (ze(c.value, t.conditions ?? [], d) && (u.push(c.value), t.limit && u.length >= t.limit))
         break;
       c = await c.continue();
     }
     if (r.close(), t.var && t.var.length > 0) {
       const f = ["_blitzID", "_localID", "@permissions", "_sort", "_clusters", "_editURLs", "_savetimestamp", ...t.var];
-      for (const g of d)
-        for (const v in g)
-          f.includes(v) || delete g[v];
+      for (const g of u)
+        for (const _ in g)
+          f.includes(_) || delete g[_];
     }
-    return d;
+    return u;
   }
   /**
    * A function that searches for a given query in a specified model.
@@ -2295,7 +2403,7 @@ class ur {
    * @return an array of blitzIDs that match the query
    */
   async search(t, e) {
-    const r = await this.connect(), a = new cr(this.model).loadFromJson(r.get("tree", this.model.getName()));
+    const r = await this.connect(), a = new yr(this.model).loadFromJson(r.get("tree", this.model.getName()));
     r.close();
     const s = a.search(t);
     return t !== "" && s.length === 0 ? [] : this.query({ conditions: e }, s);
@@ -2327,9 +2435,9 @@ class ur {
     var s, i;
     const t = this.model.getAttributesDetails(), e = ["1", !0].includes((s = this.model._attributes.hassort) == null ? void 0 : s.value), r = e && ["1", !0].includes((i = this.model._attributes.hasprojects) == null ? void 0 : i.value);
     return await it(this.model.getName(), 1, {
-      upgrade: (o, u, c, l, d) => {
-        const h = S.getDatabases();
-        if (h.includes(o.name) || (h.push(o.name), S.setDatabases(h)), c !== 1)
+      upgrade: (o, l, c, d, u) => {
+        const h = M.getDatabases();
+        if (h.includes(o.name) || (h.push(o.name), M.setDatabases(h)), c !== 1)
           return;
         o.createObjectStore("tree", { keyPath: "name" });
         const f = o.createObjectStore("objects", { keyPath: "_blitzID" });
@@ -2396,7 +2504,7 @@ class ur {
           database.close();
       }*/
 }
-class Yt {
+class Kt {
   /**
    * Set up the subject.
    */
@@ -2434,13 +2542,13 @@ class Yt {
    * @returns New Subject that only emits values passing the filter.
    */
   filterPipe(t) {
-    const e = new Yt();
+    const e = new Kt();
     return e._cleanUp = this.subscribe((r) => {
       t(r) && e.emit(r);
     }), e;
   }
 }
-const xt = class xt {
+const kt = class kt {
   /**
    * Constructor.
    */
@@ -2470,16 +2578,16 @@ const xt = class xt {
    * @returns Final object in memory
    */
   update(t) {
-    var s;
+    var i;
     const e = this.getAll();
     if (!e.has(t._blitzID.value))
       return e.set(t._blitzID.value, t), t;
-    const r = e.get(t._blitzID.value), a = Object.keys(this.model.getAttributesDetails() ?? {});
-    for (const i of a) {
-      const o = (s = t[i]) == null ? void 0 : s._value;
-      if (o !== void 0) {
-        const u = r[i];
-        u && (u._value = o, u._valueSignal.set(o, !1));
+    const r = e.get(t._blitzID.value), a = Object.keys(this.model.getAttributesDetails() ?? {}), s = p.options.sync.live === !0;
+    for (const o of a) {
+      const l = (i = t[o]) == null ? void 0 : i._value;
+      if (l !== void 0) {
+        const c = r[o];
+        c && (c._value = l, c._valueSignal.set(l, s));
       }
     }
     return r;
@@ -2499,7 +2607,32 @@ const xt = class xt {
    * @param transaction Transaction to be emitted.
    */
   emit(t) {
-    xt.channel.emit(t);
+    kt.channel.emit(t);
+  }
+  /**
+   * Apply a sync-evaluated transaction to memory and notify live subscribers.
+   *
+   * The local database already holds the evaluated result, so edited values
+   * are read back from it — one canonical write path, no duplicated
+   * evaluation logic. Objects not in memory only emit to the channel.
+   *
+   * @param transaction Transaction already applied to the local database.
+   * @param emitToChannel Emit to the list channel | The caller dedupes per object.
+   */
+  async applyTransaction(t, e = !0) {
+    if (t.action === "delete") {
+      const r = this.get(t.blitzID);
+      this.delete(t.blitzID), r == null || r.dispatchEvent("delete", null);
+    } else if (t.action === "edit") {
+      const r = this.get(t.blitzID);
+      if (r) {
+        const a = await this.model.idbClient().find(t.blitzID);
+        for (const s of Object.keys(t.data))
+          a && r[s] && (r[s].value = a[s]);
+        r.dispatchEvent("remoteChange", t.data);
+      }
+    }
+    e && this.emit(t);
   }
   /**
    * Returns raw objects for the current model filtered by the given conditions and parameters.
@@ -2508,14 +2641,14 @@ const xt = class xt {
    * @return Promise with array of filtered raw objects.
    */
   async query(t = {}) {
-    var d, h;
-    const e = [], r = Array.from(this.getAll().values()).map((f) => f.toObject()), a = this.model.getAttributesDetails() ?? void 0, s = Object.keys(a ?? {}), i = ["1", !0].includes((d = this.model._attributes.hassort) == null ? void 0 : d.value), o = i && ["1", !0].includes((h = this.model._attributes.hasprojects) == null ? void 0 : h.value), u = t.customSort && s.includes(t.customSort) ? t.customSort : o && (t.conditions ?? []).find((f) => f[0] === "project_fk" && f[1] === "=") ? "_projectsort" : i ? "_sort" : "_blitzstamp", c = t.customSortDirection ?? "DESC";
+    var u, h;
+    const e = [], r = Array.from(this.getAll().values()).map((f) => f.toObject()), a = this.model.getAttributesDetails() ?? void 0, s = Object.keys(a ?? {}), i = ["1", !0].includes((u = this.model._attributes.hassort) == null ? void 0 : u.value), o = i && ["1", !0].includes((h = this.model._attributes.hasprojects) == null ? void 0 : h.value), l = t.customSort && s.includes(t.customSort) ? t.customSort : o && (t.conditions ?? []).find((f) => f[0] === "project_fk" && f[1] === "=") ? "_projectsort" : i ? "_sort" : "_blitzstamp", c = t.customSortDirection ?? "DESC";
     r.sort((f, g) => {
       try {
-        const v = parseInt(f[u]), M = parseInt(g[u]);
-        if (v < M)
+        const _ = parseInt(f[l]), S = parseInt(g[l]);
+        if (_ < S)
           return c === "ASC" ? -1 : 1;
-        if (v > M)
+        if (_ > S)
           return c === "ASC" ? 1 : -1;
       } catch {
       }
@@ -2524,19 +2657,19 @@ const xt = class xt {
     for (const f of r) {
       if (t.pagination !== void 0)
         try {
-          const g = parseInt(f[u]);
+          const g = parseInt(f[l]);
           if (typeof g != "number" || (c === "ASC" ? t.pagination >= g : t.pagination <= g))
             continue;
         } catch {
         }
-      if (De(f, t.conditions ?? [], a) && (e.push(f), t.limit && e.length >= t.limit))
+      if (ze(f, t.conditions ?? [], a) && (e.push(f), t.limit && e.length >= t.limit))
         break;
     }
     if (t.var && t.var.length > 0) {
       const f = ["_blitzID", "_localID", "@permissions", "_sort", "_clusters", "_editURLs", "_savetimestamp", ...t.var];
       for (const g of e)
-        for (const v in g)
-          f.includes(v) || delete g[v];
+        for (const _ in g)
+          f.includes(_) || delete g[_];
     }
     return e;
   }
@@ -2544,8 +2677,8 @@ const xt = class xt {
 /**
  * Channel subject for updates.
  */
-m(xt, "channel", new Yt());
-let _t = xt;
+m(kt, "channel", new Kt());
+let _t = kt;
 class ht {
   /**
    * Set up the signal.
@@ -2589,7 +2722,7 @@ class ht {
     return this._subscribers.add(t), e && t(this._value), () => this._subscribers.delete(t);
   }
 }
-class E {
+class U {
   /**
    * Constructs type with provided value.
    *
@@ -2681,13 +2814,13 @@ class E {
     var a;
     const e = this._syncSignal.get() !== null, r = this._syncSignal.subscribe(t, e);
     return e || p.queue.getJobsForObject((a = this._object) == null ? void 0 : a._blitzID.value).then((s) => {
-      const i = s.filter((d) => {
+      const i = s.filter((u) => {
         var h;
-        return d.transaction.action === D.Edit && ((h = d.transaction.data) == null ? void 0 : h[this._name]) !== void 0;
+        return u.transaction.action === D.Edit && ((h = u.transaction.data) == null ? void 0 : h[this._name]) !== void 0;
       });
-      let o = w.Pending, u;
-      const c = i.find((d) => d.status === w.Failed), l = i.find((d) => d.status === w.Conflict && d.message !== void 0) ?? i.find((d) => d.status === w.Conflict);
-      c ? (o = w.Failed, u = c) : l ? (o = w.Conflict, u = l) : i.every((d) => d.status === w.Completed) && (o = w.Completed), this._syncSignal.set({ status: o, job: u }, !1), t(this._syncSignal.get());
+      let o = b.Pending, l;
+      const c = i.find((u) => u.status === b.Failed), d = i.find((u) => u.status === b.Conflict && u.message !== void 0) ?? i.find((u) => u.status === b.Conflict);
+      c ? (o = b.Failed, l = c) : d ? (o = b.Conflict, l = d) : i.every((u) => u.status === b.Completed) && (o = b.Completed), this._syncSignal.set({ status: o, job: l }, !1), t(this._syncSignal.get());
     }), r;
   }
   /**
@@ -2698,7 +2831,7 @@ class E {
     return ((e = (t = this._object) == null ? void 0 : t.model) == null ? void 0 : e.getAttributeDetails(this._name)) || null;
   }
 }
-class lt extends E {
+class ut extends U {
   /**
    * Returns the unserialized value of given value.
    *
@@ -2714,7 +2847,7 @@ class lt extends E {
     return this._value;
   }
 }
-class Me extends E {
+class Pe extends U {
   /**
    * Returns the unserialized value of given value.
    *
@@ -2737,35 +2870,35 @@ class Me extends E {
     return typeof this._value == "boolean" ? this._value ? "1" : "0" : this._value;
   }
 }
-const Se = 6048e5, lr = 864e5, bt = 43200, Zt = 1440, te = Symbol.for("constructDateFrom");
-function K(n, t) {
-  return typeof n == "function" ? n(t) : n && typeof n == "object" && te in n ? n[te](t) : n instanceof Date ? new n.constructor(t) : new Date(t);
+const xe = 6048e5, _r = 864e5, wt = 43200, se = 1440, ie = Symbol.for("constructDateFrom");
+function G(n, t) {
+  return typeof n == "function" ? n(t) : n && typeof n == "object" && ie in n ? n[ie](t) : n instanceof Date ? new n.constructor(t) : new Date(t);
 }
-function U(n, t) {
-  return K(t || n, n);
+function j(n, t) {
+  return G(t || n, n);
 }
-let dr = {};
+let vr = {};
 function mt() {
-  return dr;
+  return vr;
 }
 function ft(n, t) {
-  var o, u, c, l;
-  const e = mt(), r = (t == null ? void 0 : t.weekStartsOn) ?? ((u = (o = t == null ? void 0 : t.locale) == null ? void 0 : o.options) == null ? void 0 : u.weekStartsOn) ?? e.weekStartsOn ?? ((l = (c = e.locale) == null ? void 0 : c.options) == null ? void 0 : l.weekStartsOn) ?? 0, a = U(n, t == null ? void 0 : t.in), s = a.getDay(), i = (s < r ? 7 : 0) + s - r;
+  var o, l, c, d;
+  const e = mt(), r = (t == null ? void 0 : t.weekStartsOn) ?? ((l = (o = t == null ? void 0 : t.locale) == null ? void 0 : o.options) == null ? void 0 : l.weekStartsOn) ?? e.weekStartsOn ?? ((d = (c = e.locale) == null ? void 0 : c.options) == null ? void 0 : d.weekStartsOn) ?? 0, a = j(n, t == null ? void 0 : t.in), s = a.getDay(), i = (s < r ? 7 : 0) + s - r;
   return a.setDate(a.getDate() - i), a.setHours(0, 0, 0, 0), a;
 }
-function Dt(n, t) {
+function vt(n, t) {
   return ft(n, { ...t, weekStartsOn: 1 });
 }
-function Ie(n, t) {
-  const e = U(n, t == null ? void 0 : t.in), r = e.getFullYear(), a = K(e, 0);
+function Ee(n, t) {
+  const e = j(n, t == null ? void 0 : t.in), r = e.getFullYear(), a = G(e, 0);
   a.setFullYear(r + 1, 0, 4), a.setHours(0, 0, 0, 0);
-  const s = Dt(a), i = K(e, 0);
+  const s = vt(a), i = G(e, 0);
   i.setFullYear(r, 0, 4), i.setHours(0, 0, 0, 0);
-  const o = Dt(i);
+  const o = vt(i);
   return e.getTime() >= s.getTime() ? r + 1 : e.getTime() >= o.getTime() ? r : r - 1;
 }
-function Mt(n) {
-  const t = U(n), e = new Date(
+function Dt(n) {
+  const t = j(n), e = new Date(
     Date.UTC(
       t.getFullYear(),
       t.getMonth(),
@@ -2778,97 +2911,97 @@ function Mt(n) {
   );
   return e.setUTCFullYear(t.getFullYear()), +n - +e;
 }
-function zt(n, ...t) {
-  const e = K.bind(
+function Ot(n, ...t) {
+  const e = G.bind(
     null,
     n || t.find((r) => typeof r == "object")
   );
   return t.map(e);
 }
-function ee(n, t) {
-  const e = U(n, t == null ? void 0 : t.in);
+function oe(n, t) {
+  const e = j(n, t == null ? void 0 : t.in);
   return e.setHours(0, 0, 0, 0), e;
 }
-function hr(n, t, e) {
-  const [r, a] = zt(
+function Dr(n, t, e) {
+  const [r, a] = Ot(
     e == null ? void 0 : e.in,
     n,
     t
-  ), s = ee(r), i = ee(a), o = +s - Mt(s), u = +i - Mt(i);
-  return Math.round((o - u) / lr);
+  ), s = oe(r), i = oe(a), o = +s - Dt(s), l = +i - Dt(i);
+  return Math.round((o - l) / _r);
 }
-function fr(n, t) {
-  const e = Ie(n, t), r = K((t == null ? void 0 : t.in) || n, 0);
-  return r.setFullYear(e, 0, 4), r.setHours(0, 0, 0, 0), Dt(r);
+function Sr(n, t) {
+  const e = Ee(n, t), r = G((t == null ? void 0 : t.in) || n, 0);
+  return r.setFullYear(e, 0, 4), r.setHours(0, 0, 0, 0), vt(r);
 }
 function yt(n, t) {
-  const e = +U(n) - +U(t);
+  const e = +j(n) - +j(t);
   return e < 0 ? -1 : e > 0 ? 1 : e;
 }
-function mr(n) {
-  return K(n, Date.now());
+function Mr(n) {
+  return G(n, Date.now());
 }
-function gr(n) {
+function kr(n) {
   return n instanceof Date || typeof n == "object" && Object.prototype.toString.call(n) === "[object Date]";
 }
-function br(n) {
-  return !(!gr(n) && typeof n != "number" || isNaN(+U(n)));
+function Tr(n) {
+  return !(!kr(n) && typeof n != "number" || isNaN(+j(n)));
 }
-function wr(n, t, e) {
-  const [r, a] = zt(
+function Ir(n, t, e) {
+  const [r, a] = Ot(
     e == null ? void 0 : e.in,
     n,
     t
   ), s = r.getFullYear() - a.getFullYear(), i = r.getMonth() - a.getMonth();
   return s * 12 + i;
 }
-function yr(n) {
+function Or(n) {
   return (t) => {
     const r = (n ? Math[n] : Math.trunc)(t);
     return r === 0 ? 0 : r;
   };
 }
-function pr(n, t) {
-  return +U(n) - +U(t);
+function Ar(n, t) {
+  return +j(n) - +j(t);
 }
-function vr(n, t) {
-  const e = U(n, t == null ? void 0 : t.in);
+function zr(n, t) {
+  const e = j(n, t == null ? void 0 : t.in);
   return e.setHours(23, 59, 59, 999), e;
 }
-function _r(n, t) {
-  const e = U(n, t == null ? void 0 : t.in), r = e.getMonth();
+function Pr(n, t) {
+  const e = j(n, t == null ? void 0 : t.in), r = e.getMonth();
   return e.setFullYear(e.getFullYear(), r + 1, 0), e.setHours(23, 59, 59, 999), e;
 }
-function Dr(n, t) {
-  const e = U(n, t == null ? void 0 : t.in);
-  return +vr(e, t) == +_r(e, t);
+function xr(n, t) {
+  const e = j(n, t == null ? void 0 : t.in);
+  return +zr(e, t) == +Pr(e, t);
 }
-function Mr(n, t, e) {
-  const [r, a, s] = zt(
+function Er(n, t, e) {
+  const [r, a, s] = Ot(
     e == null ? void 0 : e.in,
     n,
     n,
     t
   ), i = yt(a, s), o = Math.abs(
-    wr(a, s)
+    Ir(a, s)
   );
   if (o < 1)
     return 0;
   a.getMonth() === 1 && a.getDate() > 27 && a.setDate(30), a.setMonth(a.getMonth() - i * o);
-  let u = yt(a, s) === -i;
-  Dr(r) && o === 1 && yt(r, s) === 1 && (u = !1);
-  const c = i * (o - +u);
+  let l = yt(a, s) === -i;
+  xr(r) && o === 1 && yt(r, s) === 1 && (l = !1);
+  const c = i * (o - +l);
   return c === 0 ? 0 : c;
 }
-function Sr(n, t, e) {
-  const r = pr(n, t) / 1e3;
-  return yr(e == null ? void 0 : e.roundingMethod)(r);
+function Cr(n, t, e) {
+  const r = Ar(n, t) / 1e3;
+  return Or(e == null ? void 0 : e.roundingMethod)(r);
 }
-function Ir(n, t) {
-  const e = U(n, t == null ? void 0 : t.in);
+function Ur(n, t) {
+  const e = j(n, t == null ? void 0 : t.in);
   return e.setFullYear(e.getFullYear(), 0, 1), e.setHours(0, 0, 0, 0), e;
 }
-const xr = {
+const Lr = {
   lessThanXSeconds: {
     one: "less than a second",
     other: "less than {{count}} seconds"
@@ -2930,54 +3063,54 @@ const xr = {
     one: "almost 1 year",
     other: "almost {{count}} years"
   }
-}, Or = (n, t, e) => {
+}, Wr = (n, t, e) => {
   let r;
-  const a = xr[n];
+  const a = Lr[n];
   return typeof a == "string" ? r = a : t === 1 ? r = a.one : r = a.other.replace("{{count}}", t.toString()), e != null && e.addSuffix ? e.comparison && e.comparison > 0 ? "in " + r : r + " ago" : r;
 };
-function X(n) {
+function K(n) {
   return (t = {}) => {
     const e = t.width ? String(t.width) : n.defaultWidth;
     return n.formats[e] || n.formats[n.defaultWidth];
   };
 }
-const Pr = {
+const jr = {
   full: "EEEE, MMMM do, y",
   long: "MMMM do, y",
   medium: "MMM d, y",
   short: "MM/dd/yyyy"
-}, zr = {
+}, Fr = {
   full: "h:mm:ss a zzzz",
   long: "h:mm:ss a z",
   medium: "h:mm:ss a",
   short: "h:mm a"
-}, Ar = {
+}, Jr = {
   full: "{{date}} 'at' {{time}}",
   long: "{{date}} 'at' {{time}}",
   medium: "{{date}}, {{time}}",
   short: "{{date}}, {{time}}"
-}, Tr = {
-  date: X({
-    formats: Pr,
+}, Nr = {
+  date: K({
+    formats: jr,
     defaultWidth: "full"
   }),
-  time: X({
-    formats: zr,
+  time: K({
+    formats: Fr,
     defaultWidth: "full"
   }),
-  dateTime: X({
-    formats: Ar,
+  dateTime: K({
+    formats: Jr,
     defaultWidth: "full"
   })
-}, Er = {
+}, Rr = {
   lastWeek: "'last' eeee 'at' p",
   yesterday: "'yesterday at' p",
   today: "'today at' p",
   tomorrow: "'tomorrow at' p",
   nextWeek: "eeee 'at' p",
   other: "P"
-}, Cr = (n, t, e, r) => Er[n];
-function F(n) {
+}, Hr = (n, t, e, r) => Rr[n];
+function J(n) {
   return (t, e) => {
     const r = e != null && e.context ? String(e.context) : "standalone";
     let a;
@@ -2992,15 +3125,15 @@ function F(n) {
     return a[s];
   };
 }
-const kr = {
+const $r = {
   narrow: ["B", "A"],
   abbreviated: ["BC", "AD"],
   wide: ["Before Christ", "Anno Domini"]
-}, Wr = {
+}, Br = {
   narrow: ["1", "2", "3", "4"],
   abbreviated: ["Q1", "Q2", "Q3", "Q4"],
   wide: ["1st quarter", "2nd quarter", "3rd quarter", "4th quarter"]
-}, Ur = {
+}, Yr = {
   narrow: ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"],
   abbreviated: [
     "Jan",
@@ -3030,7 +3163,7 @@ const kr = {
     "November",
     "December"
   ]
-}, jr = {
+}, qr = {
   narrow: ["S", "M", "T", "W", "T", "F", "S"],
   short: ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"],
   abbreviated: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
@@ -3043,7 +3176,7 @@ const kr = {
     "Friday",
     "Saturday"
   ]
-}, Lr = {
+}, Vr = {
   narrow: {
     am: "a",
     pm: "p",
@@ -3074,7 +3207,7 @@ const kr = {
     evening: "evening",
     night: "night"
   }
-}, Fr = {
+}, Qr = {
   narrow: {
     am: "a",
     pm: "p",
@@ -3105,7 +3238,7 @@ const kr = {
     evening: "in the evening",
     night: "at night"
   }
-}, Jr = (n, t) => {
+}, Xr = (n, t) => {
   const e = Number(n), r = e % 100;
   if (r > 20 || r < 10)
     switch (r % 10) {
@@ -3117,61 +3250,61 @@ const kr = {
         return e + "rd";
     }
   return e + "th";
-}, Nr = {
-  ordinalNumber: Jr,
-  era: F({
-    values: kr,
+}, Kr = {
+  ordinalNumber: Xr,
+  era: J({
+    values: $r,
     defaultWidth: "wide"
   }),
-  quarter: F({
-    values: Wr,
+  quarter: J({
+    values: Br,
     defaultWidth: "wide",
     argumentCallback: (n) => n - 1
   }),
-  month: F({
-    values: Ur,
+  month: J({
+    values: Yr,
     defaultWidth: "wide"
   }),
-  day: F({
-    values: jr,
+  day: J({
+    values: qr,
     defaultWidth: "wide"
   }),
-  dayPeriod: F({
-    values: Lr,
+  dayPeriod: J({
+    values: Vr,
     defaultWidth: "wide",
-    formattingValues: Fr,
+    formattingValues: Qr,
     defaultFormattingWidth: "wide"
   })
 };
-function J(n) {
+function N(n) {
   return (t, e = {}) => {
     const r = e.width, a = r && n.matchPatterns[r] || n.matchPatterns[n.defaultMatchWidth], s = t.match(a);
     if (!s)
       return null;
-    const i = s[0], o = r && n.parsePatterns[r] || n.parsePatterns[n.defaultParseWidth], u = Array.isArray(o) ? $r(o, (d) => d.test(i)) : (
+    const i = s[0], o = r && n.parsePatterns[r] || n.parsePatterns[n.defaultParseWidth], l = Array.isArray(o) ? Zr(o, (u) => u.test(i)) : (
       // [TODO] -- I challenge you to fix the type
-      Rr(o, (d) => d.test(i))
+      Gr(o, (u) => u.test(i))
     );
     let c;
-    c = n.valueCallback ? n.valueCallback(u) : u, c = e.valueCallback ? (
+    c = n.valueCallback ? n.valueCallback(l) : l, c = e.valueCallback ? (
       // [TODO] -- I challenge you to fix the type
       e.valueCallback(c)
     ) : c;
-    const l = t.slice(i.length);
-    return { value: c, rest: l };
+    const d = t.slice(i.length);
+    return { value: c, rest: d };
   };
 }
-function Rr(n, t) {
+function Gr(n, t) {
   for (const e in n)
     if (Object.prototype.hasOwnProperty.call(n, e) && t(n[e]))
       return e;
 }
-function $r(n, t) {
+function Zr(n, t) {
   for (let e = 0; e < n.length; e++)
     if (t(n[e]))
       return e;
 }
-function qt(n) {
+function Gt(n) {
   return (t, e = {}) => {
     const r = t.match(n.matchPattern);
     if (!r)
@@ -3185,23 +3318,23 @@ function qt(n) {
     return { value: i, rest: o };
   };
 }
-const Hr = /^(\d+)(th|st|nd|rd)?/i, Br = /\d+/i, Yr = {
+const tn = /^(\d+)(th|st|nd|rd)?/i, en = /\d+/i, rn = {
   narrow: /^(b|a)/i,
   abbreviated: /^(b\.?\s?c\.?|b\.?\s?c\.?\s?e\.?|a\.?\s?d\.?|c\.?\s?e\.?)/i,
   wide: /^(before christ|before common era|anno domini|common era)/i
-}, qr = {
+}, nn = {
   any: [/^b/i, /^(a|c)/i]
-}, Vr = {
+}, an = {
   narrow: /^[1234]/i,
   abbreviated: /^q[1234]/i,
   wide: /^[1234](th|st|nd|rd)? quarter/i
-}, Qr = {
+}, sn = {
   any: [/1/i, /2/i, /3/i, /4/i]
-}, Xr = {
+}, on = {
   narrow: /^[jfmasond]/i,
   abbreviated: /^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i,
   wide: /^(january|february|march|april|may|june|july|august|september|october|november|december)/i
-}, Kr = {
+}, cn = {
   narrow: [
     /^j/i,
     /^f/i,
@@ -3230,18 +3363,18 @@ const Hr = /^(\d+)(th|st|nd|rd)?/i, Br = /\d+/i, Yr = {
     /^n/i,
     /^d/i
   ]
-}, Gr = {
+}, ln = {
   narrow: /^[smtwf]/i,
   short: /^(su|mo|tu|we|th|fr|sa)/i,
   abbreviated: /^(sun|mon|tue|wed|thu|fri|sat)/i,
   wide: /^(sunday|monday|tuesday|wednesday|thursday|friday|saturday)/i
-}, Zr = {
+}, un = {
   narrow: [/^s/i, /^m/i, /^t/i, /^w/i, /^t/i, /^f/i, /^s/i],
   any: [/^su/i, /^m/i, /^tu/i, /^w/i, /^th/i, /^f/i, /^sa/i]
-}, tn = {
+}, dn = {
   narrow: /^(a|p|mi|n|(in the|at) (morning|afternoon|evening|night))/i,
   any: /^([ap]\.?\s?m\.?|midnight|noon|(in the|at) (morning|afternoon|evening|night))/i
-}, en = {
+}, hn = {
   any: {
     am: /^a/i,
     pm: /^p/i,
@@ -3252,99 +3385,99 @@ const Hr = /^(\d+)(th|st|nd|rd)?/i, Br = /\d+/i, Yr = {
     evening: /evening/i,
     night: /night/i
   }
-}, rn = {
-  ordinalNumber: qt({
-    matchPattern: Hr,
-    parsePattern: Br,
+}, fn = {
+  ordinalNumber: Gt({
+    matchPattern: tn,
+    parsePattern: en,
     valueCallback: (n) => parseInt(n, 10)
   }),
-  era: J({
-    matchPatterns: Yr,
+  era: N({
+    matchPatterns: rn,
     defaultMatchWidth: "wide",
-    parsePatterns: qr,
+    parsePatterns: nn,
     defaultParseWidth: "any"
   }),
-  quarter: J({
-    matchPatterns: Vr,
+  quarter: N({
+    matchPatterns: an,
     defaultMatchWidth: "wide",
-    parsePatterns: Qr,
+    parsePatterns: sn,
     defaultParseWidth: "any",
     valueCallback: (n) => n + 1
   }),
-  month: J({
-    matchPatterns: Xr,
+  month: N({
+    matchPatterns: on,
     defaultMatchWidth: "wide",
-    parsePatterns: Kr,
+    parsePatterns: cn,
     defaultParseWidth: "any"
   }),
-  day: J({
-    matchPatterns: Gr,
+  day: N({
+    matchPatterns: ln,
     defaultMatchWidth: "wide",
-    parsePatterns: Zr,
+    parsePatterns: un,
     defaultParseWidth: "any"
   }),
-  dayPeriod: J({
-    matchPatterns: tn,
+  dayPeriod: N({
+    matchPatterns: dn,
     defaultMatchWidth: "any",
-    parsePatterns: en,
+    parsePatterns: hn,
     defaultParseWidth: "any"
   })
 }, ct = {
   code: "en-US",
-  formatDistance: Or,
-  formatLong: Tr,
-  formatRelative: Cr,
-  localize: Nr,
-  match: rn,
+  formatDistance: Wr,
+  formatLong: Nr,
+  formatRelative: Hr,
+  localize: Kr,
+  match: fn,
   options: {
     weekStartsOn: 0,
     firstWeekContainsDate: 1
   }
 };
-function nn(n, t) {
-  const e = U(n, t == null ? void 0 : t.in);
-  return hr(e, Ir(e)) + 1;
+function mn(n, t) {
+  const e = j(n, t == null ? void 0 : t.in);
+  return Dr(e, Ur(e)) + 1;
 }
-function an(n, t) {
-  const e = U(n, t == null ? void 0 : t.in), r = +Dt(e) - +fr(e);
-  return Math.round(r / Se) + 1;
+function gn(n, t) {
+  const e = j(n, t == null ? void 0 : t.in), r = +vt(e) - +Sr(e);
+  return Math.round(r / xe) + 1;
 }
-function xe(n, t) {
-  var l, d, h, f;
-  const e = U(n, t == null ? void 0 : t.in), r = e.getFullYear(), a = mt(), s = (t == null ? void 0 : t.firstWeekContainsDate) ?? ((d = (l = t == null ? void 0 : t.locale) == null ? void 0 : l.options) == null ? void 0 : d.firstWeekContainsDate) ?? a.firstWeekContainsDate ?? ((f = (h = a.locale) == null ? void 0 : h.options) == null ? void 0 : f.firstWeekContainsDate) ?? 1, i = K((t == null ? void 0 : t.in) || n, 0);
+function Ce(n, t) {
+  var d, u, h, f;
+  const e = j(n, t == null ? void 0 : t.in), r = e.getFullYear(), a = mt(), s = (t == null ? void 0 : t.firstWeekContainsDate) ?? ((u = (d = t == null ? void 0 : t.locale) == null ? void 0 : d.options) == null ? void 0 : u.firstWeekContainsDate) ?? a.firstWeekContainsDate ?? ((f = (h = a.locale) == null ? void 0 : h.options) == null ? void 0 : f.firstWeekContainsDate) ?? 1, i = G((t == null ? void 0 : t.in) || n, 0);
   i.setFullYear(r + 1, 0, s), i.setHours(0, 0, 0, 0);
-  const o = ft(i, t), u = K((t == null ? void 0 : t.in) || n, 0);
-  u.setFullYear(r, 0, s), u.setHours(0, 0, 0, 0);
-  const c = ft(u, t);
+  const o = ft(i, t), l = G((t == null ? void 0 : t.in) || n, 0);
+  l.setFullYear(r, 0, s), l.setHours(0, 0, 0, 0);
+  const c = ft(l, t);
   return +e >= +o ? r + 1 : +e >= +c ? r : r - 1;
 }
-function sn(n, t) {
-  var o, u, c, l;
-  const e = mt(), r = (t == null ? void 0 : t.firstWeekContainsDate) ?? ((u = (o = t == null ? void 0 : t.locale) == null ? void 0 : o.options) == null ? void 0 : u.firstWeekContainsDate) ?? e.firstWeekContainsDate ?? ((l = (c = e.locale) == null ? void 0 : c.options) == null ? void 0 : l.firstWeekContainsDate) ?? 1, a = xe(n, t), s = K((t == null ? void 0 : t.in) || n, 0);
+function wn(n, t) {
+  var o, l, c, d;
+  const e = mt(), r = (t == null ? void 0 : t.firstWeekContainsDate) ?? ((l = (o = t == null ? void 0 : t.locale) == null ? void 0 : o.options) == null ? void 0 : l.firstWeekContainsDate) ?? e.firstWeekContainsDate ?? ((d = (c = e.locale) == null ? void 0 : c.options) == null ? void 0 : d.firstWeekContainsDate) ?? 1, a = Ce(n, t), s = G((t == null ? void 0 : t.in) || n, 0);
   return s.setFullYear(a, 0, r), s.setHours(0, 0, 0, 0), ft(s, t);
 }
-function on(n, t) {
-  const e = U(n, t == null ? void 0 : t.in), r = +ft(e, t) - +sn(e, t);
-  return Math.round(r / Se) + 1;
+function bn(n, t) {
+  const e = j(n, t == null ? void 0 : t.in), r = +ft(e, t) - +wn(e, t);
+  return Math.round(r / xe) + 1;
 }
-function x(n, t) {
+function T(n, t) {
   const e = n < 0 ? "-" : "", r = Math.abs(n).toString().padStart(t, "0");
   return e + r;
 }
-const G = {
+const Z = {
   // Year
   y(n, t) {
     const e = n.getFullYear(), r = e > 0 ? e : 1 - e;
-    return x(t === "yy" ? r % 100 : r, t.length);
+    return T(t === "yy" ? r % 100 : r, t.length);
   },
   // Month
   M(n, t) {
     const e = n.getMonth();
-    return t === "M" ? String(e + 1) : x(e + 1, 2);
+    return t === "M" ? String(e + 1) : T(e + 1, 2);
   },
   // Day of the month
   d(n, t) {
-    return x(n.getDate(), t.length);
+    return T(n.getDate(), t.length);
   },
   // AM or PM
   a(n, t) {
@@ -3364,26 +3497,26 @@ const G = {
   },
   // Hour [1-12]
   h(n, t) {
-    return x(n.getHours() % 12 || 12, t.length);
+    return T(n.getHours() % 12 || 12, t.length);
   },
   // Hour [0-23]
   H(n, t) {
-    return x(n.getHours(), t.length);
+    return T(n.getHours(), t.length);
   },
   // Minute
   m(n, t) {
-    return x(n.getMinutes(), t.length);
+    return T(n.getMinutes(), t.length);
   },
   // Second
   s(n, t) {
-    return x(n.getSeconds(), t.length);
+    return T(n.getSeconds(), t.length);
   },
   // Fraction of second
   S(n, t) {
     const e = t.length, r = n.getMilliseconds(), a = Math.trunc(
       r * Math.pow(10, e - 3)
     );
-    return x(a, t.length);
+    return T(a, t.length);
   }
 }, nt = {
   am: "am",
@@ -3394,7 +3527,7 @@ const G = {
   afternoon: "afternoon",
   evening: "evening",
   night: "night"
-}, re = {
+}, ce = {
   // Era
   G: function(n, t, e) {
     const r = n.getFullYear() > 0 ? 1 : 0;
@@ -3416,21 +3549,21 @@ const G = {
       const r = n.getFullYear(), a = r > 0 ? r : 1 - r;
       return e.ordinalNumber(a, { unit: "year" });
     }
-    return G.y(n, t);
+    return Z.y(n, t);
   },
   // Local week-numbering year
   Y: function(n, t, e, r) {
-    const a = xe(n, r), s = a > 0 ? a : 1 - a;
+    const a = Ce(n, r), s = a > 0 ? a : 1 - a;
     if (t === "YY") {
       const i = s % 100;
-      return x(i, 2);
+      return T(i, 2);
     }
-    return t === "Yo" ? e.ordinalNumber(s, { unit: "year" }) : x(s, t.length);
+    return t === "Yo" ? e.ordinalNumber(s, { unit: "year" }) : T(s, t.length);
   },
   // ISO week-numbering year
   R: function(n, t) {
-    const e = Ie(n);
-    return x(e, t.length);
+    const e = Ee(n);
+    return T(e, t.length);
   },
   // Extended year. This is a single number designating the year of this calendar system.
   // The main difference between `y` and `u` localizers are B.C. years:
@@ -3443,7 +3576,7 @@ const G = {
   // while `uu` pads single digit years to 2 characters and returns other years unchanged.
   u: function(n, t) {
     const e = n.getFullYear();
-    return x(e, t.length);
+    return T(e, t.length);
   },
   // Quarter
   Q: function(n, t, e) {
@@ -3452,7 +3585,7 @@ const G = {
       case "Q":
         return String(r);
       case "QQ":
-        return x(r, 2);
+        return T(r, 2);
       case "Qo":
         return e.ordinalNumber(r, { unit: "quarter" });
       case "QQQ":
@@ -3480,7 +3613,7 @@ const G = {
       case "q":
         return String(r);
       case "qq":
-        return x(r, 2);
+        return T(r, 2);
       case "qo":
         return e.ordinalNumber(r, { unit: "quarter" });
       case "qqq":
@@ -3507,7 +3640,7 @@ const G = {
     switch (t) {
       case "M":
       case "MM":
-        return G.M(n, t);
+        return Z.M(n, t);
       case "Mo":
         return e.ordinalNumber(r + 1, { unit: "month" });
       case "MMM":
@@ -3532,7 +3665,7 @@ const G = {
       case "L":
         return String(r + 1);
       case "LL":
-        return x(r + 1, 2);
+        return T(r + 1, 2);
       case "Lo":
         return e.ordinalNumber(r + 1, { unit: "month" });
       case "LLL":
@@ -3552,22 +3685,22 @@ const G = {
   },
   // Local week of year
   w: function(n, t, e, r) {
-    const a = on(n, r);
-    return t === "wo" ? e.ordinalNumber(a, { unit: "week" }) : x(a, t.length);
+    const a = bn(n, r);
+    return t === "wo" ? e.ordinalNumber(a, { unit: "week" }) : T(a, t.length);
   },
   // ISO week of year
   I: function(n, t, e) {
-    const r = an(n);
-    return t === "Io" ? e.ordinalNumber(r, { unit: "week" }) : x(r, t.length);
+    const r = gn(n);
+    return t === "Io" ? e.ordinalNumber(r, { unit: "week" }) : T(r, t.length);
   },
   // Day of the month
   d: function(n, t, e) {
-    return t === "do" ? e.ordinalNumber(n.getDate(), { unit: "date" }) : G.d(n, t);
+    return t === "do" ? e.ordinalNumber(n.getDate(), { unit: "date" }) : Z.d(n, t);
   },
   // Day of year
   D: function(n, t, e) {
-    const r = nn(n);
-    return t === "Do" ? e.ordinalNumber(r, { unit: "dayOfYear" }) : x(r, t.length);
+    const r = mn(n);
+    return t === "Do" ? e.ordinalNumber(r, { unit: "dayOfYear" }) : T(r, t.length);
   },
   // Day of week
   E: function(n, t, e) {
@@ -3605,7 +3738,7 @@ const G = {
       case "e":
         return String(s);
       case "ee":
-        return x(s, 2);
+        return T(s, 2);
       case "eo":
         return e.ordinalNumber(s, { unit: "day" });
       case "eee":
@@ -3638,7 +3771,7 @@ const G = {
       case "c":
         return String(s);
       case "cc":
-        return x(s, t.length);
+        return T(s, t.length);
       case "co":
         return e.ordinalNumber(s, { unit: "day" });
       case "ccc":
@@ -3671,7 +3804,7 @@ const G = {
       case "i":
         return String(a);
       case "ii":
-        return x(a, t.length);
+        return T(a, t.length);
       case "io":
         return e.ordinalNumber(a, { unit: "day" });
       case "iii":
@@ -3785,33 +3918,33 @@ const G = {
       let r = n.getHours() % 12;
       return r === 0 && (r = 12), e.ordinalNumber(r, { unit: "hour" });
     }
-    return G.h(n, t);
+    return Z.h(n, t);
   },
   // Hour [0-23]
   H: function(n, t, e) {
-    return t === "Ho" ? e.ordinalNumber(n.getHours(), { unit: "hour" }) : G.H(n, t);
+    return t === "Ho" ? e.ordinalNumber(n.getHours(), { unit: "hour" }) : Z.H(n, t);
   },
   // Hour [0-11]
   K: function(n, t, e) {
     const r = n.getHours() % 12;
-    return t === "Ko" ? e.ordinalNumber(r, { unit: "hour" }) : x(r, t.length);
+    return t === "Ko" ? e.ordinalNumber(r, { unit: "hour" }) : T(r, t.length);
   },
   // Hour [1-24]
   k: function(n, t, e) {
     let r = n.getHours();
-    return r === 0 && (r = 24), t === "ko" ? e.ordinalNumber(r, { unit: "hour" }) : x(r, t.length);
+    return r === 0 && (r = 24), t === "ko" ? e.ordinalNumber(r, { unit: "hour" }) : T(r, t.length);
   },
   // Minute
   m: function(n, t, e) {
-    return t === "mo" ? e.ordinalNumber(n.getMinutes(), { unit: "minute" }) : G.m(n, t);
+    return t === "mo" ? e.ordinalNumber(n.getMinutes(), { unit: "minute" }) : Z.m(n, t);
   },
   // Second
   s: function(n, t, e) {
-    return t === "so" ? e.ordinalNumber(n.getSeconds(), { unit: "second" }) : G.s(n, t);
+    return t === "so" ? e.ordinalNumber(n.getSeconds(), { unit: "second" }) : Z.s(n, t);
   },
   // Fraction of second
   S: function(n, t) {
-    return G.S(n, t);
+    return Z.S(n, t);
   },
   // Timezone (ISO-8601. If offset is 0, output is always `'Z'`)
   X: function(n, t, e) {
@@ -3820,14 +3953,14 @@ const G = {
       return "Z";
     switch (t) {
       case "X":
-        return ae(r);
+        return ue(r);
       case "XXXX":
       case "XX":
-        return Z(r);
+        return tt(r);
       case "XXXXX":
       case "XXX":
       default:
-        return Z(r, ":");
+        return tt(r, ":");
     }
   },
   // Timezone (ISO-8601. If offset is 0, output is `'+00:00'` or equivalent)
@@ -3835,14 +3968,14 @@ const G = {
     const r = n.getTimezoneOffset();
     switch (t) {
       case "x":
-        return ae(r);
+        return ue(r);
       case "xxxx":
       case "xx":
-        return Z(r);
+        return tt(r);
       case "xxxxx":
       case "xxx":
       default:
-        return Z(r, ":");
+        return tt(r, ":");
     }
   },
   // Timezone (GMT)
@@ -3852,10 +3985,10 @@ const G = {
       case "O":
       case "OO":
       case "OOO":
-        return "GMT" + ne(r, ":");
+        return "GMT" + le(r, ":");
       case "OOOO":
       default:
-        return "GMT" + Z(r, ":");
+        return "GMT" + tt(r, ":");
     }
   },
   // Timezone (specific non-location)
@@ -3865,34 +3998,34 @@ const G = {
       case "z":
       case "zz":
       case "zzz":
-        return "GMT" + ne(r, ":");
+        return "GMT" + le(r, ":");
       case "zzzz":
       default:
-        return "GMT" + Z(r, ":");
+        return "GMT" + tt(r, ":");
     }
   },
   // Seconds timestamp
   t: function(n, t, e) {
     const r = Math.trunc(+n / 1e3);
-    return x(r, t.length);
+    return T(r, t.length);
   },
   // Milliseconds timestamp
   T: function(n, t, e) {
-    return x(+n, t.length);
+    return T(+n, t.length);
   }
 };
-function ne(n, t = "") {
+function le(n, t = "") {
   const e = n > 0 ? "-" : "+", r = Math.abs(n), a = Math.trunc(r / 60), s = r % 60;
-  return s === 0 ? e + String(a) : e + String(a) + t + x(s, 2);
+  return s === 0 ? e + String(a) : e + String(a) + t + T(s, 2);
 }
-function ae(n, t) {
-  return n % 60 === 0 ? (n > 0 ? "-" : "+") + x(Math.abs(n) / 60, 2) : Z(n, t);
+function ue(n, t) {
+  return n % 60 === 0 ? (n > 0 ? "-" : "+") + T(Math.abs(n) / 60, 2) : tt(n, t);
 }
-function Z(n, t = "") {
-  const e = n > 0 ? "-" : "+", r = Math.abs(n), a = x(Math.trunc(r / 60), 2), s = x(r % 60, 2);
+function tt(n, t = "") {
+  const e = n > 0 ? "-" : "+", r = Math.abs(n), a = T(Math.trunc(r / 60), 2), s = T(r % 60, 2);
   return e + a + t + s;
 }
-const se = (n, t) => {
+const de = (n, t) => {
   switch (n) {
     case "P":
       return t.date({ width: "short" });
@@ -3904,7 +4037,7 @@ const se = (n, t) => {
     default:
       return t.date({ width: "full" });
   }
-}, Oe = (n, t) => {
+}, Ue = (n, t) => {
   switch (n) {
     case "p":
       return t.time({ width: "short" });
@@ -3916,10 +4049,10 @@ const se = (n, t) => {
     default:
       return t.time({ width: "full" });
   }
-}, cn = (n, t) => {
+}, yn = (n, t) => {
   const e = n.match(/(P+)(p+)?/) || [], r = e[1], a = e[2];
   if (!a)
-    return se(n, t);
+    return de(n, t);
   let s;
   switch (r) {
     case "P":
@@ -3936,114 +4069,114 @@ const se = (n, t) => {
       s = t.dateTime({ width: "full" });
       break;
   }
-  return s.replace("{{date}}", se(r, t)).replace("{{time}}", Oe(a, t));
-}, un = {
-  p: Oe,
-  P: cn
-}, ln = /^D+$/, dn = /^Y+$/, hn = ["D", "DD", "YY", "YYYY"];
-function fn(n) {
-  return ln.test(n);
+  return s.replace("{{date}}", de(r, t)).replace("{{time}}", Ue(a, t));
+}, pn = {
+  p: Ue,
+  P: yn
+}, _n = /^D+$/, vn = /^Y+$/, Dn = ["D", "DD", "YY", "YYYY"];
+function Sn(n) {
+  return _n.test(n);
 }
-function mn(n) {
-  return dn.test(n);
+function Mn(n) {
+  return vn.test(n);
 }
-function gn(n, t, e) {
-  const r = bn(n, t, e);
-  if (console.warn(r), hn.includes(n))
+function kn(n, t, e) {
+  const r = Tn(n, t, e);
+  if (console.warn(r), Dn.includes(n))
     throw new RangeError(r);
 }
-function bn(n, t, e) {
+function Tn(n, t, e) {
   const r = n[0] === "Y" ? "years" : "days of the month";
   return `Use \`${n.toLowerCase()}\` instead of \`${n}\` (in \`${t}\`) for formatting ${r} to the input \`${e}\`; see: https://github.com/date-fns/date-fns/blob/master/docs/unicodeTokens.md`;
 }
-const wn = /[yYQqMLwIdDecihHKkms]o|(\w)\1*|''|'(''|[^'])+('|$)|./g, yn = /P+p+|P+|p+|''|'(''|[^'])+('|$)|./g, pn = /^'([^]*?)'?$/, vn = /''/g, _n = /[a-zA-Z]/;
-function Pe(n, t, e) {
-  var l, d, h, f, g, v, M, P;
-  const r = mt(), a = (e == null ? void 0 : e.locale) ?? r.locale ?? ct, s = (e == null ? void 0 : e.firstWeekContainsDate) ?? ((d = (l = e == null ? void 0 : e.locale) == null ? void 0 : l.options) == null ? void 0 : d.firstWeekContainsDate) ?? r.firstWeekContainsDate ?? ((f = (h = r.locale) == null ? void 0 : h.options) == null ? void 0 : f.firstWeekContainsDate) ?? 1, i = (e == null ? void 0 : e.weekStartsOn) ?? ((v = (g = e == null ? void 0 : e.locale) == null ? void 0 : g.options) == null ? void 0 : v.weekStartsOn) ?? r.weekStartsOn ?? ((P = (M = r.locale) == null ? void 0 : M.options) == null ? void 0 : P.weekStartsOn) ?? 0, o = U(n, e == null ? void 0 : e.in);
-  if (!br(o))
+const In = /[yYQqMLwIdDecihHKkms]o|(\w)\1*|''|'(''|[^'])+('|$)|./g, On = /P+p+|P+|p+|''|'(''|[^'])+('|$)|./g, An = /^'([^]*?)'?$/, zn = /''/g, Pn = /[a-zA-Z]/;
+function Le(n, t, e) {
+  var d, u, h, f, g, _, S, A;
+  const r = mt(), a = (e == null ? void 0 : e.locale) ?? r.locale ?? ct, s = (e == null ? void 0 : e.firstWeekContainsDate) ?? ((u = (d = e == null ? void 0 : e.locale) == null ? void 0 : d.options) == null ? void 0 : u.firstWeekContainsDate) ?? r.firstWeekContainsDate ?? ((f = (h = r.locale) == null ? void 0 : h.options) == null ? void 0 : f.firstWeekContainsDate) ?? 1, i = (e == null ? void 0 : e.weekStartsOn) ?? ((_ = (g = e == null ? void 0 : e.locale) == null ? void 0 : g.options) == null ? void 0 : _.weekStartsOn) ?? r.weekStartsOn ?? ((A = (S = r.locale) == null ? void 0 : S.options) == null ? void 0 : A.weekStartsOn) ?? 0, o = j(n, e == null ? void 0 : e.in);
+  if (!Tr(o))
     throw new RangeError("Invalid time value");
-  let u = t.match(yn).map((C) => {
-    const A = C[0];
-    if (A === "p" || A === "P") {
-      const V = un[A];
-      return V(C, a.formatLong);
+  let l = t.match(On).map((L) => {
+    const x = L[0];
+    if (x === "p" || x === "P") {
+      const Q = pn[x];
+      return Q(L, a.formatLong);
     }
-    return C;
-  }).join("").match(wn).map((C) => {
-    if (C === "''")
+    return L;
+  }).join("").match(In).map((L) => {
+    if (L === "''")
       return { isToken: !1, value: "'" };
-    const A = C[0];
-    if (A === "'")
-      return { isToken: !1, value: Dn(C) };
-    if (re[A])
-      return { isToken: !0, value: C };
-    if (A.match(_n))
+    const x = L[0];
+    if (x === "'")
+      return { isToken: !1, value: xn(L) };
+    if (ce[x])
+      return { isToken: !0, value: L };
+    if (x.match(Pn))
       throw new RangeError(
-        "Format string contains an unescaped latin alphabet character `" + A + "`"
+        "Format string contains an unescaped latin alphabet character `" + x + "`"
       );
-    return { isToken: !1, value: C };
+    return { isToken: !1, value: L };
   });
-  a.localize.preprocessor && (u = a.localize.preprocessor(o, u));
+  a.localize.preprocessor && (l = a.localize.preprocessor(o, l));
   const c = {
     firstWeekContainsDate: s,
     weekStartsOn: i,
     locale: a
   };
-  return u.map((C) => {
-    if (!C.isToken)
-      return C.value;
-    const A = C.value;
-    (!(e != null && e.useAdditionalWeekYearTokens) && mn(A) || !(e != null && e.useAdditionalDayOfYearTokens) && fn(A)) && gn(A, t, String(n));
-    const V = re[A[0]];
-    return V(o, A, a.localize, c);
+  return l.map((L) => {
+    if (!L.isToken)
+      return L.value;
+    const x = L.value;
+    (!(e != null && e.useAdditionalWeekYearTokens) && Mn(x) || !(e != null && e.useAdditionalDayOfYearTokens) && Sn(x)) && kn(x, t, String(n));
+    const Q = ce[x[0]];
+    return Q(o, x, a.localize, c);
   }).join("");
 }
-function Dn(n) {
-  const t = n.match(pn);
-  return t ? t[1].replace(vn, "'") : n;
+function xn(n) {
+  const t = n.match(An);
+  return t ? t[1].replace(zn, "'") : n;
 }
-function Mn(n, t, e) {
+function En(n, t, e) {
   const r = mt(), a = (e == null ? void 0 : e.locale) ?? r.locale ?? ct, s = 2520, i = yt(n, t);
   if (isNaN(i))
     throw new RangeError("Invalid time value");
   const o = Object.assign({}, e, {
     addSuffix: e == null ? void 0 : e.addSuffix,
     comparison: i
-  }), [u, c] = zt(
+  }), [l, c] = Ot(
     e == null ? void 0 : e.in,
     ...i > 0 ? [t, n] : [n, t]
-  ), l = Sr(c, u), d = (Mt(c) - Mt(u)) / 1e3, h = Math.round((l - d) / 60);
+  ), d = Cr(c, l), u = (Dt(c) - Dt(l)) / 1e3, h = Math.round((d - u) / 60);
   let f;
   if (h < 2)
-    return e != null && e.includeSeconds ? l < 5 ? a.formatDistance("lessThanXSeconds", 5, o) : l < 10 ? a.formatDistance("lessThanXSeconds", 10, o) : l < 20 ? a.formatDistance("lessThanXSeconds", 20, o) : l < 40 ? a.formatDistance("halfAMinute", 0, o) : l < 60 ? a.formatDistance("lessThanXMinutes", 1, o) : a.formatDistance("xMinutes", 1, o) : h === 0 ? a.formatDistance("lessThanXMinutes", 1, o) : a.formatDistance("xMinutes", h, o);
+    return e != null && e.includeSeconds ? d < 5 ? a.formatDistance("lessThanXSeconds", 5, o) : d < 10 ? a.formatDistance("lessThanXSeconds", 10, o) : d < 20 ? a.formatDistance("lessThanXSeconds", 20, o) : d < 40 ? a.formatDistance("halfAMinute", 0, o) : d < 60 ? a.formatDistance("lessThanXMinutes", 1, o) : a.formatDistance("xMinutes", 1, o) : h === 0 ? a.formatDistance("lessThanXMinutes", 1, o) : a.formatDistance("xMinutes", h, o);
   if (h < 45)
     return a.formatDistance("xMinutes", h, o);
   if (h < 90)
     return a.formatDistance("aboutXHours", 1, o);
-  if (h < Zt) {
+  if (h < se) {
     const g = Math.round(h / 60);
     return a.formatDistance("aboutXHours", g, o);
   } else {
     if (h < s)
       return a.formatDistance("xDays", 1, o);
-    if (h < bt) {
-      const g = Math.round(h / Zt);
+    if (h < wt) {
+      const g = Math.round(h / se);
       return a.formatDistance("xDays", g, o);
-    } else if (h < bt * 2)
-      return f = Math.round(h / bt), a.formatDistance("aboutXMonths", f, o);
+    } else if (h < wt * 2)
+      return f = Math.round(h / wt), a.formatDistance("aboutXMonths", f, o);
   }
-  if (f = Mr(c, u), f < 12) {
-    const g = Math.round(h / bt);
+  if (f = Er(c, l), f < 12) {
+    const g = Math.round(h / wt);
     return a.formatDistance("xMonths", g, o);
   } else {
-    const g = f % 12, v = Math.trunc(f / 12);
-    return g < 3 ? a.formatDistance("aboutXYears", v, o) : g < 9 ? a.formatDistance("overXYears", v, o) : a.formatDistance("almostXYears", v + 1, o);
+    const g = f % 12, _ = Math.trunc(f / 12);
+    return g < 3 ? a.formatDistance("aboutXYears", _, o) : g < 9 ? a.formatDistance("overXYears", _, o) : a.formatDistance("almostXYears", _ + 1, o);
   }
 }
-function ze(n, t) {
-  return Mn(n, mr(n), t);
+function We(n, t) {
+  return En(n, Mr(n), t);
 }
-const ie = {
+const he = {
   lessThanXSeconds: {
     standalone: {
       one: "weniger als 1 Sekunde",
@@ -4198,11 +4331,11 @@ const ie = {
       other: "fast {{count}} Jahren"
     }
   }
-}, Sn = (n, t, e) => {
+}, Cn = (n, t, e) => {
   let r;
-  const a = e != null && e.addSuffix ? ie[n].withPreposition : ie[n].standalone;
+  const a = e != null && e.addSuffix ? he[n].withPreposition : he[n].standalone;
   return typeof a == "string" ? r = a : t === 1 ? r = a.one : r = a.other.replace("{{count}}", String(t)), e != null && e.addSuffix ? e.comparison && e.comparison > 0 ? "in " + r : "vor " + r : r;
-}, In = {
+}, Un = {
   full: "EEEE, do MMMM y",
   // Montag, 7. Januar 2018
   long: "do MMMM y",
@@ -4211,45 +4344,45 @@ const ie = {
   // 7. Jan. 2018
   short: "dd.MM.y"
   // 07.01.2018
-}, xn = {
+}, Ln = {
   full: "HH:mm:ss zzzz",
   long: "HH:mm:ss z",
   medium: "HH:mm:ss",
   short: "HH:mm"
-}, On = {
+}, Wn = {
   full: "{{date}} 'um' {{time}}",
   long: "{{date}} 'um' {{time}}",
   medium: "{{date}} {{time}}",
   short: "{{date}} {{time}}"
-}, Pn = {
-  date: X({
-    formats: In,
+}, jn = {
+  date: K({
+    formats: Un,
     defaultWidth: "full"
   }),
-  time: X({
-    formats: xn,
+  time: K({
+    formats: Ln,
     defaultWidth: "full"
   }),
-  dateTime: X({
-    formats: On,
+  dateTime: K({
+    formats: Wn,
     defaultWidth: "full"
   })
-}, zn = {
+}, Fn = {
   lastWeek: "'letzten' eeee 'um' p",
   yesterday: "'gestern um' p",
   today: "'heute um' p",
   tomorrow: "'morgen um' p",
   nextWeek: "eeee 'um' p",
   other: "P"
-}, An = (n, t, e, r) => zn[n], Tn = {
+}, Jn = (n, t, e, r) => Fn[n], Nn = {
   narrow: ["v.Chr.", "n.Chr."],
   abbreviated: ["v.Chr.", "n.Chr."],
   wide: ["vor Christus", "nach Christus"]
-}, En = {
+}, Rn = {
   narrow: ["1", "2", "3", "4"],
   abbreviated: ["Q1", "Q2", "Q3", "Q4"],
   wide: ["1. Quartal", "2. Quartal", "3. Quartal", "4. Quartal"]
-}, Lt = {
+}, Rt = {
   narrow: ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"],
   abbreviated: [
     "Jan",
@@ -4279,8 +4412,8 @@ const ie = {
     "November",
     "Dezember"
   ]
-}, Cn = {
-  narrow: Lt.narrow,
+}, Hn = {
+  narrow: Rt.narrow,
   abbreviated: [
     "Jan.",
     "Feb.",
@@ -4295,8 +4428,8 @@ const ie = {
     "Nov.",
     "Dez."
   ],
-  wide: Lt.wide
-}, kn = {
+  wide: Rt.wide
+}, $n = {
   narrow: ["S", "M", "D", "M", "D", "F", "S"],
   short: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
   abbreviated: ["So.", "Mo.", "Di.", "Mi.", "Do.", "Fr.", "Sa."],
@@ -4309,7 +4442,7 @@ const ie = {
     "Freitag",
     "Samstag"
   ]
-}, Wn = {
+}, Bn = {
   narrow: {
     am: "vm.",
     pm: "nm.",
@@ -4340,7 +4473,7 @@ const ie = {
     evening: "Abend",
     night: "Nacht"
   }
-}, Un = {
+}, Yn = {
   narrow: {
     am: "vm.",
     pm: "nm.",
@@ -4371,49 +4504,49 @@ const ie = {
     evening: "abends",
     night: "nachts"
   }
-}, jn = (n) => Number(n) + ".", Ln = {
-  ordinalNumber: jn,
-  era: F({
-    values: Tn,
+}, qn = (n) => Number(n) + ".", Vn = {
+  ordinalNumber: qn,
+  era: J({
+    values: Nn,
     defaultWidth: "wide"
   }),
-  quarter: F({
-    values: En,
+  quarter: J({
+    values: Rn,
     defaultWidth: "wide",
     argumentCallback: (n) => n - 1
   }),
-  month: F({
-    values: Lt,
-    formattingValues: Cn,
+  month: J({
+    values: Rt,
+    formattingValues: Hn,
     defaultWidth: "wide"
   }),
-  day: F({
-    values: kn,
+  day: J({
+    values: $n,
     defaultWidth: "wide"
   }),
-  dayPeriod: F({
-    values: Wn,
+  dayPeriod: J({
+    values: Bn,
     defaultWidth: "wide",
-    formattingValues: Un,
+    formattingValues: Yn,
     defaultFormattingWidth: "wide"
   })
-}, Fn = /^(\d+)(\.)?/i, Jn = /\d+/i, Nn = {
+}, Qn = /^(\d+)(\.)?/i, Xn = /\d+/i, Kn = {
   narrow: /^(v\.? ?Chr\.?|n\.? ?Chr\.?)/i,
   abbreviated: /^(v\.? ?Chr\.?|n\.? ?Chr\.?)/i,
   wide: /^(vor Christus|vor unserer Zeitrechnung|nach Christus|unserer Zeitrechnung)/i
-}, Rn = {
+}, Gn = {
   any: [/^v/i, /^n/i]
-}, $n = {
+}, Zn = {
   narrow: /^[1234]/i,
   abbreviated: /^q[1234]/i,
   wide: /^[1234](\.)? Quartal/i
-}, Hn = {
+}, ta = {
   any: [/1/i, /2/i, /3/i, /4/i]
-}, Bn = {
+}, ea = {
   narrow: /^[jfmasond]/i,
   abbreviated: /^(j[aä]n|feb|mär[z]?|apr|mai|jun[i]?|jul[i]?|aug|sep|okt|nov|dez)\.?/i,
   wide: /^(januar|februar|märz|april|mai|juni|juli|august|september|oktober|november|dezember)/i
-}, Yn = {
+}, ra = {
   narrow: [
     /^j/i,
     /^f/i,
@@ -4442,18 +4575,18 @@ const ie = {
     /^n/i,
     /^d/i
   ]
-}, qn = {
+}, na = {
   narrow: /^[smdmf]/i,
   short: /^(so|mo|di|mi|do|fr|sa)/i,
   abbreviated: /^(son?|mon?|die?|mit?|don?|fre?|sam?)\.?/i,
   wide: /^(sonntag|montag|dienstag|mittwoch|donnerstag|freitag|samstag)/i
-}, Vn = {
+}, aa = {
   any: [/^so/i, /^mo/i, /^di/i, /^mi/i, /^do/i, /^f/i, /^sa/i]
-}, Qn = {
+}, sa = {
   narrow: /^(vm\.?|nm\.?|Mitternacht|Mittag|morgens|nachm\.?|abends|nachts)/i,
   abbreviated: /^(vorm\.?|nachm\.?|Mitternacht|Mittag|morgens|nachm\.?|abends|nachts)/i,
   wide: /^(vormittags|nachmittags|Mitternacht|Mittag|morgens|nachmittags|abends|nachts)/i
-}, Xn = {
+}, ia = {
   any: {
     am: /^v/i,
     pm: /^n/i,
@@ -4466,55 +4599,55 @@ const ie = {
     night: /nachts/i
     // will never be matched. Night is matched by `pm`
   }
-}, Kn = {
-  ordinalNumber: qt({
-    matchPattern: Fn,
-    parsePattern: Jn,
+}, oa = {
+  ordinalNumber: Gt({
+    matchPattern: Qn,
+    parsePattern: Xn,
     valueCallback: (n) => parseInt(n)
   }),
-  era: J({
-    matchPatterns: Nn,
+  era: N({
+    matchPatterns: Kn,
     defaultMatchWidth: "wide",
-    parsePatterns: Rn,
+    parsePatterns: Gn,
     defaultParseWidth: "any"
   }),
-  quarter: J({
-    matchPatterns: $n,
+  quarter: N({
+    matchPatterns: Zn,
     defaultMatchWidth: "wide",
-    parsePatterns: Hn,
+    parsePatterns: ta,
     defaultParseWidth: "any",
     valueCallback: (n) => n + 1
   }),
-  month: J({
-    matchPatterns: Bn,
+  month: N({
+    matchPatterns: ea,
     defaultMatchWidth: "wide",
-    parsePatterns: Yn,
+    parsePatterns: ra,
     defaultParseWidth: "any"
   }),
-  day: J({
-    matchPatterns: qn,
+  day: N({
+    matchPatterns: na,
     defaultMatchWidth: "wide",
-    parsePatterns: Vn,
+    parsePatterns: aa,
     defaultParseWidth: "any"
   }),
-  dayPeriod: J({
-    matchPatterns: Qn,
+  dayPeriod: N({
+    matchPatterns: sa,
     defaultMatchWidth: "wide",
-    parsePatterns: Xn,
+    parsePatterns: ia,
     defaultParseWidth: "any"
   })
 }, St = {
   code: "de",
-  formatDistance: Sn,
-  formatLong: Pn,
-  formatRelative: An,
-  localize: Ln,
-  match: Kn,
+  formatDistance: Cn,
+  formatLong: jn,
+  formatRelative: Jn,
+  localize: Vn,
+  match: oa,
   options: {
     weekStartsOn: 1,
     firstWeekContainsDate: 4
   }
-}, Gn = {
+}, ca = {
   lessThanXSeconds: {
     one: "moins d’une seconde",
     other: "moins de {{count}} secondes"
@@ -4576,54 +4709,54 @@ const ie = {
     one: "presqu’un an",
     other: "presque {{count}} ans"
   }
-}, Zn = (n, t, e) => {
+}, la = (n, t, e) => {
   let r;
-  const a = Gn[n];
+  const a = ca[n];
   return typeof a == "string" ? r = a : t === 1 ? r = a.one : r = a.other.replace("{{count}}", String(t)), e != null && e.addSuffix ? e.comparison && e.comparison > 0 ? "dans " + r : "il y a " + r : r;
-}, ta = {
+}, ua = {
   full: "EEEE d MMMM y",
   long: "d MMMM y",
   medium: "d MMM y",
   short: "dd/MM/y"
-}, ea = {
+}, da = {
   full: "HH:mm:ss zzzz",
   long: "HH:mm:ss z",
   medium: "HH:mm:ss",
   short: "HH:mm"
-}, ra = {
+}, ha = {
   full: "{{date}} 'à' {{time}}",
   long: "{{date}} 'à' {{time}}",
   medium: "{{date}}, {{time}}",
   short: "{{date}}, {{time}}"
-}, na = {
-  date: X({
-    formats: ta,
+}, fa = {
+  date: K({
+    formats: ua,
     defaultWidth: "full"
   }),
-  time: X({
-    formats: ea,
+  time: K({
+    formats: da,
     defaultWidth: "full"
   }),
-  dateTime: X({
-    formats: ra,
+  dateTime: K({
+    formats: ha,
     defaultWidth: "full"
   })
-}, aa = {
+}, ma = {
   lastWeek: "eeee 'dernier à' p",
   yesterday: "'hier à' p",
   today: "'aujourd’hui à' p",
   tomorrow: "'demain à' p'",
   nextWeek: "eeee 'prochain à' p",
   other: "P"
-}, sa = (n, t, e, r) => aa[n], ia = {
+}, ga = (n, t, e, r) => ma[n], wa = {
   narrow: ["av. J.-C", "ap. J.-C"],
   abbreviated: ["av. J.-C", "ap. J.-C"],
   wide: ["avant Jésus-Christ", "après Jésus-Christ"]
-}, oa = {
+}, ba = {
   narrow: ["T1", "T2", "T3", "T4"],
   abbreviated: ["1er trim.", "2ème trim.", "3ème trim.", "4ème trim."],
   wide: ["1er trimestre", "2ème trimestre", "3ème trimestre", "4ème trimestre"]
-}, ca = {
+}, ya = {
   narrow: ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"],
   abbreviated: [
     "janv.",
@@ -4653,7 +4786,7 @@ const ie = {
     "novembre",
     "décembre"
   ]
-}, ua = {
+}, pa = {
   narrow: ["D", "L", "M", "M", "J", "V", "S"],
   short: ["di", "lu", "ma", "me", "je", "ve", "sa"],
   abbreviated: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."],
@@ -4666,7 +4799,7 @@ const ie = {
     "vendredi",
     "samedi"
   ]
-}, la = {
+}, _a = {
   narrow: {
     am: "AM",
     pm: "PM",
@@ -4697,58 +4830,58 @@ const ie = {
     evening: "du soir",
     night: "du matin"
   }
-}, da = (n, t) => {
+}, va = (n, t) => {
   const e = Number(n), r = t == null ? void 0 : t.unit;
   if (e === 0)
     return "0";
   const a = ["year", "week", "hour", "minute", "second"];
   let s;
   return e === 1 ? s = r && a.includes(r) ? "ère" : "er" : s = "ème", e + s;
-}, ha = ["MMM", "MMMM"], fa = {
+}, Da = ["MMM", "MMMM"], Sa = {
   preprocessor: (n, t) => n.getDate() === 1 || !t.some(
-    (r) => r.isToken && ha.includes(r.value)
+    (r) => r.isToken && Da.includes(r.value)
   ) ? t : t.map(
     (r) => r.isToken && r.value === "do" ? { isToken: !0, value: "d" } : r
   ),
-  ordinalNumber: da,
-  era: F({
-    values: ia,
+  ordinalNumber: va,
+  era: J({
+    values: wa,
     defaultWidth: "wide"
   }),
-  quarter: F({
-    values: oa,
+  quarter: J({
+    values: ba,
     defaultWidth: "wide",
     argumentCallback: (n) => n - 1
   }),
-  month: F({
-    values: ca,
+  month: J({
+    values: ya,
     defaultWidth: "wide"
   }),
-  day: F({
-    values: ua,
+  day: J({
+    values: pa,
     defaultWidth: "wide"
   }),
-  dayPeriod: F({
-    values: la,
+  dayPeriod: J({
+    values: _a,
     defaultWidth: "wide"
   })
-}, ma = /^(\d+)(ième|ère|ème|er|e)?/i, ga = /\d+/i, ba = {
+}, Ma = /^(\d+)(ième|ère|ème|er|e)?/i, ka = /\d+/i, Ta = {
   narrow: /^(av\.J\.C|ap\.J\.C|ap\.J\.-C)/i,
   abbreviated: /^(av\.J\.-C|av\.J-C|apr\.J\.-C|apr\.J-C|ap\.J-C)/i,
   wide: /^(avant Jésus-Christ|après Jésus-Christ)/i
-}, wa = {
+}, Ia = {
   any: [/^av/i, /^ap/i]
-}, ya = {
+}, Oa = {
   narrow: /^T?[1234]/i,
   abbreviated: /^[1234](er|ème|e)? trim\.?/i,
   wide: /^[1234](er|ème|e)? trimestre/i
-}, pa = {
+}, Aa = {
   any: [/1/i, /2/i, /3/i, /4/i]
-}, va = {
+}, za = {
   narrow: /^[jfmasond]/i,
   abbreviated: /^(janv|févr|mars|avr|mai|juin|juill|juil|août|sept|oct|nov|déc)\.?/i,
   wide: /^(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)/i
-}, _a = {
+}, Pa = {
   narrow: [
     /^j/i,
     /^f/i,
@@ -4777,18 +4910,18 @@ const ie = {
     /^n/i,
     /^d/i
   ]
-}, Da = {
+}, xa = {
   narrow: /^[lmjvsd]/i,
   short: /^(di|lu|ma|me|je|ve|sa)/i,
   abbreviated: /^(dim|lun|mar|mer|jeu|ven|sam)\.?/i,
   wide: /^(dimanche|lundi|mardi|mercredi|jeudi|vendredi|samedi)/i
-}, Ma = {
+}, Ea = {
   narrow: [/^d/i, /^l/i, /^m/i, /^m/i, /^j/i, /^v/i, /^s/i],
   any: [/^di/i, /^lu/i, /^ma/i, /^me/i, /^je/i, /^ve/i, /^sa/i]
-}, Sa = {
+}, Ca = {
   narrow: /^(a|p|minuit|midi|mat\.?|ap\.?m\.?|soir|nuit)/i,
   any: /^([ap]\.?\s?m\.?|du matin|de l'après[-\s]midi|du soir|de la nuit)/i
-}, Ia = {
+}, Ua = {
   any: {
     am: /^a/i,
     pm: /^p/i,
@@ -4799,56 +4932,56 @@ const ie = {
     evening: /soir/i,
     night: /nuit/i
   }
-}, xa = {
-  ordinalNumber: qt({
-    matchPattern: ma,
-    parsePattern: ga,
+}, La = {
+  ordinalNumber: Gt({
+    matchPattern: Ma,
+    parsePattern: ka,
     valueCallback: (n) => parseInt(n)
   }),
-  era: J({
-    matchPatterns: ba,
+  era: N({
+    matchPatterns: Ta,
     defaultMatchWidth: "wide",
-    parsePatterns: wa,
+    parsePatterns: Ia,
     defaultParseWidth: "any"
   }),
-  quarter: J({
-    matchPatterns: ya,
+  quarter: N({
+    matchPatterns: Oa,
     defaultMatchWidth: "wide",
-    parsePatterns: pa,
+    parsePatterns: Aa,
     defaultParseWidth: "any",
     valueCallback: (n) => n + 1
   }),
-  month: J({
-    matchPatterns: va,
+  month: N({
+    matchPatterns: za,
     defaultMatchWidth: "wide",
-    parsePatterns: _a,
+    parsePatterns: Pa,
     defaultParseWidth: "any"
   }),
-  day: J({
-    matchPatterns: Da,
+  day: N({
+    matchPatterns: xa,
     defaultMatchWidth: "wide",
-    parsePatterns: Ma,
+    parsePatterns: Ea,
     defaultParseWidth: "any"
   }),
-  dayPeriod: J({
-    matchPatterns: Sa,
+  dayPeriod: N({
+    matchPatterns: Ca,
     defaultMatchWidth: "any",
-    parsePatterns: Ia,
+    parsePatterns: Ua,
     defaultParseWidth: "any"
   })
-}, It = {
+}, Mt = {
   code: "fr",
-  formatDistance: Zn,
-  formatLong: na,
-  formatRelative: sa,
-  localize: fa,
-  match: xa,
+  formatDistance: la,
+  formatLong: fa,
+  formatRelative: ga,
+  localize: Sa,
+  match: La,
   options: {
     weekStartsOn: 1,
     firstWeekContainsDate: 4
   }
-}, Oa = /^[0-9]{4}\-[0-9]{2}\-[0-9]{2}$/;
-class Pa extends E {
+}, Wa = /^[0-9]{4}\-[0-9]{2}\-[0-9]{2}$/;
+class ja extends U {
   /**
    * Returns the unserialized value of given value.
    *
@@ -4858,7 +4991,7 @@ class Pa extends E {
     if (t === "0000-00-00")
       return null;
     const e = t instanceof Date ? this.toDateString(t) : t;
-    if (e != null && Oa.test(e))
+    if (e != null && Wa.test(e))
       return e;
     if (t !== void 0)
       return null;
@@ -4887,9 +5020,9 @@ class Pa extends E {
   toFormatted(t = "en", e = !1) {
     if (!this._value)
       return null;
-    const r = t === "fr" ? It : t === "de" ? St : ct;
+    const r = t === "fr" ? Mt : t === "de" ? St : ct;
     let a = t === "de" ? "dd. MMMM yyyy" : "dd MMMM yyyy";
-    return e && (a = "EEEE, " + a), Pe(
+    return e && (a = "EEEE, " + a), Le(
       new Date(this._value),
       a,
       { locale: r }
@@ -4901,8 +5034,8 @@ class Pa extends E {
   toRelative(t = "en") {
     if (!this._value)
       return null;
-    const e = t === "fr" ? It : t === "de" ? St : ct;
-    return ze(
+    const e = t === "fr" ? Mt : t === "de" ? St : ct;
+    return We(
       new Date(this._value),
       {
         addSuffix: !0,
@@ -4911,7 +5044,7 @@ class Pa extends E {
     );
   }
 }
-class Ae extends E {
+class je extends U {
   /**
    * Returns the unserialized value of given value.
    *
@@ -4927,7 +5060,7 @@ class Ae extends E {
     return this._value;
   }
 }
-class za extends E {
+class Fa extends U {
   /**
    * Returns the unserialized value of given value.
    *
@@ -4943,7 +5076,7 @@ class za extends E {
     return this._value;
   }
 }
-class Te extends E {
+class Fe extends U {
   /**
    * Returns the unserialized value of given value.
    *
@@ -4964,11 +5097,11 @@ class Te extends E {
     return typeof this._value == "number" ? this._value.toString() : this._value;
   }
 }
-class Aa extends Ae {
+class Ja extends je {
   // ...
 }
-const Ta = /^[0-9]{4}\-[0-9]{2}\-[0-9]{2}\s[0-9]{2}\:[0-9]{2}\:[0-9]{2}$/;
-class Ea extends E {
+const Na = /^[0-9]{4}\-[0-9]{2}\-[0-9]{2}\s[0-9]{2}\:[0-9]{2}\:[0-9]{2}$/;
+class Ra extends U {
   /**
    * Returns the unserialized value of given value.
    *
@@ -4978,7 +5111,7 @@ class Ea extends E {
     if (t === "0000-00-00 00:00:00")
       return null;
     const e = t instanceof Date ? this.toDateString(t) : t;
-    if (e != null && Ta.test(e))
+    if (e != null && Na.test(e))
       return e;
     if (t !== void 0)
       return null;
@@ -5012,9 +5145,9 @@ class Ea extends E {
   toFormatted(t = "en", e = !1) {
     if (!this._value)
       return null;
-    const r = t === "fr" ? It : t === "de" ? St : ct;
+    const r = t === "fr" ? Mt : t === "de" ? St : ct;
     let a = t === "de" ? "dd. MMMM yyyy" : "dd MMMM yyyy";
-    return e && (a = "EEEE, " + a), Pe(
+    return e && (a = "EEEE, " + a), Le(
       new Date(this._value),
       a,
       { locale: r }
@@ -5026,8 +5159,8 @@ class Ea extends E {
   toRelative(t = "en") {
     if (!this._value)
       return null;
-    const e = t === "fr" ? It : t === "de" ? St : ct;
-    return ze(
+    const e = t === "fr" ? Mt : t === "de" ? St : ct;
+    return We(
       new Date(this._value),
       {
         addSuffix: !0,
@@ -5048,7 +5181,7 @@ class Ea extends E {
     return this._value ? Math.floor((new Date(this._value).getTime() - (/* @__PURE__ */ new Date("2021-01-01T00:00:00Z")).getTime()) / 1e3) : null;
   }
 }
-class Ca extends E {
+class Ha extends U {
   /**
    * Retrieves the linked object.
    * Task: https://alpha.blitzdata.com/blitzpm/log/blitzsifeddine/2025-08-25/Fk%2FMtm%20getObject()/2fbxs4--bt1lfz?proj=1s4dec-3ibnqe
@@ -5077,7 +5210,7 @@ class Ca extends E {
     return this._value;
   }
 }
-class ka extends E {
+class $a extends U {
   /**
    * Retrieves the linked user.
    * Task: https://alpha.blitzdata.com/blitzpm/log/blitzsifeddine/2025-09-03/User%20type/2fra4l--t1g94e?proj=1s4dec-3ibnqe
@@ -5108,7 +5241,7 @@ class ka extends E {
     return this._value;
   }
 }
-class Ee {
+class Je {
   /**
    * Constructs a new many instance with given value.
    *
@@ -5169,7 +5302,7 @@ class Ee {
     } catch {
       e = [];
     }
-    return e && (e = e.map((r) => H.createType(this._name, this._type, r)).filter((r) => r.value != null), e.forEach((r) => r.withObject(this._object))), e;
+    return e && (e = e.map((r) => B.createType(this._name, this._type, r)).filter((r) => r.value != null), e.forEach((r) => r.withObject(this._object))), e;
   }
   /**
    * Serializes the value to be stored.
@@ -5182,7 +5315,7 @@ class Ee {
    * Performs and array operation.
    */
   async performAction(t) {
-    var s, i, o, u, c, l, d, h, f, g, v, M;
+    var s, i, o, l, c, d, u, h, f, g, _, S;
     const e = new $({
       action: "edit",
       data: {
@@ -5192,13 +5325,13 @@ class Ee {
       },
       model: (i = (s = this._object) == null ? void 0 : s.model) == null ? void 0 : i.getName(),
       blitzID: (o = this._object) == null ? void 0 : o._blitzID.value
-    }), r = await q.create().run([e]);
-    if (r[0].status !== W.Success && r[0].status !== W.Notice)
+    }), r = await V.create().run([e]);
+    if (r[0].status !== C.Success && r[0].status !== C.Notice)
       throw new Error(r[0].message ?? "Unknown Error! Please try again.");
-    for (const P of ((c = (u = this._object) == null ? void 0 : u._editURLs) == null ? void 0 : c.value) ?? [])
-      await p.queue.addJob(P, e.toObject());
-    const a = await ((d = (l = this._object) == null ? void 0 : l.model) == null ? void 0 : d.get({ blitzID: this._object._blitzID.value, forceLocal: !0, raw: !0 }));
-    a && Array.isArray(a[this._name]) && (this.value = a[this._name]), (f = (h = this._object) == null ? void 0 : h.model) == null || f.memoryClient().emit(e), (g = this._object) == null || g.dispatchEvent("edit", e.data), (M = (v = this._object) == null ? void 0 : v.model) == null || M.setLastTransactionHash(e.hash);
+    for (const A of ((c = (l = this._object) == null ? void 0 : l._editURLs) == null ? void 0 : c.value) ?? [])
+      await p.queue.addJob(A, e.toObject());
+    const a = await ((u = (d = this._object) == null ? void 0 : d.model) == null ? void 0 : u.get({ blitzID: this._object._blitzID.value, forceLocal: !0, raw: !0 }));
+    a && Array.isArray(a[this._name]) && (this.value = a[this._name]), (f = (h = this._object) == null ? void 0 : h.model) == null || f.memoryClient().emit(e), (g = this._object) == null || g.dispatchEvent("edit", e.data), (S = (_ = this._object) == null ? void 0 : _.model) == null || S.setLastTransactionHash(e.hash);
   }
   /**
    * Adds new item.
@@ -5208,7 +5341,7 @@ class Ee {
   async add(t) {
     await this.performAction({
       action: "add",
-      value: H.createType(this._name, this._type, t).serialize()
+      value: B.createType(this._name, this._type, t).serialize()
     });
   }
   /**
@@ -5219,7 +5352,7 @@ class Ee {
   async remove(t) {
     await this.performAction({
       action: "remove",
-      value: H.createType(this._name, this._type, t).serialize()
+      value: B.createType(this._name, this._type, t).serialize()
     });
   }
   /**
@@ -5253,13 +5386,13 @@ class Ee {
     var a;
     const e = this._syncSignal.get() !== null, r = this._syncSignal.subscribe(t, e);
     return e || p.queue.getJobsForObject((a = this._object) == null ? void 0 : a._blitzID.value).then((s) => {
-      const i = s.filter((d) => {
+      const i = s.filter((u) => {
         var h;
-        return d.transaction.action === D.Edit && ((h = d.transaction.data) == null ? void 0 : h[this._name]) !== void 0;
+        return u.transaction.action === D.Edit && ((h = u.transaction.data) == null ? void 0 : h[this._name]) !== void 0;
       });
-      let o = w.Pending, u;
-      const c = i.find((d) => d.status === w.Failed), l = i.find((d) => d.status === w.Conflict && d.message !== void 0) ?? i.find((d) => d.status === w.Conflict);
-      c ? (o = w.Failed, u = c) : l ? (o = w.Conflict, u = l) : i.every((d) => d.status === w.Completed) && (o = w.Completed), this._syncSignal.set({ status: o, job: u }, !1), t(this._syncSignal.get());
+      let o = b.Pending, l;
+      const c = i.find((u) => u.status === b.Failed), d = i.find((u) => u.status === b.Conflict && u.message !== void 0) ?? i.find((u) => u.status === b.Conflict);
+      c ? (o = b.Failed, l = c) : d ? (o = b.Conflict, l = d) : i.every((u) => u.status === b.Completed) && (o = b.Completed), this._syncSignal.set({ status: o, job: l }, !1), t(this._syncSignal.get());
     }), r;
   }
   /**
@@ -5270,7 +5403,7 @@ class Ee {
     return ((e = (t = this._object) == null ? void 0 : t.model) == null ? void 0 : e.getAttributeDetails(this._name)) || null;
   }
 }
-class Wa extends Ee {
+class Ba extends Je {
   /**
    * Returns the unserialized value.
    *
@@ -5339,32 +5472,32 @@ class Wa extends Ee {
         s.push(o);
         continue;
       }
-      const u = await (r == null ? void 0 : r.get({ skipCacheUpdateIfFound: !0, ...t, raw: !1, blitzID: i._blitzID }));
-      u && s.push(u);
+      const l = await (r == null ? void 0 : r.get({ skipCacheUpdateIfFound: !0, ...t, raw: !1, blitzID: i._blitzID }));
+      l && s.push(l);
     }
     return s;
   }
 }
-function Ua(n) {
+function Ya(n) {
   return n && n.constructor && typeof n.constructor.isBuffer == "function" && n.constructor.isBuffer(n);
 }
-function ja(n) {
+function qa(n) {
   return n;
 }
-function La(n, t) {
+function Va(n, t) {
   t = t || {};
-  const e = t.delimiter || ".", r = t.maxDepth, a = t.transformKey || ja, s = {};
-  function i(o, u, c) {
-    c = c || 1, Object.keys(o).forEach(function(l) {
-      const d = o[l], h = t.safe && Array.isArray(d), f = Object.prototype.toString.call(d), g = Ua(d), v = f === "[object Object]" || f === "[object Array]", M = u ? u + e + a(l) : a(l);
-      if (!h && !g && v && Object.keys(d).length && (!t.maxDepth || c < r))
-        return i(d, M, c + 1);
-      s[M] = d;
+  const e = t.delimiter || ".", r = t.maxDepth, a = t.transformKey || qa, s = {};
+  function i(o, l, c) {
+    c = c || 1, Object.keys(o).forEach(function(d) {
+      const u = o[d], h = t.safe && Array.isArray(u), f = Object.prototype.toString.call(u), g = Ya(u), _ = f === "[object Object]" || f === "[object Array]", S = l ? l + e + a(d) : a(d);
+      if (!h && !g && _ && Object.keys(u).length && (!t.maxDepth || c < r))
+        return i(u, S, c + 1);
+      s[S] = u;
     });
   }
   return i(n), s;
 }
-class Fa extends E {
+class Qa extends U {
   /**
    * Returns the unserialized value of given value.
    *
@@ -5404,7 +5537,7 @@ class Fa extends E {
    * Flattens the object.
    */
   flat() {
-    return La(this._value ?? {});
+    return Va(this._value ?? {});
   }
   /**
    * Groups the object by the result of the given function.
@@ -5415,7 +5548,7 @@ class Fa extends E {
     return Object.groupBy(this._value ?? {}, t);
   }
 }
-class Ja extends E {
+class Xa extends U {
   /**
    * Returns the unserialized value of given value.
    *
@@ -5456,7 +5589,7 @@ class Ja extends E {
     return ((t = this._value) == null ? void 0 : t.content) || null;
   }
 }
-class Na extends E {
+class Ka extends U {
   /**
    * Returns the unserialized value of given value.
    *
@@ -5485,7 +5618,7 @@ class Na extends E {
     return this.getOptions().includes(t);
   }
 }
-class Vt extends E {
+class Zt extends U {
   /**
    * Returns the unserialized value of given value.
    *
@@ -5506,13 +5639,13 @@ class Vt extends E {
     return typeof this._value == "number" ? this._value.toString() : this._value;
   }
 }
-class Ra extends Te {
+class Ga extends Fe {
   // ...
 }
-class $a extends Vt {
+class Za extends Zt {
   // ...
 }
-class Ha extends Vt {
+class ts extends Zt {
   /**
    * Returns the precentage value.
    */
@@ -5520,15 +5653,15 @@ class Ha extends Vt {
     return this._value != null ? (this._value * 100).toString() + "%" : null;
   }
 }
-const oe = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-class Ba extends E {
+const fe = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+class es extends U {
   /**
    * Returns the unserialized value of given value.
    *
    * @param value Value to be casted.
    */
   unserialize(t) {
-    if (t != null && oe.test(t))
+    if (t != null && fe.test(t))
       return t;
     if (t !== void 0)
       return null;
@@ -5543,18 +5676,18 @@ class Ba extends E {
    * Validate an email value.
    */
   validate(t) {
-    return oe.test(t);
+    return fe.test(t);
   }
 }
-const ce = /^\+[1-9]{1,3}\-[0-9]{7,14}$/;
-class Ya extends E {
+const me = /^\+[1-9]{1,3}\-[0-9]{7,14}$/;
+class rs extends U {
   /**
    * Returns the unserialized value of given value.
    *
    * @param value Value to be casted.
    */
   unserialize(t) {
-    if (t != null && ce.test(t))
+    if (t != null && me.test(t))
       return t;
     if (t !== void 0)
       return null;
@@ -5569,7 +5702,7 @@ class Ya extends E {
    * Validate a URL value.
    */
   validate(t) {
-    return ce.test(t);
+    return me.test(t);
   }
   /**
    * Get the calling code.
@@ -5590,15 +5723,15 @@ class Ya extends E {
     return t.length < 2 ? null : t[1];
   }
 }
-const ue = /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$/;
-class qa extends E {
+const ge = /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$/;
+class ns extends U {
   /**
    * Returns the unserialized value of given value.
    *
    * @param value Value to be casted.
    */
   unserialize(t) {
-    if (t != null && ue.test(t))
+    if (t != null && ge.test(t))
       return t;
     if (t !== void 0)
       return null;
@@ -5613,7 +5746,7 @@ class qa extends E {
    * Validate a URL value.
    */
   validate(t) {
-    return ue.test(t);
+    return ge.test(t);
   }
   /**
    * Get the native URL object.
@@ -5652,7 +5785,7 @@ class qa extends E {
     return this._value ? new URL(this._value).search : null;
   }
 }
-class Va extends E {
+class as extends U {
   /**
    * Returns the unserialized value of given value.
    *
@@ -5680,7 +5813,7 @@ class Va extends E {
     return e !== null && typeof e == "object" && e.base != null && e[t] != null ? e.base + e[t].substring(1) : null;
   }
 }
-class Qa extends E {
+class ss extends U {
   /**
    * Returns the unserialized value of given value.
    *
@@ -5706,7 +5839,7 @@ class Qa extends E {
     return ((t = this._value) == null ? void 0 : t.url) ?? null;
   }
 }
-class Xa extends E {
+class is extends U {
   /**
    * Returns the unserialized value of given value.
    *
@@ -5732,7 +5865,7 @@ class Xa extends E {
     return ((t = this._value) == null ? void 0 : t.url) ?? null;
   }
 }
-class Ka extends E {
+class os extends U {
   /**
    * Returns the unserialized value of given value.
    *
@@ -5802,7 +5935,7 @@ class Ka extends E {
     }
   }
 }
-class H {
+class B {
   /**
    * Creates appropriate type from given attribute type string and value.
    *
@@ -5811,7 +5944,7 @@ class H {
    * @param value
    */
   static createType(t, e, r) {
-    return t.endsWith("_fk") ? new Ca(t, e, r) : t === "_userID" ? new ka(t, e, r) : e === "int" || ["_blitzstamp"].includes(t) ? new Te(t, "int", r) : e === "tinyint" ? new Ra(t, e, r) : e === "double" ? new $a(t, e, r) : e === "float" ? new Vt(t, e, r) : e === "percentage" ? new Ha(t, e, r) : e === "varchar" ? new Aa(t, e, r) : e === "text" ? new Ae(t, e, r) : e === "htmlText" ? new za(t, e, r) : e === "enum" ? new Na(t, e, r) : e === "json" ? new Fa(t, e, r) : e === "boolean" ? new Me(t, e, r) : e === "datetime" || ["_publishingdate", "_modified", "_expiration"].includes(t) ? new Ea(t, "datetime", r) : e === "date" ? new Pa(t, e, r) : e === "code" ? new Ja(t, e, r) : e === "email" ? new Ba(t, e, r) : e === "phone" ? new Ya(t, e, r) : e === "url" ? new qa(t, e, r) : e === "image" ? new Va(t, e, r) : e === "video" ? new Qa(t, e, r) : e === "file" ? new Xa(t, e, r) : e === "location" ? new Ka(t, e, r) : new lt(t, e, r);
+    return t.endsWith("_fk") ? new Ha(t, e, r) : t === "_userID" ? new $a(t, e, r) : e === "int" || ["_blitzstamp"].includes(t) ? new Fe(t, "int", r) : e === "tinyint" ? new Ga(t, e, r) : e === "double" ? new Za(t, e, r) : e === "float" ? new Zt(t, e, r) : e === "percentage" ? new ts(t, e, r) : e === "varchar" ? new Ja(t, e, r) : e === "text" ? new je(t, e, r) : e === "htmlText" ? new Fa(t, e, r) : e === "enum" ? new Ka(t, e, r) : e === "json" ? new Qa(t, e, r) : e === "boolean" ? new Pe(t, e, r) : e === "datetime" || ["_publishingdate", "_modified", "_expiration"].includes(t) ? new Ra(t, "datetime", r) : e === "date" ? new ja(t, e, r) : e === "code" ? new Xa(t, e, r) : e === "email" ? new es(t, e, r) : e === "phone" ? new rs(t, e, r) : e === "url" ? new ns(t, e, r) : e === "image" ? new as(t, e, r) : e === "video" ? new ss(t, e, r) : e === "file" ? new is(t, e, r) : e === "location" ? new os(t, e, r) : new ut(t, e, r);
   }
   /**
    * Initializes a new instance of DataType or ManyType with the specified name and type.
@@ -5832,7 +5965,7 @@ class H {
    * @param values
    */
   static createMany(t, e, r) {
-    return t.endsWith("_mtm") ? new Wa(t, e, r) : new Ee(t, e, r);
+    return t.endsWith("_mtm") ? new Ba(t, e, r) : new Je(t, e, r);
   }
   /**
    * Unserializes given data to be used within library.
@@ -5842,12 +5975,12 @@ class H {
    */
   static unserialize(t, e) {
     var s, i, o;
-    const r = {}, a = [...Object.keys(t), ...Object.keys(e)].filter((u, c, l) => l.indexOf(u) === c);
-    for (const u of a)
-      Array.isArray((s = t[u]) == null ? void 0 : s.type) ? r[u] = H.createMany(u, ((i = t[u]) == null ? void 0 : i.type[0]) ?? "anonymous", e[u]) : r[u] = H.createType(
-        u,
-        ((o = t[u]) == null ? void 0 : o.type) ?? "anonymous",
-        e[u]
+    const r = {}, a = [...Object.keys(t), ...Object.keys(e)].filter((l, c, d) => d.indexOf(l) === c);
+    for (const l of a)
+      Array.isArray((s = t[l]) == null ? void 0 : s.type) ? r[l] = B.createMany(l, ((i = t[l]) == null ? void 0 : i.type[0]) ?? "anonymous", e[l]) : r[l] = B.createType(
+        l,
+        ((o = t[l]) == null ? void 0 : o.type) ?? "anonymous",
+        e[l]
       );
     return r;
   }
@@ -5916,8 +6049,8 @@ class at {
    */
   edit(t, e, r) {
     return this.enqueueEditOperation(async () => {
-      var c, l, d, h;
-      const a = (l = (c = this.model) == null ? void 0 : c.getAttributeDetails(t)) == null ? void 0 : l.type, s = H.createType(t, a, e).serialize(), i = r ? H.createType(t, a, r).serialize() : this.getAttribute(t).serialize(), o = new $({
+      var c, d, u, h;
+      const a = (d = (c = this.model) == null ? void 0 : c.getAttributeDetails(t)) == null ? void 0 : d.type, s = B.createType(t, a, e).serialize(), i = r ? B.createType(t, a, r).serialize() : this.getAttribute(t).serialize(), o = new $({
         action: "edit",
         data: {
           [t]: {
@@ -5927,13 +6060,13 @@ class at {
         },
         model: this.model.getName(),
         blitzID: this.getAttribute("_blitzID").value
-      }), u = await q.create().run([o]);
-      if (u[0].status !== W.Success && u[0].status !== W.Notice)
-        throw new Error(u[0].message ?? "Unknown Error! Please try again.");
+      }), l = await V.create().run([o]);
+      if (l[0].status !== C.Success && l[0].status !== C.Notice)
+        throw new Error(l[0].message ?? "Unknown Error! Please try again.");
       this._attributes[t].value = s;
       for (const f of this.getAttribute("_editURLs").value)
         await p.queue.addJob(f, o.toObject());
-      (d = this.model) == null || d.memoryClient().emit(o), this.dispatchEvent("edit", o.data), (h = this.model) == null || h.setLastTransactionHash(o.hash);
+      (u = this.model) == null || u.memoryClient().emit(o), this.dispatchEvent("edit", o.data), (h = this.model) == null || h.setLastTransactionHash(o.hash);
     });
   }
   /**
@@ -5945,8 +6078,8 @@ class at {
       action: "delete",
       model: this.model.getName(),
       blitzID: this.getAttribute("_blitzID").value
-    }), e = await q.create().run([t]);
-    if (e[0].status !== W.Success)
+    }), e = await V.create().run([t]);
+    if (e[0].status !== C.Success)
       throw new Error(e[0].message ?? "Unknown Error! Please try again.");
     const r = (a = this.model) == null ? void 0 : a.memoryClient();
     r == null || r.delete(this.getAttribute("_blitzID").value);
@@ -5965,7 +6098,7 @@ class at {
       throw new Error("Users missing!");
     const e = this.getAttribute("_blitzID").value, r = {
       blitzIDs: [e],
-      users: t.reduce((o, u) => ({ ...o, [`#${u.id}`]: u.permission }), {})
+      users: t.reduce((o, l) => ({ ...o, [`#${l.id}`]: l.permission }), {})
     }, a = new $({
       action: "addObjectUserPermission",
       model: this.model.getName(),
@@ -5975,12 +6108,12 @@ class at {
     }), s = [];
     for (const o of this.getAttribute("_editURLs").value)
       s.push(
-        await jt.send(
+        await Nt.send(
           { url: o, transaction: a.toObject() },
-          L._globalHeaders
+          P._globalHeaders
         )
       );
-    const i = s.find((o) => o.status !== j.Success);
+    const i = s.find((o) => o.status !== F.Success);
     if (i)
       throw new Error(i.message);
   }
@@ -6043,7 +6176,7 @@ class at {
     });
   }
 }
-class Ft {
+class Ht {
   /**
    * Transforms BlitzData options.
    */
@@ -6070,7 +6203,7 @@ class Ft {
       level: "none"
     }, t.sync.level === "partial")
       throw new Error("Partial sync type not supported yet!");
-    return t.sync.level === "cache" && (t.sync.ttl || (t.sync.ttl = 30 * 1e3)), t.sync.level === "full" && (t.sync.interval || (t.sync.interval = 30 * 1e3)), t.flush || (t.flush = {
+    return typeof t.sync.live != "boolean" && (t.sync.live = !1), t.sync.level === "cache" && (t.sync.ttl || (t.sync.ttl = 30 * 1e3)), t.sync.level === "full" && (t.sync.interval || (t.sync.interval = 30 * 1e3)), t.flush || (t.flush = {
       type: ["version", "model"]
     }), t.flush.type.includes("interval") && (t.flush.interval || (t.flush.interval = 30)), t.flush.type.includes("size") && (t.flush.size || (t.flush.size = 128)), t.flush.type.includes("model") && (t.flush.modelCacheTTL || (t.flush.modelCacheTTL = 60 * 5)), t;
   }
@@ -6111,7 +6244,7 @@ class Ft {
     return t;
   }
 }
-const Ga = {
+const cs = {
   /**
    * Get handler for the object.
    *
@@ -6132,7 +6265,7 @@ const Ga = {
     throw new Error("Setting values directly not supported. Please use `edit` method to change a value for an attribute.");
   }
 };
-class Ce {
+class Ne {
   /**
    * Creates new BDObject with supplied type, model and attributes.
    *
@@ -6142,16 +6275,16 @@ class Ce {
    * @param updateMemory
    */
   static create(t, e, r) {
-    const a = e.getAttributesDetails() ?? {}, s = H.unserialize(a, r), i = new Proxy(new t({
+    const a = e.getAttributesDetails() ?? {}, s = B.unserialize(a, r), i = new Proxy(new t({
       model: e,
       attributes: s
-    }), Ga);
+    }), cs);
     for (const o in s)
       s[o].withObject(i);
     return e.memoryClient().update(i);
   }
 }
-class ke extends at {
+class Re extends at {
   /**
    * Returns the model of the custom object.
    */
@@ -6200,8 +6333,8 @@ class ke extends at {
 /**
  * Name of the model for custom object.
  */
-m(ke, "modelName");
-const Ot = class Ot extends ke {
+m(Re, "modelName");
+const Tt = class Tt extends Re {
   /**
    * Constructor.
    *
@@ -6227,7 +6360,7 @@ const Ot = class Ot extends ke {
    * Returns the model indexed db connection.
    */
   idbClient() {
-    return new ur(this);
+    return new pr(this);
   }
   /**
    * Returns the model memory connection.
@@ -6276,17 +6409,17 @@ const Ot = class Ot extends ke {
   async add(e, r = []) {
     const a = this.resolveClusters(r), s = this.getAttributesDetails() ?? {}, i = new $({
       action: "add",
-      data: H.serialize(H.unserialize(s, e)),
+      data: B.serialize(B.unserialize(s, e)),
       model: this.getName()
-    }), o = await p.getCurrentUser(), u = i.clone();
-    u.data = { ...u.data, _userID: o.id };
-    const c = await q.create().run([u]);
-    if (c[0].status !== W.Success)
+    }), o = await p.getCurrentUser(), l = i.clone();
+    l.data = { ...l.data, _userID: o.id };
+    const c = await V.create().run([l]);
+    if (c[0].status !== C.Success)
       throw new Error(c[0].message ?? "Unknown Error! Please try again.");
-    for (const l of a)
-      for (const d of l.options.addURL)
-        await p.queue.addJob(d, i.toObject());
-    return this.memoryClient().emit(i), this.setLastTransactionHash(i.hash), Ce.create(this.returnType, this, u.data);
+    for (const d of a)
+      for (const u of d.options.addURL)
+        await p.queue.addJob(u, i.toObject());
+    return this.memoryClient().emit(i), this.setLastTransactionHash(i.hash), Ne.create(this.returnType, this, l.data);
   }
   /**
    * Finds an object by given blitz ID.
@@ -6297,7 +6430,7 @@ const Ot = class Ot extends ke {
     const r = typeof e == "string" ? { blitzID: e } : e, s = (await st.create().model(this).clusters(this.resolveClusters(r.clusters ?? [])).raw(r.raw ?? !1).get(r.blitzID).query({
       returnType: this.returnType ?? at
     }).forceHttp(r.forceHttp ?? !1).forceLocal(r.forceLocal ?? !1).skipCacheUpdateIfFound(r.skipCacheUpdateIfFound ?? !1).signal(r.signal).getQuery(r.query ?? {}).perform())[0] ?? null;
-    if (!s && this.returnType === Ot)
+    if (!s && this.returnType === Tt)
       throw new Error(`Model with blitzID "${e}" does not exists or you don't have enough permission to view it.`);
     return s || null;
   }
@@ -6337,57 +6470,57 @@ const Ot = class Ot extends ke {
       customSortDirection: e.customSortDirection,
       var: e.var,
       manyToMany: e.manyToMany
-    }).forceHttp(e.forceHttp ?? !1).forceLocal(e.forceLocal ?? !1).skipCacheUpdateIfFound(e.skipCacheUpdateIfFound ?? !1).performSignal(a), i = s.subscribe(r, s.get() !== null), o = _t.channel.filterPipe((u) => u.model === this.getName()).subscribe((u) => {
-      if (u.action === D.Add)
+    }).forceHttp(e.forceHttp ?? !1).forceLocal(e.forceLocal ?? !1).skipCacheUpdateIfFound(e.skipCacheUpdateIfFound ?? !1).performSignal(a), i = s.subscribe(r, s.get() !== null), o = _t.channel.filterPipe((l) => l.model === this.getName()).subscribe((l) => {
+      if (l.action === D.Add)
         this.list({ ...e, forceLocal: !0 }).then((c) => {
-          const l = e.raw ? c.findIndex((d) => d._blitzID === u.blitzID) : c.findIndex((d) => d.getAttribute("_blitzID").value === u.blitzID);
-          l > -1 && s.set({
+          const d = e.raw ? c.findIndex((u) => u._blitzID === l.blitzID) : c.findIndex((u) => u.getAttribute("_blitzID").value === l.blitzID);
+          d > -1 && s.set({
             items: c,
             update: {
               action: D.Add,
-              object: c[l],
-              index: l
+              object: c[d],
+              index: d
             }
           });
         });
-      else if (u.action === D.Edit) {
+      else if (l.action === D.Edit) {
         const c = s.get();
         if (!c)
           return;
-        const l = e.raw ? c.items.findIndex((d) => d._blitzID === u.blitzID) : c.items.findIndex((d) => d.getAttribute("_blitzID").value === u.blitzID);
-        l > -1 && this.list({ ...e, forceLocal: !0 }).then((d) => {
-          const h = e.raw ? d.findIndex((f) => f._blitzID === u.blitzID) : d.findIndex((f) => f.getAttribute("_blitzID").value === u.blitzID);
+        const d = e.raw ? c.items.findIndex((u) => u._blitzID === l.blitzID) : c.items.findIndex((u) => u.getAttribute("_blitzID").value === l.blitzID);
+        d > -1 && this.list({ ...e, forceLocal: !0 }).then((u) => {
+          const h = e.raw ? u.findIndex((f) => f._blitzID === l.blitzID) : u.findIndex((f) => f.getAttribute("_blitzID").value === l.blitzID);
           s.set({
-            items: d,
+            items: u,
             update: {
               action: D.Edit,
-              object: h > -1 ? d[h] : c.items[l],
-              index: h > -1 ? h : l
+              object: h > -1 ? u[h] : c.items[d],
+              index: h > -1 ? h : d
             }
           });
         });
-      } else if (u.action === D.Delete) {
+      } else if (l.action === D.Delete) {
         const c = s.get();
         if (!c)
           return;
         if (e.raw) {
-          const l = c.items.findIndex((d) => d._blitzID === u.blitzID);
-          l > -1 && s.set({
-            items: c.items.filter((d) => d._blitzID !== u.blitzID),
+          const d = c.items.findIndex((u) => u._blitzID === l.blitzID);
+          d > -1 && s.set({
+            items: c.items.filter((u) => u._blitzID !== l.blitzID),
             update: {
               action: D.Delete,
-              object: c.items[l],
-              index: l
+              object: c.items[d],
+              index: d
             }
           });
         } else {
-          const l = c.items.findIndex((d) => d.getAttribute("_blitzID").value === u.blitzID);
-          l > -1 && s.set({
-            items: c.items.filter((d) => d.getAttribute("_blitzID").value !== u.blitzID),
+          const d = c.items.findIndex((u) => u.getAttribute("_blitzID").value === l.blitzID);
+          d > -1 && s.set({
+            items: c.items.filter((u) => u.getAttribute("_blitzID").value !== l.blitzID),
             update: {
               action: D.Delete,
-              object: c.items[l],
-              index: l
+              object: c.items[d],
+              index: d
             }
           });
         }
@@ -6404,7 +6537,7 @@ const Ot = class Ot extends ke {
   async sync() {
     const e = this.getName();
     if (e) {
-      const r = Date.now() / 1e3, a = S.getLastSyncedAt(e) ?? 0, s = 30;
+      const r = Date.now() / 1e3, a = M.getLastSyncedAt(e) ?? 0, s = 30;
       r - a > s && await dt.create().run(e);
     }
   }
@@ -6440,8 +6573,8 @@ const Ot = class Ot extends ke {
    * @param clusters Clusters to set.
    */
   setClusters(e) {
-    this.clusterManager = new we();
-    const r = Ft.transformClusterOptions(e);
+    this.clusterManager = new Me();
+    const r = Ht.transformClusterOptions(e);
     for (const a of Object.keys(r))
       this.clusterManager.register(a, r[a]);
   }
@@ -6461,9 +6594,9 @@ const Ot = class Ot extends ke {
 /**
  * Name of the model for custom object.
  */
-m(Ot, "modelName", "_Model");
-let R = Ot;
-class Jt {
+m(Tt, "modelName", "_Model");
+let R = Tt;
+class $t {
   /**
    * Extract model name from the given `list` URL.
    *
@@ -6489,7 +6622,7 @@ class Jt {
     return JSON.parse(e.searchParams.get("conditions") || "[]");
   }
 }
-var We = { exports: {} }, Ue = { exports: {} };
+var He = { exports: {} }, $e = { exports: {} };
 (function() {
   var n = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", t = {
     // Bit-wise rotation left
@@ -6553,18 +6686,18 @@ var We = { exports: {} }, Ue = { exports: {} };
       return r;
     }
   };
-  Ue.exports = t;
+  $e.exports = t;
 })();
-var Za = Ue.exports, Nt = {
+var ls = $e.exports, Bt = {
   // UTF-8 encoding
   utf8: {
     // Convert a string to a byte array
     stringToBytes: function(n) {
-      return Nt.bin.stringToBytes(unescape(encodeURIComponent(n)));
+      return Bt.bin.stringToBytes(unescape(encodeURIComponent(n)));
     },
     // Convert a byte array to a string
     bytesToString: function(n) {
-      return decodeURIComponent(escape(Nt.bin.bytesToString(n)));
+      return decodeURIComponent(escape(Bt.bin.bytesToString(n)));
     }
   },
   // Binary encoding
@@ -6582,97 +6715,97 @@ var Za = Ue.exports, Nt = {
       return t.join("");
     }
   }
-}, le = Nt;
+}, we = Bt;
 /*!
  * Determine if an object is a Buffer
  *
  * @author   Feross Aboukhadijeh <https://feross.org>
  * @license  MIT
  */
-var ts = function(n) {
-  return n != null && (je(n) || es(n) || !!n._isBuffer);
+var us = function(n) {
+  return n != null && (Be(n) || ds(n) || !!n._isBuffer);
 };
-function je(n) {
+function Be(n) {
   return !!n.constructor && typeof n.constructor.isBuffer == "function" && n.constructor.isBuffer(n);
 }
-function es(n) {
-  return typeof n.readFloatLE == "function" && typeof n.slice == "function" && je(n.slice(0, 0));
+function ds(n) {
+  return typeof n.readFloatLE == "function" && typeof n.slice == "function" && Be(n.slice(0, 0));
 }
 (function() {
-  var n = Za, t = le.utf8, e = ts, r = le.bin, a = function(s, i) {
+  var n = ls, t = we.utf8, e = us, r = we.bin, a = function(s, i) {
     s.constructor == String ? i && i.encoding === "binary" ? s = r.stringToBytes(s) : s = t.stringToBytes(s) : e(s) ? s = Array.prototype.slice.call(s, 0) : !Array.isArray(s) && s.constructor !== Uint8Array && (s = s.toString());
-    for (var o = n.bytesToWords(s), u = s.length * 8, c = 1732584193, l = -271733879, d = -1732584194, h = 271733878, f = 0; f < o.length; f++)
+    for (var o = n.bytesToWords(s), l = s.length * 8, c = 1732584193, d = -271733879, u = -1732584194, h = 271733878, f = 0; f < o.length; f++)
       o[f] = (o[f] << 8 | o[f] >>> 24) & 16711935 | (o[f] << 24 | o[f] >>> 8) & 4278255360;
-    o[u >>> 5] |= 128 << u % 32, o[(u + 64 >>> 9 << 4) + 14] = u;
-    for (var g = a._ff, v = a._gg, M = a._hh, P = a._ii, f = 0; f < o.length; f += 16) {
-      var C = c, A = l, V = d, At = h;
-      c = g(c, l, d, h, o[f + 0], 7, -680876936), h = g(h, c, l, d, o[f + 1], 12, -389564586), d = g(d, h, c, l, o[f + 2], 17, 606105819), l = g(l, d, h, c, o[f + 3], 22, -1044525330), c = g(c, l, d, h, o[f + 4], 7, -176418897), h = g(h, c, l, d, o[f + 5], 12, 1200080426), d = g(d, h, c, l, o[f + 6], 17, -1473231341), l = g(l, d, h, c, o[f + 7], 22, -45705983), c = g(c, l, d, h, o[f + 8], 7, 1770035416), h = g(h, c, l, d, o[f + 9], 12, -1958414417), d = g(d, h, c, l, o[f + 10], 17, -42063), l = g(l, d, h, c, o[f + 11], 22, -1990404162), c = g(c, l, d, h, o[f + 12], 7, 1804603682), h = g(h, c, l, d, o[f + 13], 12, -40341101), d = g(d, h, c, l, o[f + 14], 17, -1502002290), l = g(l, d, h, c, o[f + 15], 22, 1236535329), c = v(c, l, d, h, o[f + 1], 5, -165796510), h = v(h, c, l, d, o[f + 6], 9, -1069501632), d = v(d, h, c, l, o[f + 11], 14, 643717713), l = v(l, d, h, c, o[f + 0], 20, -373897302), c = v(c, l, d, h, o[f + 5], 5, -701558691), h = v(h, c, l, d, o[f + 10], 9, 38016083), d = v(d, h, c, l, o[f + 15], 14, -660478335), l = v(l, d, h, c, o[f + 4], 20, -405537848), c = v(c, l, d, h, o[f + 9], 5, 568446438), h = v(h, c, l, d, o[f + 14], 9, -1019803690), d = v(d, h, c, l, o[f + 3], 14, -187363961), l = v(l, d, h, c, o[f + 8], 20, 1163531501), c = v(c, l, d, h, o[f + 13], 5, -1444681467), h = v(h, c, l, d, o[f + 2], 9, -51403784), d = v(d, h, c, l, o[f + 7], 14, 1735328473), l = v(l, d, h, c, o[f + 12], 20, -1926607734), c = M(c, l, d, h, o[f + 5], 4, -378558), h = M(h, c, l, d, o[f + 8], 11, -2022574463), d = M(d, h, c, l, o[f + 11], 16, 1839030562), l = M(l, d, h, c, o[f + 14], 23, -35309556), c = M(c, l, d, h, o[f + 1], 4, -1530992060), h = M(h, c, l, d, o[f + 4], 11, 1272893353), d = M(d, h, c, l, o[f + 7], 16, -155497632), l = M(l, d, h, c, o[f + 10], 23, -1094730640), c = M(c, l, d, h, o[f + 13], 4, 681279174), h = M(h, c, l, d, o[f + 0], 11, -358537222), d = M(d, h, c, l, o[f + 3], 16, -722521979), l = M(l, d, h, c, o[f + 6], 23, 76029189), c = M(c, l, d, h, o[f + 9], 4, -640364487), h = M(h, c, l, d, o[f + 12], 11, -421815835), d = M(d, h, c, l, o[f + 15], 16, 530742520), l = M(l, d, h, c, o[f + 2], 23, -995338651), c = P(c, l, d, h, o[f + 0], 6, -198630844), h = P(h, c, l, d, o[f + 7], 10, 1126891415), d = P(d, h, c, l, o[f + 14], 15, -1416354905), l = P(l, d, h, c, o[f + 5], 21, -57434055), c = P(c, l, d, h, o[f + 12], 6, 1700485571), h = P(h, c, l, d, o[f + 3], 10, -1894986606), d = P(d, h, c, l, o[f + 10], 15, -1051523), l = P(l, d, h, c, o[f + 1], 21, -2054922799), c = P(c, l, d, h, o[f + 8], 6, 1873313359), h = P(h, c, l, d, o[f + 15], 10, -30611744), d = P(d, h, c, l, o[f + 6], 15, -1560198380), l = P(l, d, h, c, o[f + 13], 21, 1309151649), c = P(c, l, d, h, o[f + 4], 6, -145523070), h = P(h, c, l, d, o[f + 11], 10, -1120210379), d = P(d, h, c, l, o[f + 2], 15, 718787259), l = P(l, d, h, c, o[f + 9], 21, -343485551), c = c + C >>> 0, l = l + A >>> 0, d = d + V >>> 0, h = h + At >>> 0;
+    o[l >>> 5] |= 128 << l % 32, o[(l + 64 >>> 9 << 4) + 14] = l;
+    for (var g = a._ff, _ = a._gg, S = a._hh, A = a._ii, f = 0; f < o.length; f += 16) {
+      var L = c, x = d, Q = u, At = h;
+      c = g(c, d, u, h, o[f + 0], 7, -680876936), h = g(h, c, d, u, o[f + 1], 12, -389564586), u = g(u, h, c, d, o[f + 2], 17, 606105819), d = g(d, u, h, c, o[f + 3], 22, -1044525330), c = g(c, d, u, h, o[f + 4], 7, -176418897), h = g(h, c, d, u, o[f + 5], 12, 1200080426), u = g(u, h, c, d, o[f + 6], 17, -1473231341), d = g(d, u, h, c, o[f + 7], 22, -45705983), c = g(c, d, u, h, o[f + 8], 7, 1770035416), h = g(h, c, d, u, o[f + 9], 12, -1958414417), u = g(u, h, c, d, o[f + 10], 17, -42063), d = g(d, u, h, c, o[f + 11], 22, -1990404162), c = g(c, d, u, h, o[f + 12], 7, 1804603682), h = g(h, c, d, u, o[f + 13], 12, -40341101), u = g(u, h, c, d, o[f + 14], 17, -1502002290), d = g(d, u, h, c, o[f + 15], 22, 1236535329), c = _(c, d, u, h, o[f + 1], 5, -165796510), h = _(h, c, d, u, o[f + 6], 9, -1069501632), u = _(u, h, c, d, o[f + 11], 14, 643717713), d = _(d, u, h, c, o[f + 0], 20, -373897302), c = _(c, d, u, h, o[f + 5], 5, -701558691), h = _(h, c, d, u, o[f + 10], 9, 38016083), u = _(u, h, c, d, o[f + 15], 14, -660478335), d = _(d, u, h, c, o[f + 4], 20, -405537848), c = _(c, d, u, h, o[f + 9], 5, 568446438), h = _(h, c, d, u, o[f + 14], 9, -1019803690), u = _(u, h, c, d, o[f + 3], 14, -187363961), d = _(d, u, h, c, o[f + 8], 20, 1163531501), c = _(c, d, u, h, o[f + 13], 5, -1444681467), h = _(h, c, d, u, o[f + 2], 9, -51403784), u = _(u, h, c, d, o[f + 7], 14, 1735328473), d = _(d, u, h, c, o[f + 12], 20, -1926607734), c = S(c, d, u, h, o[f + 5], 4, -378558), h = S(h, c, d, u, o[f + 8], 11, -2022574463), u = S(u, h, c, d, o[f + 11], 16, 1839030562), d = S(d, u, h, c, o[f + 14], 23, -35309556), c = S(c, d, u, h, o[f + 1], 4, -1530992060), h = S(h, c, d, u, o[f + 4], 11, 1272893353), u = S(u, h, c, d, o[f + 7], 16, -155497632), d = S(d, u, h, c, o[f + 10], 23, -1094730640), c = S(c, d, u, h, o[f + 13], 4, 681279174), h = S(h, c, d, u, o[f + 0], 11, -358537222), u = S(u, h, c, d, o[f + 3], 16, -722521979), d = S(d, u, h, c, o[f + 6], 23, 76029189), c = S(c, d, u, h, o[f + 9], 4, -640364487), h = S(h, c, d, u, o[f + 12], 11, -421815835), u = S(u, h, c, d, o[f + 15], 16, 530742520), d = S(d, u, h, c, o[f + 2], 23, -995338651), c = A(c, d, u, h, o[f + 0], 6, -198630844), h = A(h, c, d, u, o[f + 7], 10, 1126891415), u = A(u, h, c, d, o[f + 14], 15, -1416354905), d = A(d, u, h, c, o[f + 5], 21, -57434055), c = A(c, d, u, h, o[f + 12], 6, 1700485571), h = A(h, c, d, u, o[f + 3], 10, -1894986606), u = A(u, h, c, d, o[f + 10], 15, -1051523), d = A(d, u, h, c, o[f + 1], 21, -2054922799), c = A(c, d, u, h, o[f + 8], 6, 1873313359), h = A(h, c, d, u, o[f + 15], 10, -30611744), u = A(u, h, c, d, o[f + 6], 15, -1560198380), d = A(d, u, h, c, o[f + 13], 21, 1309151649), c = A(c, d, u, h, o[f + 4], 6, -145523070), h = A(h, c, d, u, o[f + 11], 10, -1120210379), u = A(u, h, c, d, o[f + 2], 15, 718787259), d = A(d, u, h, c, o[f + 9], 21, -343485551), c = c + L >>> 0, d = d + x >>> 0, u = u + Q >>> 0, h = h + At >>> 0;
     }
-    return n.endian([c, l, d, h]);
+    return n.endian([c, d, u, h]);
   };
-  a._ff = function(s, i, o, u, c, l, d) {
-    var h = s + (i & o | ~i & u) + (c >>> 0) + d;
-    return (h << l | h >>> 32 - l) + i;
-  }, a._gg = function(s, i, o, u, c, l, d) {
-    var h = s + (i & u | o & ~u) + (c >>> 0) + d;
-    return (h << l | h >>> 32 - l) + i;
-  }, a._hh = function(s, i, o, u, c, l, d) {
-    var h = s + (i ^ o ^ u) + (c >>> 0) + d;
-    return (h << l | h >>> 32 - l) + i;
-  }, a._ii = function(s, i, o, u, c, l, d) {
-    var h = s + (o ^ (i | ~u)) + (c >>> 0) + d;
-    return (h << l | h >>> 32 - l) + i;
-  }, a._blocksize = 16, a._digestsize = 16, We.exports = function(s, i) {
+  a._ff = function(s, i, o, l, c, d, u) {
+    var h = s + (i & o | ~i & l) + (c >>> 0) + u;
+    return (h << d | h >>> 32 - d) + i;
+  }, a._gg = function(s, i, o, l, c, d, u) {
+    var h = s + (i & l | o & ~l) + (c >>> 0) + u;
+    return (h << d | h >>> 32 - d) + i;
+  }, a._hh = function(s, i, o, l, c, d, u) {
+    var h = s + (i ^ o ^ l) + (c >>> 0) + u;
+    return (h << d | h >>> 32 - d) + i;
+  }, a._ii = function(s, i, o, l, c, d, u) {
+    var h = s + (o ^ (i | ~l)) + (c >>> 0) + u;
+    return (h << d | h >>> 32 - d) + i;
+  }, a._blocksize = 16, a._digestsize = 16, He.exports = function(s, i) {
     if (s == null)
       throw new Error("Illegal argument " + s);
     var o = n.wordsToBytes(a(s, i));
     return i && i.asBytes ? o : i && i.asString ? r.bytesToString(o) : n.bytesToHex(o);
   };
 })();
-var rs = We.exports;
-const ns = /* @__PURE__ */ nr(rs), as = /^[v^~<>=]*?(\d+)(?:\.([x*]|\d+)(?:\.([x*]|\d+)(?:\.([x*]|\d+))?(?:-([\da-z\-]+(?:\.[\da-z\-]+)*))?(?:\+[\da-z\-]+(?:\.[\da-z\-]+)*)?)?)?$/i, de = (n) => {
+var hs = He.exports;
+const fs = /* @__PURE__ */ fr(hs), ms = /^[v^~<>=]*?(\d+)(?:\.([x*]|\d+)(?:\.([x*]|\d+)(?:\.([x*]|\d+))?(?:-([\da-z\-]+(?:\.[\da-z\-]+)*))?(?:\+[\da-z\-]+(?:\.[\da-z\-]+)*)?)?)?$/i, be = (n) => {
   if (typeof n != "string")
     throw new TypeError("Invalid argument expected string");
-  const t = n.match(as);
+  const t = n.match(ms);
   if (!t)
     throw new Error(`Invalid argument not valid semver ('${n}' received)`);
   return t.shift(), t;
-}, he = (n) => n === "*" || n === "x" || n === "X", fe = (n) => {
+}, ye = (n) => n === "*" || n === "x" || n === "X", pe = (n) => {
   const t = parseInt(n, 10);
   return isNaN(t) ? n : t;
-}, ss = (n, t) => typeof n != typeof t ? [String(n), String(t)] : [n, t], is = (n, t) => {
-  if (he(n) || he(t))
+}, gs = (n, t) => typeof n != typeof t ? [String(n), String(t)] : [n, t], ws = (n, t) => {
+  if (ye(n) || ye(t))
     return 0;
-  const [e, r] = ss(fe(n), fe(t));
+  const [e, r] = gs(pe(n), pe(t));
   return e > r ? 1 : e < r ? -1 : 0;
-}, me = (n, t) => {
+}, _e = (n, t) => {
   for (let e = 0; e < Math.max(n.length, t.length); e++) {
-    const r = is(n[e] || "0", t[e] || "0");
+    const r = ws(n[e] || "0", t[e] || "0");
     if (r !== 0)
       return r;
   }
   return 0;
-}, os = (n, t) => {
-  const e = de(n), r = de(t), a = e.pop(), s = r.pop(), i = me(e, r);
-  return i !== 0 ? i : a && s ? me(a.split("."), s.split(".")) : a || s ? a ? -1 : 1 : 0;
-}, ge = (n, t, e) => {
-  cs(e);
-  const r = os(n, t);
-  return Le[e].includes(r);
-}, Le = {
+}, bs = (n, t) => {
+  const e = be(n), r = be(t), a = e.pop(), s = r.pop(), i = _e(e, r);
+  return i !== 0 ? i : a && s ? _e(a.split("."), s.split(".")) : a || s ? a ? -1 : 1 : 0;
+}, ve = (n, t, e) => {
+  ys(e);
+  const r = bs(n, t);
+  return Ye[e].includes(r);
+}, Ye = {
   ">": [1],
   ">=": [0, 1],
   "=": [0],
   "<=": [-1, 0],
   "<": [-1],
   "!=": [-1, 1]
-}, be = Object.keys(Le), cs = (n) => {
+}, De = Object.keys(Ye), ys = (n) => {
   if (typeof n != "string")
     throw new TypeError(`Invalid operator type, expected string but got ${typeof n}`);
-  if (be.indexOf(n) === -1)
-    throw new Error(`Invalid operator, expected one of ${be.join("|")}`);
+  if (De.indexOf(n) === -1)
+    throw new Error(`Invalid operator, expected one of ${De.join("|")}`);
 };
-class Fe {
+class qe {
   /**
    * Constructor
    * @param options Flush options
@@ -6689,22 +6822,22 @@ class Fe {
    */
   async perform() {
     if (this.options.type.includes("version")) {
-      const t = S.get("version");
-      if (!t || ge(p.VERSION, t, ">")) {
+      const t = M.get("version");
+      if (!t || ve(p.VERSION, t, ">")) {
         const e = p.VERSION.split(".")[1], r = t == null ? void 0 : t.split(".")[1];
-        if (r && ge(e, r, ">")) {
-          await this.flush(), S.setLastSyncedAt(Math.floor(Date.now() / 1e3)), S.set("version", p.VERSION);
+        if (r && ve(e, r, ">")) {
+          await this.flush(), M.setLastSyncedAt(Math.floor(Date.now() / 1e3)), M.set("version", p.VERSION);
           return;
         } else
-          S.set("version", p.VERSION);
+          M.set("version", p.VERSION);
       }
     }
     if (this.options.type.includes("interval") && this.options.interval) {
-      const t = S.get("lastFlush");
+      const t = M.get("lastFlush");
       if (!t)
-        S.set("lastFlush", Date.now().toString());
+        M.set("lastFlush", Date.now().toString());
       else if (Math.floor((Date.now() - parseInt(t)) / 864e5) >= this.options.interval) {
-        await this.flush(), S.set("lastFlush", Date.now().toString()), S.setLastSyncedAt(Math.floor(Date.now() / 1e3)), S.set("version", p.VERSION);
+        await this.flush(), M.set("lastFlush", Date.now().toString()), M.setLastSyncedAt(Math.floor(Date.now() / 1e3)), M.set("version", p.VERSION);
         return;
       }
     }
@@ -6712,7 +6845,7 @@ class Fe {
       try {
         const t = await navigator.storage.estimate();
         if (t.usage && Math.floor(t.usage / 1e6) >= this.options.size) {
-          await this.flush(), S.setLastSyncedAt(Math.floor(Date.now() / 1e3)), S.set("version", p.VERSION);
+          await this.flush(), M.setLastSyncedAt(Math.floor(Date.now() / 1e3)), M.set("version", p.VERSION);
           return;
         }
       } catch (t) {
@@ -6724,8 +6857,8 @@ class Fe {
           var i;
           return (i = s.name) == null ? void 0 : i.startsWith("bdt");
         }).map((s) => s.name),
-        ...S.getDatabases()
-      ].filter((s, i, o) => !["_Model", "_Project", "0BAUsers"].includes(s) && o.findIndex((u) => u === s) === i), r = [
+        ...M.getDatabases()
+      ].filter((s, i, o) => !["_Model", "_Project", "0BAUsers"].includes(s) && o.findIndex((l) => l === s) === i), r = [
         "_sort",
         "_objectpermission",
         "_modified",
@@ -6743,17 +6876,17 @@ class Fe {
       if (a) {
         for (const s of e)
           try {
-            const i = (JSON.parse(S.get("model." + s) || "null") ?? {}).object;
+            const i = (JSON.parse(M.get("model." + s) || "null") ?? {}).object;
             if (i) {
               const o = await a.get("objects", s);
-              o && (!r.every((u) => i[u] === o[u]) || !Object.keys(i.attributes ?? []).every((u) => {
-                var c, l, d, h, f, g, v, M;
+              o && (!r.every((l) => i[l] === o[l]) || !Object.keys(i.attributes ?? []).every((l) => {
+                var c, d, u, h, f, g, _, S;
                 return (
                   // Check single enum and many enum attributes
-                  i.attributes[u].type === "enum" || Array.isArray(i.attributes[u].type) && i.attributes[u].type[0] === "enum" ? (Array.isArray(i.attributes[u].type) ? (l = (c = o.attributes) == null ? void 0 : c[u]) == null ? void 0 : l.type[0] : (h = (d = o.attributes) == null ? void 0 : d[u]) == null ? void 0 : h.type) === "enum" && (i.attributes[u].options ?? []).every((P, C) => {
-                    var A, V;
-                    return P === ((V = (A = o.attributes) == null ? void 0 : A[u]) == null ? void 0 : V.options[C]);
-                  }) : Array.isArray(i.attributes[u].type) ? i.attributes[u].type[0] === ((g = (f = o.attributes) == null ? void 0 : f[u]) == null ? void 0 : g.type[0]) : i.attributes[u].type === ((M = (v = o.attributes) == null ? void 0 : v[u]) == null ? void 0 : M.type)
+                  i.attributes[l].type === "enum" || Array.isArray(i.attributes[l].type) && i.attributes[l].type[0] === "enum" ? (Array.isArray(i.attributes[l].type) ? (d = (c = o.attributes) == null ? void 0 : c[l]) == null ? void 0 : d.type[0] : (h = (u = o.attributes) == null ? void 0 : u[l]) == null ? void 0 : h.type) === "enum" && (i.attributes[l].options ?? []).every((A, L) => {
+                    var x, Q;
+                    return A === ((Q = (x = o.attributes) == null ? void 0 : x[l]) == null ? void 0 : Q.options[L]);
+                  }) : Array.isArray(i.attributes[l].type) ? i.attributes[l].type[0] === ((g = (f = o.attributes) == null ? void 0 : f[l]) == null ? void 0 : g.type[0]) : i.attributes[l].type === ((S = (_ = o.attributes) == null ? void 0 : _[l]) == null ? void 0 : S.type)
                 );
               })) && await a.delete("objects", s);
             }
@@ -6773,16 +6906,16 @@ class Fe {
         var s;
         return (s = a.name) == null ? void 0 : s.startsWith("bdt");
       }).map((a) => a.name),
-      ...S.getDatabases(),
+      ...M.getDatabases(),
       "_Model",
       "_Project",
       "0BAUsers",
       "db_master"
     ].filter((a, s, i) => i.findIndex((o) => o === a) === s);
     for (const a of e)
-      await $t(a);
-    const r = t.find((a) => a.name === _.name) ? await it(_.name, 1) : null;
-    r && (await r.clear(_.store), r.close()), S.clear();
+      await qt(a);
+    const r = t.find((a) => a.name === v.name) ? await it(v.name, 1) : null;
+    r && (await r.clear(v.store), r.close()), M.clear();
   }
   /**
    * Updates model cache in local storage
@@ -6790,8 +6923,8 @@ class Fe {
   static modelCacheUpdate(t, e) {
     if (p.options.flush.type.includes("model") && p.options.flush.modelCacheTTL && t && e !== null && typeof e == "object" && Object.hasOwn(e, "_blitzID"))
       try {
-        const r = Date.now(), a = "model." + t.getName(), s = JSON.parse(S.get(a) || "null");
-        (!s || r - s.lastFetchedAt >= p.options.flush.modelCacheTTL * 1e3) && S.set(
+        const r = Date.now(), a = "model." + t.getName(), s = JSON.parse(M.get(a) || "null");
+        (!s || r - s.lastFetchedAt >= p.options.flush.modelCacheTTL * 1e3) && M.set(
           a,
           JSON.stringify({
             lastFetchedAt: r,
@@ -6899,11 +7032,11 @@ class st {
     if ((a = this._query) != null && a.conditions && e)
       for (const s of this._query.conditions) {
         const i = s[0];
-        s.length === 3 && e[i] !== void 0 && typeof e[i].type == "string" && (s[1] === "IN" && Array.isArray(s[2]) ? s[2] = s[2].map((o) => H.createType(
+        s.length === 3 && e[i] !== void 0 && typeof e[i].type == "string" && (s[1] === "IN" && Array.isArray(s[2]) ? s[2] = s[2].map((o) => B.createType(
           i,
           e[i].type,
           o
-        ).serialize()) : s[2] = H.createType(
+        ).serialize()) : s[2] = B.createType(
           i,
           e[i].type,
           s[2]
@@ -6969,7 +7102,7 @@ class st {
     var r;
     const e = [];
     for (const a of t)
-      e.push(Ce.create(((r = this._query) == null ? void 0 : r.returnType) ?? at, this._model, a));
+      e.push(Ne.create(((r = this._query) == null ? void 0 : r.returnType) ?? at, this._model, a));
     return e;
   }
   /**
@@ -6987,7 +7120,7 @@ class st {
         const r = this._skipCacheUpdateIfFound && t.length > 0 ? !1 : this.shouldSendHttpRequest();
         if (r || t.length === 0) {
           const a = await this.filterQueuedObjects(this.mergeObjects(await this.performHttp()));
-          (a.length > 0 || this._forceHttp) && (t = await this.filterExpiredObjects(a), t.length > 0 && await this._model.idbClient().save(t)), r && ((e = this._model) == null ? void 0 : e.getName()) !== "_Model" && S.setListCallLastTimeStamp(this.hash(), (/* @__PURE__ */ new Date()).getTime());
+          (a.length > 0 || this._forceHttp) && (t = await this.filterExpiredObjects(a), t.length > 0 && await this._model.idbClient().save(t)), r && ((e = this._model) == null ? void 0 : e.getName()) !== "_Model" && M.setListCallLastTimeStamp(this.hash(), (/* @__PURE__ */ new Date()).getTime());
         }
       }
     }
@@ -7002,27 +7135,31 @@ class st {
     const e = new ht(null);
     return (async () => {
       var s;
-      if (!t) {
-        e.set({
-          items: await this.perform()
-        });
-        return;
+      let r = [];
+      const a = (i, o) => {
+        r = i, e.set(o ? { items: i, nextSource: o } : { items: i });
+      };
+      try {
+        if (!t) {
+          a(await this.perform());
+          return;
+        }
+        const i = await this.performMemory();
+        if (a(
+          this._raw ? i : this.convertObjects(i),
+          this.hasLocalDatabase() ? "local database" : "server"
+        ), this.hasLocalDatabase()) {
+          const l = await this.performIndexedDb();
+          a(
+            this._raw ? l : this.convertObjects(l),
+            "server"
+          );
+        }
+        let o = await this.filterQueuedObjects(this.mergeObjects(await this.performHttp()));
+        o = await this.filterExpiredObjects(o), o.length > 0 && this.hasLocalDatabase() && await ((s = this._model) == null ? void 0 : s.idbClient().save(o)), a(this._raw ? o : this.convertObjects(o));
+      } catch (i) {
+        console.error("List call failed:", (i == null ? void 0 : i.stack) ?? (i == null ? void 0 : i.message) ?? i), e.set({ items: r });
       }
-      const r = await this.performMemory();
-      if (e.set({
-        items: this._raw ? r : this.convertObjects(r),
-        nextSource: this.hasLocalDatabase() ? "local database" : "server"
-      }), this.hasLocalDatabase()) {
-        const i = await this.performIndexedDb();
-        e.set({
-          items: this._raw ? i : this.convertObjects(i),
-          nextSource: "server"
-        });
-      }
-      let a = await this.filterQueuedObjects(this.mergeObjects(await this.performHttp()));
-      a = await this.filterExpiredObjects(a), a.length > 0 && this.hasLocalDatabase() && await ((s = this._model) == null ? void 0 : s.idbClient().save(a)), e.set({
-        items: this._raw ? a : this.convertObjects(a)
-      });
     })(), e;
   }
   /**
@@ -7053,29 +7190,29 @@ class st {
             query: this._getQuery
           }, this._signal);
         else {
-          const u = await et.list({
+          const l = await et.list({
             endpoint: {
               baseUrl: i,
               modelName: this._model.getName(),
               query: this._query
             }
           }, this._signal);
-          o = u.items || [], Fe.modelCacheUpdate(this._model, u.model);
+          o = l.items || [], qe.modelCacheUpdate(this._model, l.model);
         }
-        for (const u of o) {
-          u._clusters = [t.name], u._editURLs = JSON.parse(JSON.stringify(t.options.readURL));
-          for (const c in u)
-            if (c.endsWith("_fk") && u[c] !== null && typeof u[c] == "object" && u[c]._blitzID) {
-              const l = (a = (r = this._model) == null ? void 0 : r.getAttributeDetails(c)) == null ? void 0 : a.type;
-              if (l && l !== "_Model" && this.hasLocalDatabase()) {
-                const d = await R.get(l);
-                d && await d.idbClient().save([u[c]], !0);
+        for (const l of o) {
+          l._clusters = [t.name], l._editURLs = JSON.parse(JSON.stringify(t.options.readURL));
+          for (const c in l)
+            if (c.endsWith("_fk") && l[c] !== null && typeof l[c] == "object" && l[c]._blitzID) {
+              const d = (a = (r = this._model) == null ? void 0 : r.getAttributeDetails(c)) == null ? void 0 : a.type;
+              if (d && d !== "_Model" && this.hasLocalDatabase()) {
+                const u = await R.get(d);
+                u && await u.idbClient().save([l[c]], !0);
               }
-              u[c] = u[c]._blitzID;
+              l[c] = l[c]._blitzID;
             } else
-              c.endsWith("_mtm") && Array.isArray(u[c]) && (u[c] = u[c].map((l, d) => ({
-                _blitzID: typeof l == "string" ? l : l._blitzID,
-                _mtmSort: typeof l == "string" ? (u[c].length - d) * 15 : l._mtmSort
+              c.endsWith("_mtm") && Array.isArray(l[c]) && (l[c] = l[c].map((d, u) => ({
+                _blitzID: typeof d == "string" ? d : d._blitzID,
+                _mtmSort: typeof d == "string" ? (l[c].length - u) * 15 : d._mtmSort
               })));
         }
         return o;
@@ -7106,7 +7243,7 @@ class st {
         var: (r = this._getQuery) == null ? void 0 : r.var,
         manyToMany: (a = this._getQuery) == null ? void 0 : a.manyToMany
       });
-    const e = this._urls ? this._urls.map((s) => Jt.extractConditions(s)).flat() : this._query.conditions;
+    const e = this._urls ? this._urls.map((s) => $t.extractConditions(s)).flat() : this._query.conditions;
     return await t.query({ ...this._query, conditions: e });
   }
   /**
@@ -7122,7 +7259,7 @@ class st {
         var: (r = this._getQuery) == null ? void 0 : r.var,
         manyToMany: (a = this._getQuery) == null ? void 0 : a.manyToMany
       });
-    const e = this._urls ? this._urls.map((s) => Jt.extractConditions(s)).flat() : this._query.conditions;
+    const e = this._urls ? this._urls.map((s) => $t.extractConditions(s)).flat() : this._query.conditions;
     return await t.query({ ...this._query, conditions: e });
   }
   /**
@@ -7151,7 +7288,7 @@ class st {
     const e = await p.queue.getJobs(), r = [];
     for (const s of t)
       if (!e.find((i) => i.transaction.action === D.Delete && i.transaction.blitzID === s._blitzID))
-        if (!e.find((i) => i.transaction.action === D.Edit && i.transaction.blitzID === s._blitzID && i.status !== w.Completed))
+        if (!e.find((i) => i.transaction.action === D.Edit && i.transaction.blitzID === s._blitzID && i.status !== b.Completed))
           r.push(s);
         else {
           const i = await ((a = this._model) == null ? void 0 : a.get({ blitzID: s._blitzID, raw: !0, forceLocal: !0 }));
@@ -7167,7 +7304,7 @@ class st {
    */
   async filterExpiredObjects(t) {
     var a;
-    const e = S.getCurrentUser();
+    const e = M.getCurrentUser();
     if (!e || !e.id)
       return t;
     const r = [];
@@ -7206,7 +7343,7 @@ class st {
     var e;
     if (p.options.sync.level !== "cache" || ((e = this._model) == null ? void 0 : e.getName()) === "_Model")
       return !1;
-    const t = S.getListCallLastTimeStamp(this.hash());
+    const t = M.getListCallLastTimeStamp(this.hash());
     return t ? (/* @__PURE__ */ new Date()).getTime() - t > p.options.sync.ttl : !0;
   }
   /**
@@ -7214,7 +7351,7 @@ class st {
    */
   hash() {
     var t, e;
-    return ns(JSON.stringify({
+    return fs(JSON.stringify({
       clusters: ((t = this._clusters) == null ? void 0 : t.map((r) => r.name)) ?? [],
       blitzId: this._get,
       urls: this._urls,
@@ -7238,7 +7375,7 @@ const z = class z {
    * {@link https://semver.org/}
    */
   static get VERSION() {
-    return "1.4.21";
+    return "1.6.0";
   }
   /**
    * Initializes BlitzData with given options.
@@ -7249,13 +7386,13 @@ const z = class z {
       return;
     }
     this.initialized = !0;
-    const e = Ft.transformBlitzDataOptions(t);
-    this.options = e, e.clusters && z.setClusters(e.clusters), await new Fe(this.options.flush).perform(), await new Bt().ping(), this.queue = await new or().init(), z._Model = new R({
+    const e = Ht.transformBlitzDataOptions(t);
+    this.options = e, e.clusters && z.setClusters(e.clusters), await new qe(this.options.flush).perform(), await new Xt().ping(), this.queue = await new br().init(), z._Model = new R({
       model: void 0,
       attributes: {
-        _blitzID: new lt("_blitzID", "string", "_Model"),
-        searchable: new lt("searchable", "json", void 0),
-        attributes: new lt("attributes", "json", {
+        _blitzID: new ut("_blitzID", "string", "_Model"),
+        searchable: new ut("searchable", "json", void 0),
+        attributes: new ut("attributes", "json", {
           name: {
             label: "Name",
             type: "varchar"
@@ -7302,8 +7439,8 @@ const z = class z {
             type: "boolean"
           }
         }),
-        _editURLs: new lt("_editURLs", "json", []),
-        haspublishingdate: new Me("haspublishingdate", "boolean", !1)
+        _editURLs: new ut("_editURLs", "json", []),
+        haspublishingdate: new Pe("haspublishingdate", "boolean", !1)
       }
     }), z._Model.setReturnType(R), t && typeof t != "string" && !Array.isArray(t) && t.uiManager && (this.ui = new t.uiManager(this, t.uiManagerSettings));
     try {
@@ -7321,7 +7458,7 @@ const z = class z {
    * Registers clusters.
    */
   static setClusters(t) {
-    t = Ft.transformClusterOptions(t);
+    t = Ht.transformClusterOptions(t);
     for (const e of Object.keys(t))
       z.clusterManager.register(e, t[e]);
   }
@@ -7331,7 +7468,7 @@ const z = class z {
    * @param url
    */
   static async list(t) {
-    const e = Jt.extractModelName(t);
+    const e = $t.extractModelName(t);
     if (!await z._Model.exists(e))
       throw new Error(`Model "${e}" does not exist.`);
     return st.create().model(await z._Model.get(e)).urls([t]).query({}).perform();
@@ -7378,7 +7515,7 @@ const z = class z {
   static async runController(t, e) {
     let r = t.startsWith("/") ? t.slice(1) : t;
     r.includes(".json") || (r += ".json");
-    const a = T.sanitizeBaseUrl(z.clusterManager.toArray()[0].getNextReadURL()), s = new URL(a).origin !== window.location.origin ? r.includes("?") ? "&enableCors=1" : "?enableCors=1" : "", i = L.create().url(a + r + s).method((e == null ? void 0 : e.method) ?? "GET").header("Accept", "application/json");
+    const a = E.sanitizeBaseUrl(z.clusterManager.toArray()[0].getNextReadURL()), s = new URL(a).origin !== window.location.origin ? r.includes("?") ? "&enableCors=1" : "?enableCors=1" : "", i = P.create().url(a + r + s).method((e == null ? void 0 : e.method) ?? "GET").header("Accept", "application/json");
     e != null && e.headers && i.headers(e.headers), (e == null ? void 0 : e.body) !== void 0 && i.body(e.body), e != null && e.signal && i.signal(e.signal);
     const o = await i.send(e == null ? void 0 : e.rawResponse);
     if (!(e != null && e.rawResponse) && o.error)
@@ -7393,13 +7530,13 @@ const z = class z {
   static async listProjectUsers(t) {
     if (!t)
       throw new Error("Project ID required!");
-    const e = S.getProjectUsers(t);
+    const e = M.getProjectUsers(t);
     if (e !== null && typeof e == "object") {
-      const o = Date.now(), u = 864e5;
-      if (o < e.lastSaved + u)
+      const o = Date.now(), l = 864e5;
+      if (o < e.lastSaved + l)
         return e.users;
     }
-    const r = T.sanitizeBaseUrl(z.clusterManager.toArray()[0].getNextReadURL()), a = new URL(r).origin !== window.location.origin ? "?enableCors=1" : "", s = await L.create().url(r + `api/listProjectUsers/${t}.json${a}`).get();
+    const r = E.sanitizeBaseUrl(z.clusterManager.toArray()[0].getNextReadURL()), a = new URL(r).origin !== window.location.origin ? "?enableCors=1" : "", s = await P.create().url(r + `api/listProjectUsers/${t}.json${a}`).get();
     if (s.error)
       throw new Error(s.error);
     if (s.errors instanceof Array && s.errors.length > 0)
@@ -7408,34 +7545,34 @@ const z = class z {
       lastSaved: Date.now(),
       users: (s.users || []).map((o) => ({ id: o._blitzID, username: o.username }))
     };
-    return S.setProjectUsers(t, i), i.users;
+    return M.setProjectUsers(t, i), i.users;
   }
   /**
    * Get current user.
    */
   static async getCurrentUser() {
-    var u;
-    const t = S.getCurrentUser();
+    var l;
+    const t = M.getCurrentUser();
     if (t)
       return t;
-    const e = T.sanitizeBaseUrl(z.clusterManager.toArray()[0].getNextReadURL()), r = new URL(e).origin !== window.location.origin ? "?enableCors=1" : "", a = await L.create().url(e + "api/ping.json" + r).get();
+    const e = E.sanitizeBaseUrl(z.clusterManager.toArray()[0].getNextReadURL()), r = new URL(e).origin !== window.location.origin ? "?enableCors=1" : "", a = await P.create().url(e + "api/ping.json" + r).get();
     if (a.error)
       throw new Error(a.error);
     if (!a.userhash) {
       const c = { id: "public", username: "Public" };
-      return S.setCurrentUser(c), c;
+      return M.setCurrentUser(c), c;
     }
     const s = await R.get("0BAUsers"), i = await (s == null ? void 0 : s.get(a.userhash));
-    if (!i || !((u = i.username) != null && u.value))
+    if (!i || !((l = i.username) != null && l.value))
       throw new Error("Could not get user object!");
     const o = { id: a.userhash, username: i.username.value };
-    return S.setCurrentUser(o), o;
+    return M.setCurrentUser(o), o;
   }
   /**
    * Clean up current user.
    */
   static refreshCurrentUser() {
-    S.setCurrentUser(null);
+    M.setCurrentUser(null);
   }
   /**
    * Adds event listener to the BlitzData.
@@ -7476,7 +7613,7 @@ const z = class z {
 /**
  * Cluster manager.
  */
-m(z, "clusterManager", new we()), /**
+m(z, "clusterManager", new Me()), /**
  * _Model instance.
  */
 m(z, "_Model"), /**
@@ -7499,19 +7636,314 @@ m(z, "listeners", /* @__PURE__ */ new Map()), /**
  */
 m(z, "initialized", !1);
 let p = z;
+class ps {
+  constructor(t = "blitzdata.oauth.tokens", e = typeof localStorage < "u" ? localStorage : null) {
+    this._key = t, this._storage = e;
+  }
+  load() {
+    var e;
+    const t = (e = this._storage) == null ? void 0 : e.getItem(this._key);
+    if (!t)
+      return null;
+    try {
+      const r = JSON.parse(t);
+      if (r != null && r.accessToken && (r != null && r.refreshToken) && (r != null && r.expiresAt))
+        return r;
+    } catch {
+    }
+    return this.clear(), null;
+  }
+  save(t) {
+    var e;
+    (e = this._storage) == null || e.setItem(this._key, JSON.stringify(t));
+  }
+  clear() {
+    var t;
+    (t = this._storage) == null || t.removeItem(this._key);
+  }
+}
+function Ve(n) {
+  let t = "";
+  for (const e of n)
+    t += String.fromCharCode(e);
+  return btoa(t).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function Ct(n = 32) {
+  const t = new Uint8Array(n);
+  return crypto.getRandomValues(t), Ve(t);
+}
+async function _s(n) {
+  const t = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(n));
+  return Ve(new Uint8Array(t));
+}
+function Qe(n) {
+  const t = n.replace(/-/g, "+").replace(/_/g, "/"), e = t + "=".repeat((4 - t.length % 4) % 4), r = atob(e), a = new Uint8Array(r.length);
+  for (let s = 0; s < r.length; s++)
+    a[s] = r.charCodeAt(s);
+  return a;
+}
+function Se(n) {
+  return JSON.parse(new TextDecoder().decode(Qe(n)));
+}
+function Ut(n) {
+  const t = n.split(".");
+  if (t.length !== 3)
+    throw new Error("id_token is not a well-formed JWT");
+  return {
+    header: Se(t[0]),
+    payload: Se(t[1]),
+    signingInput: `${t[0]}.${t[1]}`,
+    signature: Qe(t[2])
+  };
+}
+function vs(n, t) {
+  const e = Math.floor((t.now ?? Date.now()) / 1e3), r = t.clockToleranceSeconds ?? 60;
+  if (n.iss !== t.issuer)
+    throw new Error(`id_token issuer mismatch: ${n.iss}`);
+  if (!(Array.isArray(n.aud) ? n.aud : [n.aud]).includes(t.audience))
+    throw new Error(`id_token audience mismatch: ${n.aud}`);
+  if (typeof n.exp != "number" || n.exp + r < e)
+    throw new Error("id_token has expired");
+  if (t.nonce !== void 0 && n.nonce !== t.nonce)
+    throw new Error("id_token nonce mismatch");
+}
+async function Ds(n, t) {
+  if (typeof crypto > "u" || !crypto.subtle)
+    return !1;
+  const e = (n.header.kid ? t.keys.find((a) => a.kid === n.header.kid) : t.keys[0]) ?? t.keys[0];
+  if (!e)
+    return !1;
+  const r = await crypto.subtle.importKey(
+    "jwk",
+    { kty: e.kty, n: e.n, e: e.e, alg: "RS256", ext: !0 },
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    !1,
+    ["verify"]
+  );
+  return await crypto.subtle.verify(
+    "RSASSA-PKCS1-v1_5",
+    r,
+    n.signature,
+    new TextEncoder().encode(n.signingInput)
+  );
+}
+const Lt = "blitzdata.oauth.verifier", Wt = "blitzdata.oauth.state", jt = "blitzdata.oauth.nonce";
+class Ms {
+  constructor(t) {
+    m(this, "_baseUrl");
+    m(this, "_issuerOrigin");
+    m(this, "_redirectUri");
+    m(this, "_scope");
+    m(this, "_clientId");
+    m(this, "_store");
+    m(this, "_tokens", null);
+    m(this, "_claims", null);
+    m(this, "_discovery", null);
+    m(this, "_discoveryPromise", null);
+    m(this, "_refreshPromise", null);
+    m(this, "_refreshTimer", null);
+    m(this, "_leewayMs");
+    this._baseUrl = t.baseUrl.endsWith("/") ? t.baseUrl : t.baseUrl + "/", this._issuerOrigin = new URL(this._baseUrl).origin, this._redirectUri = t.redirectUri ?? (typeof location < "u" ? location.origin + location.pathname : ""), this._scope = t.scope ?? "openid profile email", this._clientId = t.clientId ?? new URL(this._redirectUri || this._baseUrl).origin, this._store = new ps(t.storageKey, t.storage ?? (typeof localStorage < "u" ? localStorage : null)), this._leewayMs = (t.refreshLeewaySeconds ?? 60) * 1e3, P.onUnauthorized(async (e) => new URL(e).origin !== this._issuerOrigin ? !1 : this.refresh());
+  }
+  /**
+   * The validated identity claims from the id_token, or null when not logged in
+   * or the instance did not issue one (no OIDC scope / no signing key).
+   */
+  get claims() {
+    return this._claims;
+  }
+  get isAuthenticated() {
+    return !!this._tokens && this._tokens.expiresAt > Date.now();
+  }
+  get accessToken() {
+    var t;
+    return ((t = this._tokens) == null ? void 0 : t.accessToken) ?? null;
+  }
+  /**
+   * Call once on app start, before BlitzData.initialize.
+   * Completes a pending login redirect or restores the stored session,
+   * refreshing it when it is about to expire.
+   *
+   * @returns Whether a user is authenticated.
+   */
+  async init() {
+    var t;
+    if (typeof location < "u" && new URLSearchParams(location.search).has("code"))
+      await this.handleRedirectCallback();
+    else if (this._tokens = this._store.load(), (t = this._tokens) != null && t.idToken)
+      try {
+        this._claims = Ut(this._tokens.idToken).payload;
+      } catch {
+        this._claims = null;
+      }
+    return this._tokens ? this._tokens.expiresAt <= Date.now() + this._leewayMs ? await this.refresh() : (this._applyTokens(), !0) : !1;
+  }
+  /**
+   * Start the login by sending the browser to the BlitzData authorize page.
+   */
+  async loginWithRedirect() {
+    const t = Ct(32), e = Ct(16), r = Ct(16);
+    sessionStorage.setItem(Lt, t), sessionStorage.setItem(Wt, e), sessionStorage.setItem(jt, r);
+    const a = new URLSearchParams({
+      response_type: "code",
+      client_id: this._clientId,
+      redirect_uri: this._redirectUri,
+      scope: this._scope,
+      state: e,
+      nonce: r,
+      code_challenge_method: "S256",
+      code_challenge: await _s(t)
+    });
+    location.href = `${this._baseUrl}blitz/o/oauth/authorize?${a}`;
+  }
+  /**
+   * Exchange the ?code from the authorize redirect for tokens.
+   * Called automatically by init().
+   */
+  async handleRedirectCallback() {
+    const t = new URLSearchParams(location.search), e = t.get("code");
+    if (!e)
+      return !1;
+    const r = sessionStorage.getItem(Wt), a = sessionStorage.getItem(Lt), s = sessionStorage.getItem(jt);
+    if (sessionStorage.removeItem(Wt), sessionStorage.removeItem(Lt), sessionStorage.removeItem(jt), !a || !r || t.get("state") !== r)
+      throw new Error("OAuth state mismatch, restart the login");
+    await this._storeTokenResponse(
+      await this._postForm("blitz/o/oauth/token", { code: e, code_verifier: a }),
+      s ?? void 0
+    ), t.delete("code"), t.delete("state");
+    const i = t.toString();
+    return history.replaceState(null, "", location.pathname + (i ? "?" + i : "") + location.hash), !0;
+  }
+  /**
+   * Rotate the tokens with the refresh endpoint. Single-flight:
+   * concurrent calls share one request. Logs out when the refresh fails.
+   */
+  refresh() {
+    return this._refreshPromise ? this._refreshPromise : (this._refreshPromise = this._withRefreshLock(() => this._doRefresh()).finally(() => {
+      this._refreshPromise = null;
+    }), this._refreshPromise);
+  }
+  async _doRefresh() {
+    var r;
+    const t = this._store.load();
+    if (t && t.expiresAt > Date.now() + this._leewayMs) {
+      if (this._tokens = t, t.idToken)
+        try {
+          this._claims = Ut(t.idToken).payload;
+        } catch {
+          this._claims = null;
+        }
+      return this._applyTokens(), !0;
+    }
+    const e = ((r = this._tokens) == null ? void 0 : r.refreshToken) ?? (t == null ? void 0 : t.refreshToken);
+    if (!e)
+      return !1;
+    try {
+      const a = await this._postForm("blitz/o/oauth/refresh", { refresh_token: e });
+      return await this._storeTokenResponse(a), !0;
+    } catch {
+      return this.logout(), !1;
+    }
+  }
+  async _withRefreshLock(t) {
+    var r;
+    const e = (r = globalThis.navigator) == null ? void 0 : r.locks;
+    return e != null && e.request ? await e.request("blitzdata.oauth.refresh." + this._issuerOrigin, t) : await t();
+  }
+  /**
+   * Fetch the OIDC userinfo claims for the current access token.
+   */
+  async getUserInfo() {
+    const t = await this._getDiscovery();
+    if (!t || !this._tokens)
+      return null;
+    const e = await fetch(t.userinfo_endpoint, {
+      headers: { Authorization: `Bearer ${this._tokens.accessToken}` }
+    });
+    return e.ok ? await e.json() : null;
+  }
+  /**
+   * Drop the local session and stop authenticating requests. The local
+   * session is cleared immediately; server-side revocation is best-effort.
+   *
+   * @param options.everywhere Revoke every session of the user, not just this one.
+   */
+  async logout(t = {}) {
+    var a, s, i;
+    const e = ((a = this._tokens) == null ? void 0 : a.refreshToken) ?? ((s = this._store.load()) == null ? void 0 : s.refreshToken), r = (i = this._tokens) == null ? void 0 : i.accessToken;
+    this._tokens = null, this._claims = null, this._store.clear(), this._refreshTimer && clearTimeout(this._refreshTimer), P.setScopedHeaders(this._issuerOrigin, {});
+    try {
+      t.everywhere && r ? await fetch(this._baseUrl + "blitz/o/oauth/revoke", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded", Authorization: `Bearer ${r}` },
+        body: "all=1"
+      }) : e && await this._postForm("blitz/o/oauth/revoke", { token: e });
+    } catch {
+    }
+  }
+  // nonce is present only on the initial code exchange, absent on refresh.
+  async _storeTokenResponse(t, e) {
+    if (!(t != null && t.access_token) || !(t != null && t.refresh_token))
+      throw new Error("OAuth token endpoint returned no tokens" + (t != null && t.error ? `: ${t.error}` : ""));
+    this._tokens = {
+      accessToken: t.access_token,
+      refreshToken: t.refresh_token,
+      expiresAt: Date.now() + t.expires_in * 1e3,
+      idToken: t.id_token
+    }, t.id_token && (this._claims = await this._validateIdToken(t.id_token, e)), this._store.save(this._tokens), this._applyTokens();
+  }
+  // Validate the id_token's claims and, when a JWKS is reachable, its RS256 signature.
+  async _validateIdToken(t, e) {
+    var i;
+    const r = Ut(t), a = await this._getDiscovery(), s = (a == null ? void 0 : a.issuer) ?? this._issuerOrigin;
+    if (vs(r.payload, { issuer: s, audience: this._clientId, nonce: e }), a) {
+      const o = await this._fetchJson(a.jwks_uri);
+      if ((i = o == null ? void 0 : o.keys) != null && i.length && !await Ds(r, o))
+        throw new Error("id_token signature verification failed");
+    }
+    return r.payload;
+  }
+  async _getDiscovery() {
+    return this._discovery ? this._discovery : this._discoveryPromise ? this._discoveryPromise : (this._discoveryPromise = this._fetchJson(`${this._issuerOrigin}/.well-known/openid-configuration`).then((t) => t != null && t.issuer && new URL(t.issuer).origin === this._issuerOrigin ? (this._discovery = t, t) : null).catch(() => null), this._discoveryPromise);
+  }
+  async _fetchJson(t) {
+    const e = await fetch(t);
+    return e.ok ? await e.json() : null;
+  }
+  _applyTokens() {
+    this._tokens && (P.setScopedHeaders(this._issuerOrigin, { Authorization: `Bearer ${this._tokens.accessToken}` }), this._scheduleRefresh());
+  }
+  _scheduleRefresh() {
+    if (this._refreshTimer && clearTimeout(this._refreshTimer), !this._tokens)
+      return;
+    const t = Math.max(this._tokens.expiresAt - Date.now() - this._leewayMs, 5e3);
+    this._refreshTimer = setTimeout(() => this.refresh(), t);
+  }
+  async _postForm(t, e) {
+    const r = await fetch(this._baseUrl + t, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(e).toString()
+    });
+    if (!r.ok)
+      throw new Error(`OAuth request to ${t} failed with status ${r.status}`);
+    return await r.json();
+  }
+}
 export {
-  ke as BDCustomObject,
+  Re as BDCustomObject,
   R as BDModel,
   at as BDObject,
   p as BlitzData,
-  E as DataType,
-  L as HttpRequest,
-  w as JobStatus,
-  S as LocalStorageRepository,
-  Wa as ManyForeignKeyType,
-  Ee as ManyType,
-  Ae as TextType,
+  U as DataType,
+  P as HttpRequest,
+  b as JobStatus,
+  M as LocalStorageRepository,
+  Ba as ManyForeignKeyType,
+  Je as ManyType,
+  Ms as OAuthClient,
+  je as TextType,
   ot as blitzhash,
   rt as blitzstamp,
-  ar as sleep
+  mr as sleep
 };
