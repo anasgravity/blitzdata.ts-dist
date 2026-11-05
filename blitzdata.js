@@ -7324,10 +7324,15 @@ const dt = class dt {
    * fetching any transactions. Servers predating the parameter ignore it
    * and answer with their oldest page instead — the tail then replays
    * history, which converges to the same state, just slower.
+   *
+   * A position of 0 is never trusted: the server answers 0 for an empty
+   * log but also when its peek gate (a `_Model~users` row) refuses a user
+   * the log query itself would serve. Tail from now instead of replaying
+   * the whole history.
    */
   async peek(t, e, r) {
     const { lastTimestamp: s, lastLogID: a } = await this.fetchLogs(t, e, r, null, !0);
-    return { timestamp: s ?? 0, logID: a };
+    return typeof s == "number" && s > 0 ? { timestamp: s, logID: a } : { timestamp: Math.floor(Date.now() / 1e3), logID: a };
   }
   /**
    * Downloads the model's complete current state into the local database.
@@ -8354,7 +8359,7 @@ const A = class A {
    * {@link https://semver.org/}
    */
   static get VERSION() {
-    return "1.17.3";
+    return "1.17.4";
   }
   /**
    * Initializes BlitzData with given options.
