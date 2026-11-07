@@ -1,7 +1,7 @@
 var Dr = Object.defineProperty;
 var Sr = (n, t, e) => t in n ? Dr(n, t, { enumerable: !0, configurable: !0, writable: !0, value: e }) : n[t] = e;
 var m = (n, t, e) => (Sr(n, typeof t != "symbol" ? t + "" : t, e), e);
-const O = class O {
+const A = class A {
   constructor() {
     /**
      * Request method.
@@ -32,8 +32,8 @@ const O = class O {
    * Create a new request.
    */
   static create() {
-    const t = new O();
-    return O._globalHeaders && t.headers(O._globalHeaders), t;
+    const t = new A();
+    return A._globalHeaders && t.headers(A._globalHeaders), t;
   }
   /**
    * Set the global request headers.
@@ -41,7 +41,7 @@ const O = class O {
    * @param headers Global request headers.
    */
   static globalHeaders(t) {
-    O._globalHeaders = t, O._notifyGlobalHeadersChange();
+    A._globalHeaders = t, A._notifyGlobalHeadersChange();
   }
   /**
    * Merge headers into the global request headers.
@@ -52,9 +52,9 @@ const O = class O {
   static updateGlobalHeaders(t) {
     for (const e in t) {
       const r = t[e];
-      r === null ? delete O._globalHeaders[e] : O._globalHeaders[e] = r;
+      r === null ? delete A._globalHeaders[e] : A._globalHeaders[e] = r;
     }
-    O._notifyGlobalHeadersChange();
+    A._notifyGlobalHeadersChange();
   }
   /**
    * Set the headers applied only to requests targeting the given origin.
@@ -64,14 +64,14 @@ const O = class O {
    * @param headers Headers to attach for that origin.
    */
   static setScopedHeaders(t, e) {
-    O._scopedHeaders = O._scopedHeaders.filter((r) => r.origin !== t), Object.keys(e).length > 0 && O._scopedHeaders.push({ origin: t, headers: e }), O._notifyGlobalHeadersChange();
+    A._scopedHeaders = A._scopedHeaders.filter((r) => r.origin !== t), Object.keys(e).length > 0 && A._scopedHeaders.push({ origin: t, headers: e }), A._notifyGlobalHeadersChange();
   }
   /**
    * Register a handler to recover from a 401 (typically an OAuth refresh).
    * The request is retried once if the handler resolves true.
    */
   static onUnauthorized(t) {
-    O._unauthorizedHandler = t;
+    A._unauthorizedHandler = t;
   }
   /**
    * Register a listener called whenever the global or scoped headers change.
@@ -79,11 +79,11 @@ const O = class O {
    * @param listener Change listener.
    */
   static onGlobalHeadersChange(t) {
-    O._globalHeadersListeners.push(t);
+    A._globalHeadersListeners.push(t);
   }
   static _notifyGlobalHeadersChange() {
-    for (const t of O._globalHeadersListeners)
-      t(O._globalHeaders);
+    for (const t of A._globalHeadersListeners)
+      t(A._globalHeaders);
   }
   /**
    * Resolve the scoped headers that apply to a request URL.
@@ -97,7 +97,7 @@ const O = class O {
     } catch {
       return {};
     }
-    return O._scopedHeaders.filter((r) => r.origin === e).reduce((r, s) => Object.assign(r, s.headers), {});
+    return A._scopedHeaders.filter((r) => r.origin === e).reduce((r, s) => Object.assign(r, s.headers), {});
   }
   /**
    * Set the request method.
@@ -155,11 +155,11 @@ const O = class O {
   async send(t = !1) {
     const e = await fetch(this._url, {
       method: this._method,
-      headers: { ...this._headers, ...O._scopedHeadersFor(this._url) },
+      headers: { ...this._headers, ...A._scopedHeadersFor(this._url) },
       body: this._body ? this._body instanceof FormData ? this._body : JSON.stringify(this._body) : void 0,
       signal: this._signal ? this._signal : void 0
     });
-    return e.status === 401 && !this._retriedAfterUnauthorized && O._unauthorizedHandler && this._url && (this._retriedAfterUnauthorized = !0, await O._unauthorizedHandler(this._url)) ? await this.send(t) : t ? e : await e.json();
+    return e.status === 401 && !this._retriedAfterUnauthorized && A._unauthorizedHandler && this._url && (this._retriedAfterUnauthorized = !0, await A._unauthorizedHandler(this._url)) ? await this.send(t) : t ? e : await e.json();
   }
   /**
    * Send request with GET method.
@@ -178,21 +178,21 @@ const O = class O {
  * Global request headers.
  * This is used primarily for development purposes.
  */
-m(O, "_globalHeaders", {}), /**
+m(A, "_globalHeaders", {}), /**
  * Headers applied only to requests whose URL matches a given origin.
  * Used to keep a Bearer token scoped to the host that issued it,
  * so it never leaks to a second cluster on another host.
  */
-m(O, "_scopedHeaders", []), /**
+m(A, "_scopedHeaders", []), /**
  * Handler invoked once on a 401 to try to recover (e.g. refresh the token).
  * Returning true retries the request with refreshed headers.
  */
-m(O, "_unauthorizedHandler", null), /**
+m(A, "_unauthorizedHandler", null), /**
  * Listeners notified whenever the global headers change,
  * used to propagate them to the queue's shared worker.
  */
-m(O, "_globalHeadersListeners", []);
-let z = O;
+m(A, "_globalHeadersListeners", []);
+let z = A;
 class Mr {
   /**
    * Create a new cluster.
@@ -307,7 +307,7 @@ function Tr() {
   ]);
 }
 const He = /* @__PURE__ */ new WeakMap(), Gt = /* @__PURE__ */ new WeakMap(), Be = /* @__PURE__ */ new WeakMap(), Jt = /* @__PURE__ */ new WeakMap(), ie = /* @__PURE__ */ new WeakMap();
-function Or(n) {
+function Ar(n) {
   const t = new Promise((e, r) => {
     const s = () => {
       n.removeEventListener("success", a), n.removeEventListener("error", i);
@@ -323,7 +323,7 @@ function Or(n) {
   }).catch(() => {
   }), ie.set(t, n), t;
 }
-function Ar(n) {
+function Or(n) {
   if (Gt.has(n))
     return;
   const t = new Promise((e, r) => {
@@ -371,11 +371,11 @@ function Pr(n) {
   };
 }
 function Er(n) {
-  return typeof n == "function" ? Pr(n) : (n instanceof IDBTransaction && Ar(n), kr(n, Ir()) ? new Proxy(n, Zt) : n);
+  return typeof n == "function" ? Pr(n) : (n instanceof IDBTransaction && Or(n), kr(n, Ir()) ? new Proxy(n, Zt) : n);
 }
 function G(n) {
   if (n instanceof IDBRequest)
-    return Or(n);
+    return Ar(n);
   if (Jt.has(n))
     return Jt.get(n);
   const t = Er(n);
@@ -552,10 +552,10 @@ var qe = {};
       for (k = 0; k != 256; ++k)
         for (b = w[k], $ = 256 + k; $ < 4096; $ += 256)
           b = T[$] = b >>> 8 ^ w[b & 255];
-      var j = [];
+      var F = [];
       for (k = 1; k != 16; ++k)
-        j[k - 1] = typeof Int32Array < "u" ? T.subarray(k * 256, k * 256 + 256) : T.slice(k * 256, k * 256 + 256);
-      return j;
+        F[k - 1] = typeof Int32Array < "u" ? T.subarray(k * 256, k * 256 + 256) : T.slice(k * 256, k * 256 + 256);
+      return F;
     }
     var a = s(r), i = a[0], o = a[1], l = a[2], c = a[3], u = a[4], d = a[5], h = a[6], f = a[7], g = a[8], _ = a[9], v = a[10], E = a[11], N = a[12], C = a[13], Q = a[14];
     function Wt(w, $) {
@@ -571,20 +571,20 @@ var qe = {};
       return ~b;
     }
     function vr(w, $) {
-      for (var b = $ ^ -1, k = 0, T = w.length, j = 0, Rt = 0; k < T; )
-        j = w.charCodeAt(k++), j < 128 ? b = b >>> 8 ^ r[(b ^ j) & 255] : j < 2048 ? (b = b >>> 8 ^ r[(b ^ (192 | j >> 6 & 31)) & 255], b = b >>> 8 ^ r[(b ^ (128 | j & 63)) & 255]) : j >= 55296 && j < 57344 ? (j = (j & 1023) + 64, Rt = w.charCodeAt(k++) & 1023, b = b >>> 8 ^ r[(b ^ (240 | j >> 8 & 7)) & 255], b = b >>> 8 ^ r[(b ^ (128 | j >> 2 & 63)) & 255], b = b >>> 8 ^ r[(b ^ (128 | Rt >> 6 & 15 | (j & 3) << 4)) & 255], b = b >>> 8 ^ r[(b ^ (128 | Rt & 63)) & 255]) : (b = b >>> 8 ^ r[(b ^ (224 | j >> 12 & 15)) & 255], b = b >>> 8 ^ r[(b ^ (128 | j >> 6 & 63)) & 255], b = b >>> 8 ^ r[(b ^ (128 | j & 63)) & 255]);
+      for (var b = $ ^ -1, k = 0, T = w.length, F = 0, Rt = 0; k < T; )
+        F = w.charCodeAt(k++), F < 128 ? b = b >>> 8 ^ r[(b ^ F) & 255] : F < 2048 ? (b = b >>> 8 ^ r[(b ^ (192 | F >> 6 & 31)) & 255], b = b >>> 8 ^ r[(b ^ (128 | F & 63)) & 255]) : F >= 55296 && F < 57344 ? (F = (F & 1023) + 64, Rt = w.charCodeAt(k++) & 1023, b = b >>> 8 ^ r[(b ^ (240 | F >> 8 & 7)) & 255], b = b >>> 8 ^ r[(b ^ (128 | F >> 2 & 63)) & 255], b = b >>> 8 ^ r[(b ^ (128 | Rt >> 6 & 15 | (F & 3) << 4)) & 255], b = b >>> 8 ^ r[(b ^ (128 | Rt & 63)) & 255]) : (b = b >>> 8 ^ r[(b ^ (224 | F >> 12 & 15)) & 255], b = b >>> 8 ^ r[(b ^ (128 | F >> 6 & 63)) & 255], b = b >>> 8 ^ r[(b ^ (128 | F & 63)) & 255]);
       return ~b;
     }
     t.table = r, t.bstr = Wt, t.buf = _r, t.str = vr;
   });
 })(qe);
 function ot() {
-  return jr(/* @__PURE__ */ new Date());
+  return Fr(/* @__PURE__ */ new Date());
 }
-function jr(n) {
+function Fr(n) {
   return Math.floor((n.getTime() - (/* @__PURE__ */ new Date("2021-01-01T00:00:00Z")).getTime()) / 1e3);
 }
-function ci(n) {
+function li(n) {
   return new Date(n * 1e3 + (/* @__PURE__ */ new Date("2021-01-01T00:00:00Z")).getTime());
 }
 function ct(n) {
@@ -804,16 +804,16 @@ function te(n, t) {
     return n;
   }
 }
-function Ot(n, t) {
+function At(n, t) {
   if (n === t)
     return !0;
   if (n === null || t === null || typeof n != "object" || typeof t != "object" || Array.isArray(n) !== Array.isArray(t))
     return !1;
   const e = Object.keys(n);
-  return e.length !== Object.keys(t).length ? !1 : e.every((r) => Object.hasOwn(t, r) && Ot(n[r], t[r]));
+  return e.length !== Object.keys(t).length ? !1 : e.every((r) => Object.hasOwn(t, r) && At(n[r], t[r]));
 }
 function be(n, t) {
-  return Ot(te(n, t), t);
+  return At(te(n, t), t);
 }
 var kt = [], Ve, ce = [];
 function ye(n, t) {
@@ -994,7 +994,7 @@ class Qe {
         });
     else if (e.status === L.Conflict) {
       const i = Object.keys(t.transaction.data)[0];
-      if (Ot((r = t.transaction.data) == null ? void 0 : r[i].prev, (s = t.transaction.data) == null ? void 0 : s[i].new) || be(e.message, (a = t.transaction.data) == null ? void 0 : a[i].new)) {
+      if (At((r = t.transaction.data) == null ? void 0 : r[i].prev, (s = t.transaction.data) == null ? void 0 : s[i].new) || be(e.message, (a = t.transaction.data) == null ? void 0 : a[i].new)) {
         const o = await this._updateJob({
           ...t,
           status: p.Completed
@@ -1053,7 +1053,7 @@ class Qe {
         message: l.message
       });
     else if (l.status === L.Conflict)
-      if (Ot((d = o.transaction.data) == null ? void 0 : d[r].prev, (h = o.transaction.data) == null ? void 0 : h[r].new) || be(l.message, (f = o.transaction.data) == null ? void 0 : f[r].new)) {
+      if (At((d = o.transaction.data) == null ? void 0 : d[r].prev, (h = o.transaction.data) == null ? void 0 : h[r].new) || be(l.message, (f = o.transaction.data) == null ? void 0 : f[r].new)) {
         o = await this._updateJob({
           ...o,
           status: p.Completed
@@ -1268,7 +1268,7 @@ class B {
     return typeof this.conflict < "u" && this.conflict !== null;
   }
 }
-class At extends Array {
+class Ot extends Array {
   /**
    * Returns the transaction result with given hash.
    *
@@ -1315,23 +1315,23 @@ class At extends Array {
    * Returns new transaction result collection that only contains successful transaction results.
    */
   successful() {
-    return new At(...this.filter((t) => t.status));
+    return new Ot(...this.filter((t) => t.status));
   }
   /**
    * Returns new transaction result collection that only contains failed transaction results.
    */
   failed() {
-    return new At(...this.filter((t) => !t.status));
+    return new Ot(...this.filter((t) => !t.status));
   }
 }
 let Xe;
-function Fr(n) {
+function jr(n) {
   Xe = n;
 }
 function K() {
   return Xe;
 }
-class jt {
+class Ft {
   constructor() {
     /**
      * Master indexed db client.
@@ -1342,7 +1342,7 @@ class jt {
    * Creates a new instance of the SyncTransactionRepository class.
    */
   static create() {
-    return new jt();
+    return new Ft();
   }
   /**
    * Returns all waited transactions from the indexed db.
@@ -1402,7 +1402,7 @@ class q {
    * @param transactions Transactions to be processed.
    */
   async run(t) {
-    const e = new At(), r = jt.create(), s = { add: 1, edit: 2, delete: 3 }, a = await new X().openConnection();
+    const e = new Ot(), r = Ft.create(), s = { add: 1, edit: 2, delete: 3 }, a = await new X().openConnection();
     t = t.sort((i, o) => s[i.action] - s[o.action]);
     for (const i of t) {
       let o;
@@ -2649,7 +2649,7 @@ const rr = 6048e5, qr = 864e5, St = 43200, De = 1440, Se = Symbol.for("construct
 function tt(n, t) {
   return typeof n == "function" ? n(t) : n && typeof n == "object" && Se in n ? n[Se](t) : n instanceof Date ? new n.constructor(t) : new Date(t);
 }
-function F(n, t) {
+function j(n, t) {
   return tt(t || n, n);
 }
 let Yr = {};
@@ -2658,14 +2658,14 @@ function vt() {
 }
 function pt(n, t) {
   var o, l, c, u;
-  const e = vt(), r = (t == null ? void 0 : t.weekStartsOn) ?? ((l = (o = t == null ? void 0 : t.locale) == null ? void 0 : o.options) == null ? void 0 : l.weekStartsOn) ?? e.weekStartsOn ?? ((u = (c = e.locale) == null ? void 0 : c.options) == null ? void 0 : u.weekStartsOn) ?? 0, s = F(n, t == null ? void 0 : t.in), a = s.getDay(), i = (a < r ? 7 : 0) + a - r;
+  const e = vt(), r = (t == null ? void 0 : t.weekStartsOn) ?? ((l = (o = t == null ? void 0 : t.locale) == null ? void 0 : o.options) == null ? void 0 : l.weekStartsOn) ?? e.weekStartsOn ?? ((u = (c = e.locale) == null ? void 0 : c.options) == null ? void 0 : u.weekStartsOn) ?? 0, s = j(n, t == null ? void 0 : t.in), a = s.getDay(), i = (a < r ? 7 : 0) + a - r;
   return s.setDate(s.getDate() - i), s.setHours(0, 0, 0, 0), s;
 }
 function Et(n, t) {
   return pt(n, { ...t, weekStartsOn: 1 });
 }
-function sr(n, t) {
-  const e = F(n, t == null ? void 0 : t.in), r = e.getFullYear(), s = tt(e, 0);
+function nr(n, t) {
+  const e = j(n, t == null ? void 0 : t.in), r = e.getFullYear(), s = tt(e, 0);
   s.setFullYear(r + 1, 0, 4), s.setHours(0, 0, 0, 0);
   const a = Et(s), i = tt(e, 0);
   i.setFullYear(r, 0, 4), i.setHours(0, 0, 0, 0);
@@ -2673,7 +2673,7 @@ function sr(n, t) {
   return e.getTime() >= a.getTime() ? r + 1 : e.getTime() >= o.getTime() ? r : r - 1;
 }
 function xt(n) {
-  const t = F(n), e = new Date(
+  const t = j(n), e = new Date(
     Date.UTC(
       t.getFullYear(),
       t.getMonth(),
@@ -2686,7 +2686,7 @@ function xt(n) {
   );
   return e.setUTCFullYear(t.getFullYear()), +n - +e;
 }
-function Ft(n, ...t) {
+function jt(n, ...t) {
   const e = tt.bind(
     null,
     n || t.find((r) => typeof r == "object")
@@ -2694,11 +2694,11 @@ function Ft(n, ...t) {
   return t.map(e);
 }
 function Me(n, t) {
-  const e = F(n, t == null ? void 0 : t.in);
+  const e = j(n, t == null ? void 0 : t.in);
   return e.setHours(0, 0, 0, 0), e;
 }
 function Vr(n, t, e) {
-  const [r, s] = Ft(
+  const [r, s] = jt(
     e == null ? void 0 : e.in,
     n,
     t
@@ -2706,11 +2706,11 @@ function Vr(n, t, e) {
   return Math.round((o - l) / qr);
 }
 function Qr(n, t) {
-  const e = sr(n, t), r = tt((t == null ? void 0 : t.in) || n, 0);
+  const e = nr(n, t), r = tt((t == null ? void 0 : t.in) || n, 0);
   return r.setFullYear(e, 0, 4), r.setHours(0, 0, 0, 0), Et(r);
 }
 function It(n, t) {
-  const e = +F(n) - +F(t);
+  const e = +j(n) - +j(t);
   return e < 0 ? -1 : e > 0 ? 1 : e;
 }
 function Xr(n) {
@@ -2720,39 +2720,39 @@ function Kr(n) {
   return n instanceof Date || typeof n == "object" && Object.prototype.toString.call(n) === "[object Date]";
 }
 function Gr(n) {
-  return !(!Kr(n) && typeof n != "number" || isNaN(+F(n)));
+  return !(!Kr(n) && typeof n != "number" || isNaN(+j(n)));
 }
 function Zr(n, t, e) {
-  const [r, s] = Ft(
+  const [r, s] = jt(
     e == null ? void 0 : e.in,
     n,
     t
   ), a = r.getFullYear() - s.getFullYear(), i = r.getMonth() - s.getMonth();
   return a * 12 + i;
 }
-function ts(n) {
+function tn(n) {
   return (t) => {
     const r = (n ? Math[n] : Math.trunc)(t);
     return r === 0 ? 0 : r;
   };
 }
-function es(n, t) {
-  return +F(n) - +F(t);
+function en(n, t) {
+  return +j(n) - +j(t);
 }
-function rs(n, t) {
-  const e = F(n, t == null ? void 0 : t.in);
+function rn(n, t) {
+  const e = j(n, t == null ? void 0 : t.in);
   return e.setHours(23, 59, 59, 999), e;
 }
-function ss(n, t) {
-  const e = F(n, t == null ? void 0 : t.in), r = e.getMonth();
+function nn(n, t) {
+  const e = j(n, t == null ? void 0 : t.in), r = e.getMonth();
   return e.setFullYear(e.getFullYear(), r + 1, 0), e.setHours(23, 59, 59, 999), e;
 }
-function ns(n, t) {
-  const e = F(n, t == null ? void 0 : t.in);
-  return +rs(e, t) == +ss(e, t);
+function sn(n, t) {
+  const e = j(n, t == null ? void 0 : t.in);
+  return +rn(e, t) == +nn(e, t);
 }
-function as(n, t, e) {
-  const [r, s, a] = Ft(
+function an(n, t, e) {
+  const [r, s, a] = jt(
     e == null ? void 0 : e.in,
     n,
     n,
@@ -2764,19 +2764,19 @@ function as(n, t, e) {
     return 0;
   s.getMonth() === 1 && s.getDate() > 27 && s.setDate(30), s.setMonth(s.getMonth() - i * o);
   let l = It(s, a) === -i;
-  ns(r) && o === 1 && It(r, a) === 1 && (l = !1);
+  sn(r) && o === 1 && It(r, a) === 1 && (l = !1);
   const c = i * (o - +l);
   return c === 0 ? 0 : c;
 }
-function is(n, t, e) {
-  const r = es(n, t) / 1e3;
-  return ts(e == null ? void 0 : e.roundingMethod)(r);
+function on(n, t, e) {
+  const r = en(n, t) / 1e3;
+  return tn(e == null ? void 0 : e.roundingMethod)(r);
 }
-function os(n, t) {
-  const e = F(n, t == null ? void 0 : t.in);
+function cn(n, t) {
+  const e = j(n, t == null ? void 0 : t.in);
   return e.setFullYear(e.getFullYear(), 0, 1), e.setHours(0, 0, 0, 0), e;
 }
-const cs = {
+const ln = {
   lessThanXSeconds: {
     one: "less than a second",
     other: "less than {{count}} seconds"
@@ -2838,9 +2838,9 @@ const cs = {
     one: "almost 1 year",
     other: "almost {{count}} years"
   }
-}, ls = (n, t, e) => {
+}, un = (n, t, e) => {
   let r;
-  const s = cs[n];
+  const s = ln[n];
   return typeof s == "string" ? r = s : t === 1 ? r = s.one : r = s.other.replace("{{count}}", t.toString()), e != null && e.addSuffix ? e.comparison && e.comparison > 0 ? "in " + r : r + " ago" : r;
 };
 function Z(n) {
@@ -2849,42 +2849,42 @@ function Z(n) {
     return n.formats[e] || n.formats[n.defaultWidth];
   };
 }
-const us = {
+const dn = {
   full: "EEEE, MMMM do, y",
   long: "MMMM do, y",
   medium: "MMM d, y",
   short: "MM/dd/yyyy"
-}, ds = {
+}, hn = {
   full: "h:mm:ss a zzzz",
   long: "h:mm:ss a z",
   medium: "h:mm:ss a",
   short: "h:mm a"
-}, hs = {
+}, fn = {
   full: "{{date}} 'at' {{time}}",
   long: "{{date}} 'at' {{time}}",
   medium: "{{date}}, {{time}}",
   short: "{{date}}, {{time}}"
-}, fs = {
+}, mn = {
   date: Z({
-    formats: us,
+    formats: dn,
     defaultWidth: "full"
   }),
   time: Z({
-    formats: ds,
+    formats: hn,
     defaultWidth: "full"
   }),
   dateTime: Z({
-    formats: hs,
+    formats: fn,
     defaultWidth: "full"
   })
-}, ms = {
+}, gn = {
   lastWeek: "'last' eeee 'at' p",
   yesterday: "'yesterday at' p",
   today: "'today at' p",
   tomorrow: "'tomorrow at' p",
   nextWeek: "eeee 'at' p",
   other: "P"
-}, gs = (n, t, e, r) => ms[n];
+}, wn = (n, t, e, r) => gn[n];
 function R(n) {
   return (t, e) => {
     const r = e != null && e.context ? String(e.context) : "standalone";
@@ -2900,15 +2900,15 @@ function R(n) {
     return s[a];
   };
 }
-const ws = {
+const bn = {
   narrow: ["B", "A"],
   abbreviated: ["BC", "AD"],
   wide: ["Before Christ", "Anno Domini"]
-}, bs = {
+}, yn = {
   narrow: ["1", "2", "3", "4"],
   abbreviated: ["Q1", "Q2", "Q3", "Q4"],
   wide: ["1st quarter", "2nd quarter", "3rd quarter", "4th quarter"]
-}, ys = {
+}, pn = {
   narrow: ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"],
   abbreviated: [
     "Jan",
@@ -2938,7 +2938,7 @@ const ws = {
     "November",
     "December"
   ]
-}, ps = {
+}, _n = {
   narrow: ["S", "M", "T", "W", "T", "F", "S"],
   short: ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"],
   abbreviated: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
@@ -2951,7 +2951,7 @@ const ws = {
     "Friday",
     "Saturday"
   ]
-}, _s = {
+}, vn = {
   narrow: {
     am: "a",
     pm: "p",
@@ -2982,7 +2982,7 @@ const ws = {
     evening: "evening",
     night: "night"
   }
-}, vs = {
+}, Dn = {
   narrow: {
     am: "a",
     pm: "p",
@@ -3013,7 +3013,7 @@ const ws = {
     evening: "in the evening",
     night: "at night"
   }
-}, Ds = (n, t) => {
+}, Sn = (n, t) => {
   const e = Number(n), r = e % 100;
   if (r > 20 || r < 10)
     switch (r % 10) {
@@ -3025,29 +3025,29 @@ const ws = {
         return e + "rd";
     }
   return e + "th";
-}, Ss = {
-  ordinalNumber: Ds,
+}, Mn = {
+  ordinalNumber: Sn,
   era: R({
-    values: ws,
+    values: bn,
     defaultWidth: "wide"
   }),
   quarter: R({
-    values: bs,
+    values: yn,
     defaultWidth: "wide",
     argumentCallback: (n) => n - 1
   }),
   month: R({
-    values: ys,
+    values: pn,
     defaultWidth: "wide"
   }),
   day: R({
-    values: ps,
+    values: _n,
     defaultWidth: "wide"
   }),
   dayPeriod: R({
-    values: _s,
+    values: vn,
     defaultWidth: "wide",
-    formattingValues: vs,
+    formattingValues: Dn,
     defaultFormattingWidth: "wide"
   })
 };
@@ -3056,9 +3056,9 @@ function J(n) {
     const r = e.width, s = r && n.matchPatterns[r] || n.matchPatterns[n.defaultMatchWidth], a = t.match(s);
     if (!a)
       return null;
-    const i = a[0], o = r && n.parsePatterns[r] || n.parsePatterns[n.defaultParseWidth], l = Array.isArray(o) ? ks(o, (d) => d.test(i)) : (
+    const i = a[0], o = r && n.parsePatterns[r] || n.parsePatterns[n.defaultParseWidth], l = Array.isArray(o) ? In(o, (d) => d.test(i)) : (
       // [TODO] -- I challenge you to fix the type
-      Ms(o, (d) => d.test(i))
+      kn(o, (d) => d.test(i))
     );
     let c;
     c = n.valueCallback ? n.valueCallback(l) : l, c = e.valueCallback ? (
@@ -3069,12 +3069,12 @@ function J(n) {
     return { value: c, rest: u };
   };
 }
-function Ms(n, t) {
+function kn(n, t) {
   for (const e in n)
     if (Object.prototype.hasOwnProperty.call(n, e) && t(n[e]))
       return e;
 }
-function ks(n, t) {
+function In(n, t) {
   for (let e = 0; e < n.length; e++)
     if (t(n[e]))
       return e;
@@ -3093,23 +3093,23 @@ function ue(n) {
     return { value: i, rest: o };
   };
 }
-const Is = /^(\d+)(th|st|nd|rd)?/i, Ts = /\d+/i, Os = {
+const Tn = /^(\d+)(th|st|nd|rd)?/i, An = /\d+/i, On = {
   narrow: /^(b|a)/i,
   abbreviated: /^(b\.?\s?c\.?|b\.?\s?c\.?\s?e\.?|a\.?\s?d\.?|c\.?\s?e\.?)/i,
   wide: /^(before christ|before common era|anno domini|common era)/i
-}, As = {
+}, zn = {
   any: [/^b/i, /^(a|c)/i]
-}, zs = {
+}, Pn = {
   narrow: /^[1234]/i,
   abbreviated: /^q[1234]/i,
   wide: /^[1234](th|st|nd|rd)? quarter/i
-}, Ps = {
+}, En = {
   any: [/1/i, /2/i, /3/i, /4/i]
-}, Es = {
+}, xn = {
   narrow: /^[jfmasond]/i,
   abbreviated: /^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i,
   wide: /^(january|february|march|april|may|june|july|august|september|october|november|december)/i
-}, xs = {
+}, Cn = {
   narrow: [
     /^j/i,
     /^f/i,
@@ -3138,18 +3138,18 @@ const Is = /^(\d+)(th|st|nd|rd)?/i, Ts = /\d+/i, Os = {
     /^n/i,
     /^d/i
   ]
-}, Cs = {
+}, Un = {
   narrow: /^[smtwf]/i,
   short: /^(su|mo|tu|we|th|fr|sa)/i,
   abbreviated: /^(sun|mon|tue|wed|thu|fri|sat)/i,
   wide: /^(sunday|monday|tuesday|wednesday|thursday|friday|saturday)/i
-}, Us = {
+}, Ln = {
   narrow: [/^s/i, /^m/i, /^t/i, /^w/i, /^t/i, /^f/i, /^s/i],
   any: [/^su/i, /^m/i, /^tu/i, /^w/i, /^th/i, /^f/i, /^sa/i]
-}, Ls = {
+}, Nn = {
   narrow: /^(a|p|mi|n|(in the|at) (morning|afternoon|evening|night))/i,
   any: /^([ap]\.?\s?m\.?|midnight|noon|(in the|at) (morning|afternoon|evening|night))/i
-}, Ns = {
+}, Fn = {
   any: {
     am: /^a/i,
     pm: /^p/i,
@@ -3160,79 +3160,79 @@ const Is = /^(\d+)(th|st|nd|rd)?/i, Ts = /\d+/i, Os = {
     evening: /evening/i,
     night: /night/i
   }
-}, js = {
+}, jn = {
   ordinalNumber: ue({
-    matchPattern: Is,
-    parsePattern: Ts,
+    matchPattern: Tn,
+    parsePattern: An,
     valueCallback: (n) => parseInt(n, 10)
   }),
   era: J({
-    matchPatterns: Os,
+    matchPatterns: On,
     defaultMatchWidth: "wide",
-    parsePatterns: As,
+    parsePatterns: zn,
     defaultParseWidth: "any"
   }),
   quarter: J({
-    matchPatterns: zs,
+    matchPatterns: Pn,
     defaultMatchWidth: "wide",
-    parsePatterns: Ps,
+    parsePatterns: En,
     defaultParseWidth: "any",
     valueCallback: (n) => n + 1
   }),
   month: J({
-    matchPatterns: Es,
+    matchPatterns: xn,
     defaultMatchWidth: "wide",
-    parsePatterns: xs,
+    parsePatterns: Cn,
     defaultParseWidth: "any"
   }),
   day: J({
-    matchPatterns: Cs,
+    matchPatterns: Un,
     defaultMatchWidth: "wide",
-    parsePatterns: Us,
+    parsePatterns: Ln,
     defaultParseWidth: "any"
   }),
   dayPeriod: J({
-    matchPatterns: Ls,
+    matchPatterns: Nn,
     defaultMatchWidth: "any",
-    parsePatterns: Ns,
+    parsePatterns: Fn,
     defaultParseWidth: "any"
   })
 }, mt = {
   code: "en-US",
-  formatDistance: ls,
-  formatLong: fs,
-  formatRelative: gs,
-  localize: Ss,
-  match: js,
+  formatDistance: un,
+  formatLong: mn,
+  formatRelative: wn,
+  localize: Mn,
+  match: jn,
   options: {
     weekStartsOn: 0,
     firstWeekContainsDate: 1
   }
 };
-function Fs(n, t) {
-  const e = F(n, t == null ? void 0 : t.in);
-  return Vr(e, os(e)) + 1;
+function Wn(n, t) {
+  const e = j(n, t == null ? void 0 : t.in);
+  return Vr(e, cn(e)) + 1;
 }
-function Ws(n, t) {
-  const e = F(n, t == null ? void 0 : t.in), r = +Et(e) - +Qr(e);
+function Rn(n, t) {
+  const e = j(n, t == null ? void 0 : t.in), r = +Et(e) - +Qr(e);
   return Math.round(r / rr) + 1;
 }
-function nr(n, t) {
+function sr(n, t) {
   var u, d, h, f;
-  const e = F(n, t == null ? void 0 : t.in), r = e.getFullYear(), s = vt(), a = (t == null ? void 0 : t.firstWeekContainsDate) ?? ((d = (u = t == null ? void 0 : t.locale) == null ? void 0 : u.options) == null ? void 0 : d.firstWeekContainsDate) ?? s.firstWeekContainsDate ?? ((f = (h = s.locale) == null ? void 0 : h.options) == null ? void 0 : f.firstWeekContainsDate) ?? 1, i = tt((t == null ? void 0 : t.in) || n, 0);
+  const e = j(n, t == null ? void 0 : t.in), r = e.getFullYear(), s = vt(), a = (t == null ? void 0 : t.firstWeekContainsDate) ?? ((d = (u = t == null ? void 0 : t.locale) == null ? void 0 : u.options) == null ? void 0 : d.firstWeekContainsDate) ?? s.firstWeekContainsDate ?? ((f = (h = s.locale) == null ? void 0 : h.options) == null ? void 0 : f.firstWeekContainsDate) ?? 1, i = tt((t == null ? void 0 : t.in) || n, 0);
   i.setFullYear(r + 1, 0, a), i.setHours(0, 0, 0, 0);
   const o = pt(i, t), l = tt((t == null ? void 0 : t.in) || n, 0);
   l.setFullYear(r, 0, a), l.setHours(0, 0, 0, 0);
   const c = pt(l, t);
   return +e >= +o ? r + 1 : +e >= +c ? r : r - 1;
 }
-function Rs(n, t) {
+function Jn(n, t) {
   var o, l, c, u;
-  const e = vt(), r = (t == null ? void 0 : t.firstWeekContainsDate) ?? ((l = (o = t == null ? void 0 : t.locale) == null ? void 0 : o.options) == null ? void 0 : l.firstWeekContainsDate) ?? e.firstWeekContainsDate ?? ((u = (c = e.locale) == null ? void 0 : c.options) == null ? void 0 : u.firstWeekContainsDate) ?? 1, s = nr(n, t), a = tt((t == null ? void 0 : t.in) || n, 0);
+  const e = vt(), r = (t == null ? void 0 : t.firstWeekContainsDate) ?? ((l = (o = t == null ? void 0 : t.locale) == null ? void 0 : o.options) == null ? void 0 : l.firstWeekContainsDate) ?? e.firstWeekContainsDate ?? ((u = (c = e.locale) == null ? void 0 : c.options) == null ? void 0 : u.firstWeekContainsDate) ?? 1, s = sr(n, t), a = tt((t == null ? void 0 : t.in) || n, 0);
   return a.setFullYear(s, 0, r), a.setHours(0, 0, 0, 0), pt(a, t);
 }
-function Js(n, t) {
-  const e = F(n, t == null ? void 0 : t.in), r = +pt(e, t) - +Rs(e, t);
+function $n(n, t) {
+  const e = j(n, t == null ? void 0 : t.in), r = +pt(e, t) - +Jn(e, t);
   return Math.round(r / rr) + 1;
 }
 function I(n, t) {
@@ -3328,7 +3328,7 @@ const et = {
   },
   // Local week-numbering year
   Y: function(n, t, e, r) {
-    const s = nr(n, r), a = s > 0 ? s : 1 - s;
+    const s = sr(n, r), a = s > 0 ? s : 1 - s;
     if (t === "YY") {
       const i = a % 100;
       return I(i, 2);
@@ -3337,7 +3337,7 @@ const et = {
   },
   // ISO week-numbering year
   R: function(n, t) {
-    const e = sr(n);
+    const e = nr(n);
     return I(e, t.length);
   },
   // Extended year. This is a single number designating the year of this calendar system.
@@ -3460,12 +3460,12 @@ const et = {
   },
   // Local week of year
   w: function(n, t, e, r) {
-    const s = Js(n, r);
+    const s = $n(n, r);
     return t === "wo" ? e.ordinalNumber(s, { unit: "week" }) : I(s, t.length);
   },
   // ISO week of year
   I: function(n, t, e) {
-    const r = Ws(n);
+    const r = Rn(n);
     return t === "Io" ? e.ordinalNumber(r, { unit: "week" }) : I(r, t.length);
   },
   // Day of the month
@@ -3474,7 +3474,7 @@ const et = {
   },
   // Day of year
   D: function(n, t, e) {
-    const r = Fs(n);
+    const r = Wn(n);
     return t === "Do" ? e.ordinalNumber(r, { unit: "dayOfYear" }) : I(r, t.length);
   },
   // Day of week
@@ -3731,11 +3731,11 @@ const et = {
         return Te(r);
       case "XXXX":
       case "XX":
-        return nt(r);
+        return st(r);
       case "XXXXX":
       case "XXX":
       default:
-        return nt(r, ":");
+        return st(r, ":");
     }
   },
   // Timezone (ISO-8601. If offset is 0, output is `'+00:00'` or equivalent)
@@ -3746,11 +3746,11 @@ const et = {
         return Te(r);
       case "xxxx":
       case "xx":
-        return nt(r);
+        return st(r);
       case "xxxxx":
       case "xxx":
       default:
-        return nt(r, ":");
+        return st(r, ":");
     }
   },
   // Timezone (GMT)
@@ -3763,7 +3763,7 @@ const et = {
         return "GMT" + Ie(r, ":");
       case "OOOO":
       default:
-        return "GMT" + nt(r, ":");
+        return "GMT" + st(r, ":");
     }
   },
   // Timezone (specific non-location)
@@ -3776,7 +3776,7 @@ const et = {
         return "GMT" + Ie(r, ":");
       case "zzzz":
       default:
-        return "GMT" + nt(r, ":");
+        return "GMT" + st(r, ":");
     }
   },
   // Seconds timestamp
@@ -3794,13 +3794,13 @@ function Ie(n, t = "") {
   return a === 0 ? e + String(s) : e + String(s) + t + I(a, 2);
 }
 function Te(n, t) {
-  return n % 60 === 0 ? (n > 0 ? "-" : "+") + I(Math.abs(n) / 60, 2) : nt(n, t);
+  return n % 60 === 0 ? (n > 0 ? "-" : "+") + I(Math.abs(n) / 60, 2) : st(n, t);
 }
-function nt(n, t = "") {
+function st(n, t = "") {
   const e = n > 0 ? "-" : "+", r = Math.abs(n), s = I(Math.trunc(r / 60), 2), a = I(r % 60, 2);
   return e + s + t + a;
 }
-const Oe = (n, t) => {
+const Ae = (n, t) => {
   switch (n) {
     case "P":
       return t.date({ width: "short" });
@@ -3824,10 +3824,10 @@ const Oe = (n, t) => {
     default:
       return t.time({ width: "full" });
   }
-}, $s = (n, t) => {
+}, Hn = (n, t) => {
   const e = n.match(/(P+)(p+)?/) || [], r = e[1], s = e[2];
   if (!s)
-    return Oe(n, t);
+    return Ae(n, t);
   let a;
   switch (r) {
     case "P":
@@ -3844,48 +3844,48 @@ const Oe = (n, t) => {
       a = t.dateTime({ width: "full" });
       break;
   }
-  return a.replace("{{date}}", Oe(r, t)).replace("{{time}}", ar(s, t));
-}, Hs = {
+  return a.replace("{{date}}", Ae(r, t)).replace("{{time}}", ar(s, t));
+}, Bn = {
   p: ar,
-  P: $s
-}, Bs = /^D+$/, qs = /^Y+$/, Ys = ["D", "DD", "YY", "YYYY"];
-function Vs(n) {
-  return Bs.test(n);
+  P: Hn
+}, qn = /^D+$/, Yn = /^Y+$/, Vn = ["D", "DD", "YY", "YYYY"];
+function Qn(n) {
+  return qn.test(n);
 }
-function Qs(n) {
-  return qs.test(n);
+function Xn(n) {
+  return Yn.test(n);
 }
-function Xs(n, t, e) {
-  const r = Ks(n, t, e);
-  if (console.warn(r), Ys.includes(n))
+function Kn(n, t, e) {
+  const r = Gn(n, t, e);
+  if (console.warn(r), Vn.includes(n))
     throw new RangeError(r);
 }
-function Ks(n, t, e) {
+function Gn(n, t, e) {
   const r = n[0] === "Y" ? "years" : "days of the month";
   return `Use \`${n.toLowerCase()}\` instead of \`${n}\` (in \`${t}\`) for formatting ${r} to the input \`${e}\`; see: https://github.com/date-fns/date-fns/blob/master/docs/unicodeTokens.md`;
 }
-const Gs = /[yYQqMLwIdDecihHKkms]o|(\w)\1*|''|'(''|[^'])+('|$)|./g, Zs = /P+p+|P+|p+|''|'(''|[^'])+('|$)|./g, tn = /^'([^]*?)'?$/, en = /''/g, rn = /[a-zA-Z]/;
+const Zn = /[yYQqMLwIdDecihHKkms]o|(\w)\1*|''|'(''|[^'])+('|$)|./g, ts = /P+p+|P+|p+|''|'(''|[^'])+('|$)|./g, es = /^'([^]*?)'?$/, rs = /''/g, ns = /[a-zA-Z]/;
 function ir(n, t, e) {
   var u, d, h, f, g, _, v, E;
-  const r = vt(), s = (e == null ? void 0 : e.locale) ?? r.locale ?? mt, a = (e == null ? void 0 : e.firstWeekContainsDate) ?? ((d = (u = e == null ? void 0 : e.locale) == null ? void 0 : u.options) == null ? void 0 : d.firstWeekContainsDate) ?? r.firstWeekContainsDate ?? ((f = (h = r.locale) == null ? void 0 : h.options) == null ? void 0 : f.firstWeekContainsDate) ?? 1, i = (e == null ? void 0 : e.weekStartsOn) ?? ((_ = (g = e == null ? void 0 : e.locale) == null ? void 0 : g.options) == null ? void 0 : _.weekStartsOn) ?? r.weekStartsOn ?? ((E = (v = r.locale) == null ? void 0 : v.options) == null ? void 0 : E.weekStartsOn) ?? 0, o = F(n, e == null ? void 0 : e.in);
+  const r = vt(), s = (e == null ? void 0 : e.locale) ?? r.locale ?? mt, a = (e == null ? void 0 : e.firstWeekContainsDate) ?? ((d = (u = e == null ? void 0 : e.locale) == null ? void 0 : u.options) == null ? void 0 : d.firstWeekContainsDate) ?? r.firstWeekContainsDate ?? ((f = (h = r.locale) == null ? void 0 : h.options) == null ? void 0 : f.firstWeekContainsDate) ?? 1, i = (e == null ? void 0 : e.weekStartsOn) ?? ((_ = (g = e == null ? void 0 : e.locale) == null ? void 0 : g.options) == null ? void 0 : _.weekStartsOn) ?? r.weekStartsOn ?? ((E = (v = r.locale) == null ? void 0 : v.options) == null ? void 0 : E.weekStartsOn) ?? 0, o = j(n, e == null ? void 0 : e.in);
   if (!Gr(o))
     throw new RangeError("Invalid time value");
-  let l = t.match(Zs).map((N) => {
+  let l = t.match(ts).map((N) => {
     const C = N[0];
     if (C === "p" || C === "P") {
-      const Q = Hs[C];
+      const Q = Bn[C];
       return Q(N, s.formatLong);
     }
     return N;
-  }).join("").match(Gs).map((N) => {
+  }).join("").match(Zn).map((N) => {
     if (N === "''")
       return { isToken: !1, value: "'" };
     const C = N[0];
     if (C === "'")
-      return { isToken: !1, value: sn(N) };
+      return { isToken: !1, value: ss(N) };
     if (ke[C])
       return { isToken: !0, value: N };
-    if (C.match(rn))
+    if (C.match(ns))
       throw new RangeError(
         "Format string contains an unescaped latin alphabet character `" + C + "`"
       );
@@ -3901,26 +3901,26 @@ function ir(n, t, e) {
     if (!N.isToken)
       return N.value;
     const C = N.value;
-    (!(e != null && e.useAdditionalWeekYearTokens) && Qs(C) || !(e != null && e.useAdditionalDayOfYearTokens) && Vs(C)) && Xs(C, t, String(n));
+    (!(e != null && e.useAdditionalWeekYearTokens) && Xn(C) || !(e != null && e.useAdditionalDayOfYearTokens) && Qn(C)) && Kn(C, t, String(n));
     const Q = ke[C[0]];
     return Q(o, C, s.localize, c);
   }).join("");
 }
-function sn(n) {
-  const t = n.match(tn);
-  return t ? t[1].replace(en, "'") : n;
+function ss(n) {
+  const t = n.match(es);
+  return t ? t[1].replace(rs, "'") : n;
 }
-function nn(n, t, e) {
+function as(n, t, e) {
   const r = vt(), s = (e == null ? void 0 : e.locale) ?? r.locale ?? mt, a = 2520, i = It(n, t);
   if (isNaN(i))
     throw new RangeError("Invalid time value");
   const o = Object.assign({}, e, {
     addSuffix: e == null ? void 0 : e.addSuffix,
     comparison: i
-  }), [l, c] = Ft(
+  }), [l, c] = jt(
     e == null ? void 0 : e.in,
     ...i > 0 ? [t, n] : [n, t]
-  ), u = is(c, l), d = (xt(c) - xt(l)) / 1e3, h = Math.round((u - d) / 60);
+  ), u = on(c, l), d = (xt(c) - xt(l)) / 1e3, h = Math.round((u - d) / 60);
   let f;
   if (h < 2)
     return e != null && e.includeSeconds ? u < 5 ? s.formatDistance("lessThanXSeconds", 5, o) : u < 10 ? s.formatDistance("lessThanXSeconds", 10, o) : u < 20 ? s.formatDistance("lessThanXSeconds", 20, o) : u < 40 ? s.formatDistance("halfAMinute", 0, o) : u < 60 ? s.formatDistance("lessThanXMinutes", 1, o) : s.formatDistance("xMinutes", 1, o) : h === 0 ? s.formatDistance("lessThanXMinutes", 1, o) : s.formatDistance("xMinutes", h, o);
@@ -3940,7 +3940,7 @@ function nn(n, t, e) {
     } else if (h < St * 2)
       return f = Math.round(h / St), s.formatDistance("aboutXMonths", f, o);
   }
-  if (f = as(c, l), f < 12) {
+  if (f = an(c, l), f < 12) {
     const g = Math.round(h / St);
     return s.formatDistance("xMonths", g, o);
   } else {
@@ -3949,9 +3949,9 @@ function nn(n, t, e) {
   }
 }
 function or(n, t) {
-  return nn(n, Xr(n), t);
+  return as(n, Xr(n), t);
 }
-const Ae = {
+const Oe = {
   lessThanXSeconds: {
     standalone: {
       one: "weniger als 1 Sekunde",
@@ -4106,11 +4106,11 @@ const Ae = {
       other: "fast {{count}} Jahren"
     }
   }
-}, an = (n, t, e) => {
+}, is = (n, t, e) => {
   let r;
-  const s = e != null && e.addSuffix ? Ae[n].withPreposition : Ae[n].standalone;
+  const s = e != null && e.addSuffix ? Oe[n].withPreposition : Oe[n].standalone;
   return typeof s == "string" ? r = s : t === 1 ? r = s.one : r = s.other.replace("{{count}}", String(t)), e != null && e.addSuffix ? e.comparison && e.comparison > 0 ? "in " + r : "vor " + r : r;
-}, on = {
+}, os = {
   full: "EEEE, do MMMM y",
   // Montag, 7. Januar 2018
   long: "do MMMM y",
@@ -4119,41 +4119,41 @@ const Ae = {
   // 7. Jan. 2018
   short: "dd.MM.y"
   // 07.01.2018
-}, cn = {
+}, cs = {
   full: "HH:mm:ss zzzz",
   long: "HH:mm:ss z",
   medium: "HH:mm:ss",
   short: "HH:mm"
-}, ln = {
+}, ls = {
   full: "{{date}} 'um' {{time}}",
   long: "{{date}} 'um' {{time}}",
   medium: "{{date}} {{time}}",
   short: "{{date}} {{time}}"
-}, un = {
+}, us = {
   date: Z({
-    formats: on,
+    formats: os,
     defaultWidth: "full"
   }),
   time: Z({
-    formats: cn,
+    formats: cs,
     defaultWidth: "full"
   }),
   dateTime: Z({
-    formats: ln,
+    formats: ls,
     defaultWidth: "full"
   })
-}, dn = {
+}, ds = {
   lastWeek: "'letzten' eeee 'um' p",
   yesterday: "'gestern um' p",
   today: "'heute um' p",
   tomorrow: "'morgen um' p",
   nextWeek: "eeee 'um' p",
   other: "P"
-}, hn = (n, t, e, r) => dn[n], fn = {
+}, hs = (n, t, e, r) => ds[n], fs = {
   narrow: ["v.Chr.", "n.Chr."],
   abbreviated: ["v.Chr.", "n.Chr."],
   wide: ["vor Christus", "nach Christus"]
-}, mn = {
+}, ms = {
   narrow: ["1", "2", "3", "4"],
   abbreviated: ["Q1", "Q2", "Q3", "Q4"],
   wide: ["1. Quartal", "2. Quartal", "3. Quartal", "4. Quartal"]
@@ -4187,7 +4187,7 @@ const Ae = {
     "November",
     "Dezember"
   ]
-}, gn = {
+}, gs = {
   narrow: ee.narrow,
   abbreviated: [
     "Jan.",
@@ -4204,7 +4204,7 @@ const Ae = {
     "Dez."
   ],
   wide: ee.wide
-}, wn = {
+}, ws = {
   narrow: ["S", "M", "D", "M", "D", "F", "S"],
   short: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
   abbreviated: ["So.", "Mo.", "Di.", "Mi.", "Do.", "Fr.", "Sa."],
@@ -4217,7 +4217,7 @@ const Ae = {
     "Freitag",
     "Samstag"
   ]
-}, bn = {
+}, bs = {
   narrow: {
     am: "vm.",
     pm: "nm.",
@@ -4248,7 +4248,7 @@ const Ae = {
     evening: "Abend",
     night: "Nacht"
   }
-}, yn = {
+}, ys = {
   narrow: {
     am: "vm.",
     pm: "nm.",
@@ -4279,49 +4279,49 @@ const Ae = {
     evening: "abends",
     night: "nachts"
   }
-}, pn = (n) => Number(n) + ".", _n = {
-  ordinalNumber: pn,
+}, ps = (n) => Number(n) + ".", _s = {
+  ordinalNumber: ps,
   era: R({
-    values: fn,
+    values: fs,
     defaultWidth: "wide"
   }),
   quarter: R({
-    values: mn,
+    values: ms,
     defaultWidth: "wide",
     argumentCallback: (n) => n - 1
   }),
   month: R({
     values: ee,
-    formattingValues: gn,
+    formattingValues: gs,
     defaultWidth: "wide"
   }),
   day: R({
-    values: wn,
+    values: ws,
     defaultWidth: "wide"
   }),
   dayPeriod: R({
-    values: bn,
+    values: bs,
     defaultWidth: "wide",
-    formattingValues: yn,
+    formattingValues: ys,
     defaultFormattingWidth: "wide"
   })
-}, vn = /^(\d+)(\.)?/i, Dn = /\d+/i, Sn = {
+}, vs = /^(\d+)(\.)?/i, Ds = /\d+/i, Ss = {
   narrow: /^(v\.? ?Chr\.?|n\.? ?Chr\.?)/i,
   abbreviated: /^(v\.? ?Chr\.?|n\.? ?Chr\.?)/i,
   wide: /^(vor Christus|vor unserer Zeitrechnung|nach Christus|unserer Zeitrechnung)/i
-}, Mn = {
+}, Ms = {
   any: [/^v/i, /^n/i]
-}, kn = {
+}, ks = {
   narrow: /^[1234]/i,
   abbreviated: /^q[1234]/i,
   wide: /^[1234](\.)? Quartal/i
-}, In = {
+}, Is = {
   any: [/1/i, /2/i, /3/i, /4/i]
-}, Tn = {
+}, Ts = {
   narrow: /^[jfmasond]/i,
   abbreviated: /^(j[aä]n|feb|mär[z]?|apr|mai|jun[i]?|jul[i]?|aug|sep|okt|nov|dez)\.?/i,
   wide: /^(januar|februar|märz|april|mai|juni|juli|august|september|oktober|november|dezember)/i
-}, On = {
+}, As = {
   narrow: [
     /^j/i,
     /^f/i,
@@ -4350,18 +4350,18 @@ const Ae = {
     /^n/i,
     /^d/i
   ]
-}, An = {
+}, Os = {
   narrow: /^[smdmf]/i,
   short: /^(so|mo|di|mi|do|fr|sa)/i,
   abbreviated: /^(son?|mon?|die?|mit?|don?|fre?|sam?)\.?/i,
   wide: /^(sonntag|montag|dienstag|mittwoch|donnerstag|freitag|samstag)/i
-}, zn = {
+}, zs = {
   any: [/^so/i, /^mo/i, /^di/i, /^mi/i, /^do/i, /^f/i, /^sa/i]
-}, Pn = {
+}, Ps = {
   narrow: /^(vm\.?|nm\.?|Mitternacht|Mittag|morgens|nachm\.?|abends|nachts)/i,
   abbreviated: /^(vorm\.?|nachm\.?|Mitternacht|Mittag|morgens|nachm\.?|abends|nachts)/i,
   wide: /^(vormittags|nachmittags|Mitternacht|Mittag|morgens|nachmittags|abends|nachts)/i
-}, En = {
+}, Es = {
   any: {
     am: /^v/i,
     pm: /^n/i,
@@ -4374,55 +4374,55 @@ const Ae = {
     night: /nachts/i
     // will never be matched. Night is matched by `pm`
   }
-}, xn = {
+}, xs = {
   ordinalNumber: ue({
-    matchPattern: vn,
-    parsePattern: Dn,
+    matchPattern: vs,
+    parsePattern: Ds,
     valueCallback: (n) => parseInt(n)
   }),
   era: J({
-    matchPatterns: Sn,
+    matchPatterns: Ss,
     defaultMatchWidth: "wide",
-    parsePatterns: Mn,
+    parsePatterns: Ms,
     defaultParseWidth: "any"
   }),
   quarter: J({
-    matchPatterns: kn,
+    matchPatterns: ks,
     defaultMatchWidth: "wide",
-    parsePatterns: In,
+    parsePatterns: Is,
     defaultParseWidth: "any",
     valueCallback: (n) => n + 1
   }),
   month: J({
-    matchPatterns: Tn,
+    matchPatterns: Ts,
     defaultMatchWidth: "wide",
-    parsePatterns: On,
+    parsePatterns: As,
     defaultParseWidth: "any"
   }),
   day: J({
-    matchPatterns: An,
+    matchPatterns: Os,
     defaultMatchWidth: "wide",
-    parsePatterns: zn,
+    parsePatterns: zs,
     defaultParseWidth: "any"
   }),
   dayPeriod: J({
-    matchPatterns: Pn,
+    matchPatterns: Ps,
     defaultMatchWidth: "wide",
-    parsePatterns: En,
+    parsePatterns: Es,
     defaultParseWidth: "any"
   })
 }, Ct = {
   code: "de",
-  formatDistance: an,
-  formatLong: un,
-  formatRelative: hn,
-  localize: _n,
-  match: xn,
+  formatDistance: is,
+  formatLong: us,
+  formatRelative: hs,
+  localize: _s,
+  match: xs,
   options: {
     weekStartsOn: 1,
     firstWeekContainsDate: 4
   }
-}, Cn = {
+}, Cs = {
   lessThanXSeconds: {
     one: "moins d’une seconde",
     other: "moins de {{count}} secondes"
@@ -4484,54 +4484,54 @@ const Ae = {
     one: "presqu’un an",
     other: "presque {{count}} ans"
   }
-}, Un = (n, t, e) => {
+}, Us = (n, t, e) => {
   let r;
-  const s = Cn[n];
+  const s = Cs[n];
   return typeof s == "string" ? r = s : t === 1 ? r = s.one : r = s.other.replace("{{count}}", String(t)), e != null && e.addSuffix ? e.comparison && e.comparison > 0 ? "dans " + r : "il y a " + r : r;
-}, Ln = {
+}, Ls = {
   full: "EEEE d MMMM y",
   long: "d MMMM y",
   medium: "d MMM y",
   short: "dd/MM/y"
-}, Nn = {
+}, Ns = {
   full: "HH:mm:ss zzzz",
   long: "HH:mm:ss z",
   medium: "HH:mm:ss",
   short: "HH:mm"
-}, jn = {
+}, Fs = {
   full: "{{date}} 'à' {{time}}",
   long: "{{date}} 'à' {{time}}",
   medium: "{{date}}, {{time}}",
   short: "{{date}}, {{time}}"
-}, Fn = {
+}, js = {
   date: Z({
-    formats: Ln,
+    formats: Ls,
     defaultWidth: "full"
   }),
   time: Z({
-    formats: Nn,
+    formats: Ns,
     defaultWidth: "full"
   }),
   dateTime: Z({
-    formats: jn,
+    formats: Fs,
     defaultWidth: "full"
   })
-}, Wn = {
+}, Ws = {
   lastWeek: "eeee 'dernier à' p",
   yesterday: "'hier à' p",
   today: "'aujourd’hui à' p",
   tomorrow: "'demain à' p'",
   nextWeek: "eeee 'prochain à' p",
   other: "P"
-}, Rn = (n, t, e, r) => Wn[n], Jn = {
+}, Rs = (n, t, e, r) => Ws[n], Js = {
   narrow: ["av. J.-C", "ap. J.-C"],
   abbreviated: ["av. J.-C", "ap. J.-C"],
   wide: ["avant Jésus-Christ", "après Jésus-Christ"]
-}, $n = {
+}, $s = {
   narrow: ["T1", "T2", "T3", "T4"],
   abbreviated: ["1er trim.", "2ème trim.", "3ème trim.", "4ème trim."],
   wide: ["1er trimestre", "2ème trimestre", "3ème trimestre", "4ème trimestre"]
-}, Hn = {
+}, Hs = {
   narrow: ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"],
   abbreviated: [
     "janv.",
@@ -4561,7 +4561,7 @@ const Ae = {
     "novembre",
     "décembre"
   ]
-}, Bn = {
+}, Bs = {
   narrow: ["D", "L", "M", "M", "J", "V", "S"],
   short: ["di", "lu", "ma", "me", "je", "ve", "sa"],
   abbreviated: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."],
@@ -4574,7 +4574,7 @@ const Ae = {
     "vendredi",
     "samedi"
   ]
-}, qn = {
+}, qs = {
   narrow: {
     am: "AM",
     pm: "PM",
@@ -4605,46 +4605,46 @@ const Ae = {
     evening: "du soir",
     night: "du matin"
   }
-}, Yn = (n, t) => {
+}, Ys = (n, t) => {
   const e = Number(n), r = t == null ? void 0 : t.unit;
   if (e === 0)
     return "0";
   const s = ["year", "week", "hour", "minute", "second"];
   let a;
   return e === 1 ? a = r && s.includes(r) ? "ère" : "er" : a = "ème", e + a;
-}, Vn = ["MMM", "MMMM"], Qn = {
+}, Vs = ["MMM", "MMMM"], Qs = {
   preprocessor: (n, t) => n.getDate() === 1 || !t.some(
-    (r) => r.isToken && Vn.includes(r.value)
+    (r) => r.isToken && Vs.includes(r.value)
   ) ? t : t.map(
     (r) => r.isToken && r.value === "do" ? { isToken: !0, value: "d" } : r
   ),
-  ordinalNumber: Yn,
+  ordinalNumber: Ys,
   era: R({
-    values: Jn,
+    values: Js,
     defaultWidth: "wide"
   }),
   quarter: R({
-    values: $n,
+    values: $s,
     defaultWidth: "wide",
     argumentCallback: (n) => n - 1
   }),
   month: R({
-    values: Hn,
+    values: Hs,
     defaultWidth: "wide"
   }),
   day: R({
-    values: Bn,
+    values: Bs,
     defaultWidth: "wide"
   }),
   dayPeriod: R({
-    values: qn,
+    values: qs,
     defaultWidth: "wide"
   })
-}, Xn = /^(\d+)(ième|ère|ème|er|e)?/i, Kn = /\d+/i, Gn = {
+}, Xs = /^(\d+)(ième|ère|ème|er|e)?/i, Ks = /\d+/i, Gs = {
   narrow: /^(av\.J\.C|ap\.J\.C|ap\.J\.-C)/i,
   abbreviated: /^(av\.J\.-C|av\.J-C|apr\.J\.-C|apr\.J-C|ap\.J-C)/i,
   wide: /^(avant Jésus-Christ|après Jésus-Christ)/i
-}, Zn = {
+}, Zs = {
   any: [/^av/i, /^ap/i]
 }, ta = {
   narrow: /^T?[1234]/i,
@@ -4656,7 +4656,7 @@ const Ae = {
   narrow: /^[jfmasond]/i,
   abbreviated: /^(janv|févr|mars|avr|mai|juin|juill|juil|août|sept|oct|nov|déc)\.?/i,
   wide: /^(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)/i
-}, sa = {
+}, na = {
   narrow: [
     /^j/i,
     /^f/i,
@@ -4685,7 +4685,7 @@ const Ae = {
     /^n/i,
     /^d/i
   ]
-}, na = {
+}, sa = {
   narrow: /^[lmjvsd]/i,
   short: /^(di|lu|ma|me|je|ve|sa)/i,
   abbreviated: /^(dim|lun|mar|mer|jeu|ven|sam)\.?/i,
@@ -4709,14 +4709,14 @@ const Ae = {
   }
 }, ca = {
   ordinalNumber: ue({
-    matchPattern: Xn,
-    parsePattern: Kn,
+    matchPattern: Xs,
+    parsePattern: Ks,
     valueCallback: (n) => parseInt(n)
   }),
   era: J({
-    matchPatterns: Gn,
+    matchPatterns: Gs,
     defaultMatchWidth: "wide",
-    parsePatterns: Zn,
+    parsePatterns: Zs,
     defaultParseWidth: "any"
   }),
   quarter: J({
@@ -4729,11 +4729,11 @@ const Ae = {
   month: J({
     matchPatterns: ra,
     defaultMatchWidth: "wide",
-    parsePatterns: sa,
+    parsePatterns: na,
     defaultParseWidth: "any"
   }),
   day: J({
-    matchPatterns: na,
+    matchPatterns: sa,
     defaultMatchWidth: "wide",
     parsePatterns: aa,
     defaultParseWidth: "any"
@@ -4746,10 +4746,10 @@ const Ae = {
   })
 }, Ut = {
   code: "fr",
-  formatDistance: Un,
-  formatLong: Fn,
-  formatRelative: Rn,
-  localize: Qn,
+  formatDistance: Us,
+  formatLong: js,
+  formatRelative: Rs,
+  localize: Qs,
   match: ca,
   options: {
     weekStartsOn: 1,
@@ -5454,7 +5454,7 @@ class Ta extends U {
   }
 }
 const Pe = /^\+[1-9]{1,3}\-[0-9]{7,14}$/;
-class Oa extends U {
+class Aa extends U {
   /**
    * Returns the unserialized value of given value.
    *
@@ -5498,7 +5498,7 @@ class Oa extends U {
   }
 }
 const Ee = /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$/;
-class Aa extends U {
+class Oa extends U {
   /**
    * Returns the unserialized value of given value.
    *
@@ -5768,7 +5768,7 @@ class H {
     if (t.endsWith("_fk"))
       return new ga(t, e, r);
     const s = (a = Ge[t]) == null ? void 0 : a.type;
-    return typeof s == "string" && (e = s), e === "user" ? new wa(t, e, r) : e === "int" ? new re(t, "int", r) : e === "blitzstamp" ? new re(t, e, r) : e === "tinyint" ? new Ma(t, e, r) : e === "double" ? new ka(t, e, r) : e === "float" ? new de(t, e, r) : e === "percentage" ? new Ia(t, e, r) : e === "varchar" ? new ha(t, e, r) : e === "text" ? new cr(t, e, r) : e === "htmlText" ? new da(t, e, r) : e === "enum" ? new Sa(t, e, r) : e === "json" ? new va(t, e, r) : e === "boolean" ? new er(t, e, r) : e === "datetime" ? new ma(t, "datetime", r) : e === "date" ? new ua(t, e, r) : e === "code" ? new Da(t, e, r) : e === "email" ? new Ta(t, e, r) : e === "phone" ? new Oa(t, e, r) : e === "url" ? new Aa(t, e, r) : e === "image" ? new za(t, e, r) : e === "video" ? new Pa(t, e, r) : e === "file" ? new Ea(t, e, r) : e === "pdf" ? new xa(t, e, r) : e === "location" ? new Ca(t, e, r) : new wt(t, e, r);
+    return typeof s == "string" && (e = s), e === "user" ? new wa(t, e, r) : e === "int" ? new re(t, "int", r) : e === "blitzstamp" ? new re(t, e, r) : e === "tinyint" ? new Ma(t, e, r) : e === "double" ? new ka(t, e, r) : e === "float" ? new de(t, e, r) : e === "percentage" ? new Ia(t, e, r) : e === "varchar" ? new ha(t, e, r) : e === "text" ? new cr(t, e, r) : e === "htmlText" ? new da(t, e, r) : e === "enum" ? new Sa(t, e, r) : e === "json" ? new va(t, e, r) : e === "boolean" ? new er(t, e, r) : e === "datetime" ? new ma(t, "datetime", r) : e === "date" ? new ua(t, e, r) : e === "code" ? new Da(t, e, r) : e === "email" ? new Ta(t, e, r) : e === "phone" ? new Aa(t, e, r) : e === "url" ? new Oa(t, e, r) : e === "image" ? new za(t, e, r) : e === "video" ? new Pa(t, e, r) : e === "file" ? new Ea(t, e, r) : e === "pdf" ? new xa(t, e, r) : e === "location" ? new Ca(t, e, r) : new wt(t, e, r);
   }
   /**
    * Initializes a new instance of DataType or ManyType with the specified name and type.
@@ -5825,7 +5825,7 @@ class ur extends Error {
     super(t), this.name = "DefinitiveHistoryError";
   }
 }
-class st {
+class nt {
   /**
    * Performs a list call to the server by given base URL, model name and query parameters.
    */
@@ -6190,7 +6190,7 @@ class ut {
     let r;
     for (const a of e)
       try {
-        return await st.getHistory({
+        return await nt.getHistory({
           baseUrl: a,
           modelName: this.model.getName(),
           blitzID: this.getAttribute("_blitzID").value
@@ -6261,7 +6261,7 @@ class ut {
     });
   }
 }
-class se {
+class ne {
   /**
    * Transforms BlitzData options.
    */
@@ -6329,7 +6329,7 @@ class se {
     return t;
   }
 }
-class ne {
+class se {
   /**
    * Extract model name from the given `list` URL.
    *
@@ -6496,12 +6496,12 @@ var La = fr.exports, ae = {
  * @license  MIT
  */
 var Na = function(n) {
-  return n != null && (mr(n) || ja(n) || !!n._isBuffer);
+  return n != null && (mr(n) || Fa(n) || !!n._isBuffer);
 };
 function mr(n) {
   return !!n.constructor && typeof n.constructor.isBuffer == "function" && n.constructor.isBuffer(n);
 }
-function ja(n) {
+function Fa(n) {
   return typeof n.readFloatLE == "function" && typeof n.slice == "function" && mr(n.slice(0, 0));
 }
 (function() {
@@ -6535,8 +6535,8 @@ function ja(n) {
     return i && i.asBytes ? o : i && i.asString ? r.bytesToString(o) : n.bytesToHex(o);
   };
 })();
-var Fa = hr.exports;
-const Wa = /* @__PURE__ */ Nr(Fa), Ra = /^[v^~<>=]*?(\d+)(?:\.([x*]|\d+)(?:\.([x*]|\d+)(?:\.([x*]|\d+))?(?:-([\da-z\-]+(?:\.[\da-z\-]+)*))?(?:\+[\da-z\-]+(?:\.[\da-z\-]+)*)?)?)?$/i, Ue = (n) => {
+var ja = hr.exports;
+const Wa = /* @__PURE__ */ Nr(ja), Ra = /^[v^~<>=]*?(\d+)(?:\.([x*]|\d+)(?:\.([x*]|\d+)(?:\.([x*]|\d+))?(?:-([\da-z\-]+(?:\.[\da-z\-]+)*))?(?:\+[\da-z\-]+(?:\.[\da-z\-]+)*)?)?)?$/i, Ue = (n) => {
   if (typeof n != "string")
     throw new TypeError("Invalid argument expected string");
   const t = n.match(Ra);
@@ -6551,7 +6551,7 @@ const Wa = /* @__PURE__ */ Nr(Fa), Ra = /^[v^~<>=]*?(\d+)(?:\.([x*]|\d+)(?:\.([x
     return 0;
   const [e, r] = Ja(Ne(n), Ne(t));
   return e > r ? 1 : e < r ? -1 : 0;
-}, je = (n, t) => {
+}, Fe = (n, t) => {
   for (let e = 0; e < Math.max(n.length, t.length); e++) {
     const r = $a(n[e] || "0", t[e] || "0");
     if (r !== 0)
@@ -6559,9 +6559,9 @@ const Wa = /* @__PURE__ */ Nr(Fa), Ra = /^[v^~<>=]*?(\d+)(?:\.([x*]|\d+)(?:\.([x
   }
   return 0;
 }, Ha = (n, t) => {
-  const e = Ue(n), r = Ue(t), s = e.pop(), a = r.pop(), i = je(e, r);
-  return i !== 0 ? i : s && a ? je(s.split("."), a.split(".")) : s || a ? s ? -1 : 1 : 0;
-}, Fe = (n, t, e) => {
+  const e = Ue(n), r = Ue(t), s = e.pop(), a = r.pop(), i = Fe(e, r);
+  return i !== 0 ? i : s && a ? Fe(s.split("."), a.split(".")) : s || a ? s ? -1 : 1 : 0;
+}, je = (n, t, e) => {
   Ba(e);
   const r = Ha(n, t);
   return gr[e].includes(r);
@@ -6596,9 +6596,9 @@ class wr {
   async perform() {
     if (this.options.type.includes("version")) {
       const t = S.get("version");
-      if (!t || Fe(y.VERSION, t, ">")) {
+      if (!t || je(y.VERSION, t, ">")) {
         const e = y.VERSION.split(".")[1], r = t == null ? void 0 : t.split(".")[1];
-        if (r && Fe(e, r, ">")) {
+        if (r && je(e, r, ">")) {
           await this.flush(), S.set("version", y.VERSION);
           return;
         } else
@@ -6986,14 +6986,14 @@ class it {
       try {
         let o = [];
         if (this._get)
-          o = await st.get({
+          o = await nt.get({
             baseUrl: i,
             modelName: this._model.getName(),
             blitzID: this._get,
             query: this._getQuery
           }, this._signal);
         else {
-          const l = await st.list({
+          const l = await nt.list({
             endpoint: {
               baseUrl: i,
               modelName: this._model.getName(),
@@ -7031,7 +7031,7 @@ class it {
    * @param url URL to make list call.
    */
   async performSingleUrlHttp(t) {
-    return ((await st.list({ fullUrl: t }, this._signal)).items || []).map((r) => (r.cluster = [], r._editURLs = [t], r));
+    return ((await nt.list({ fullUrl: t }, this._signal)).items || []).map((r) => (r.cluster = [], r._editURLs = [t], r));
   }
   /**
    * Performs IndexedDB list call.
@@ -7046,7 +7046,7 @@ class it {
         var: (r = this._getQuery) == null ? void 0 : r.var,
         manyToMany: (s = this._getQuery) == null ? void 0 : s.manyToMany
       });
-    const e = this._urls ? this._urls.map((a) => ne.extractConditions(a)).flat() : this._query.conditions;
+    const e = this._urls ? this._urls.map((a) => se.extractConditions(a)).flat() : this._query.conditions;
     return await t.query({ ...this._query, conditions: e });
   }
   /**
@@ -7062,7 +7062,7 @@ class it {
         var: (r = this._getQuery) == null ? void 0 : r.var,
         manyToMany: (s = this._getQuery) == null ? void 0 : s.manyToMany
       });
-    const e = this._urls ? this._urls.map((a) => ne.extractConditions(a)).flat() : this._query.conditions;
+    const e = this._urls ? this._urls.map((a) => se.extractConditions(a)).flat() : this._query.conditions;
     return await t.query({ ...this._query, conditions: e });
   }
   /**
@@ -7392,7 +7392,7 @@ const dt = class dt {
    * Fetches one page of a model's change-log from one cluster.
    */
   async fetchLogs(t, e, r, s, a = !1) {
-    const i = await st.listLogs({
+    const i = await nt.listLogs({
       baseUrl: t.getNextReadURL(),
       model: e,
       type: r === "delete" ? "delete" : void 0,
@@ -7416,7 +7416,7 @@ const dt = class dt {
     const e = await this.withoutEvaluated(t);
     if (e.length === 0)
       return;
-    const r = jt.create();
+    const r = Ft.create();
     await r.putMultiple(e);
     const s = (await r.all()).map((o) => W.fromObject(o)), a = await q.create().run(s);
     if (y.options.sync.live === !0) {
@@ -7838,7 +7838,7 @@ const Nt = class Nt extends br {
    */
   setClusters(e) {
     this.clusterManager = new $e();
-    const r = se.transformClusterOptions(e);
+    const r = ne.transformClusterOptions(e);
     for (const s of Object.keys(r))
       this.clusterManager.register(s, r[s]);
   }
@@ -8325,7 +8325,14 @@ class fe {
     await (e == null ? void 0 : e.memoryClient().applyTransaction(t, !0));
   }
 }
-const A = class A {
+function ni(n) {
+  var e;
+  if (n)
+    return n;
+  const t = (e = globalThis.BlitzUIManager) == null ? void 0 : e.default;
+  return typeof t == "function" ? t : void 0;
+}
+const O = class O {
   /**
    * _Model instance. Stored in ModelRegistry so low-level modules can
    * reach it without importing this module.
@@ -8334,7 +8341,7 @@ const A = class A {
     return K();
   }
   static set _Model(t) {
-    Fr(t);
+    jr(t);
   }
   /**
   * Queue instance. Stored in QueueRegistry so low-level modules can
@@ -8359,7 +8366,7 @@ const A = class A {
    * {@link https://semver.org/}
    */
   static get VERSION() {
-    return "1.17.4";
+    return "1.17.5";
   }
   /**
    * Initializes BlitzData with given options.
@@ -8370,8 +8377,8 @@ const A = class A {
       return;
     }
     this.initialized = !0;
-    const e = se.transformBlitzDataOptions(t);
-    this.options = e, e.clusters && A.setClusters(e.clusters), await new wr(this.options.flush).perform(), await new X().ping(), this.queue = await new Za().init(), A._Model = new V({
+    const e = ne.transformBlitzDataOptions(t);
+    this.options = e, e.clusters && O.setClusters(e.clusters), await new wr(this.options.flush).perform(), await new X().ping(), this.queue = await new Za().init(), O._Model = new V({
       model: void 0,
       attributes: {
         _blitzID: new wt("_blitzID", "string", "_Model"),
@@ -8426,22 +8433,24 @@ const A = class A {
         _editURLs: new wt("_editURLs", "json", []),
         haspublishingdate: new er("haspublishingdate", "boolean", !1)
       }
-    }), A._Model.setReturnType(V), t && typeof t != "string" && !Array.isArray(t) && t.uiManager && (this.ui = new t.uiManager(this, t.uiManagerSettings));
+    }), O._Model.setReturnType(V);
+    const r = t && typeof t != "string" && !Array.isArray(t) ? t : void 0, s = ni(r == null ? void 0 : r.uiManager);
+    s && (this.ui = new s(this, r == null ? void 0 : r.uiManagerSettings));
     try {
-      await A.getCurrentUser();
-    } catch (r) {
-      console.error("Error fetching current user:", r.stack);
+      await O.getCurrentUser();
+    } catch (a) {
+      console.error("Error fetching current user:", a.stack);
     }
     if (e.sync.level === "full") {
-      const r = _t.create();
-      A.syncReady = r.run().catch((s) => {
-        console.error("Initial sync failed:", (s == null ? void 0 : s.stack) ?? (s == null ? void 0 : s.message) ?? s);
-      }), e.sync.background !== !0 && await A.syncReady, r.runAtInterval(e.sync.interval);
+      const a = _t.create();
+      O.syncReady = a.run().catch((i) => {
+        console.error("Initial sync failed:", (i == null ? void 0 : i.stack) ?? (i == null ? void 0 : i.message) ?? i);
+      }), e.sync.background !== !0 && await O.syncReady, a.runAtInterval(e.sync.interval);
     } else if (e.sync.level === "cache") {
-      const r = _t.create();
-      A.syncReady = r.run(void 0, "delete").catch((s) => {
-        console.error("Initial sync failed:", (s == null ? void 0 : s.stack) ?? (s == null ? void 0 : s.message) ?? s);
-      }), await A.syncReady;
+      const a = _t.create();
+      O.syncReady = a.run(void 0, "delete").catch((i) => {
+        console.error("Initial sync failed:", (i == null ? void 0 : i.stack) ?? (i == null ? void 0 : i.message) ?? i);
+      }), await O.syncReady;
     }
     e.realtime && e.realtime.models.length > 0 && fe.create().start();
   }
@@ -8449,9 +8458,9 @@ const A = class A {
    * Registers clusters.
    */
   static setClusters(t) {
-    t = se.transformClusterOptions(t);
+    t = ne.transformClusterOptions(t);
     for (const e of Object.keys(t))
-      A.clusterManager.register(e, t[e]);
+      O.clusterManager.register(e, t[e]);
   }
   /**
    * Performs a list call to the server by given URL.
@@ -8459,10 +8468,10 @@ const A = class A {
    * @param url
    */
   static async list(t) {
-    const e = ne.extractModelName(t);
-    if (!await A._Model.exists(e))
+    const e = se.extractModelName(t);
+    if (!await O._Model.exists(e))
       throw new Error(`Model "${e}" does not exist.`);
-    return it.create().model(await A._Model.get(e)).urls([t]).query({}).perform();
+    return it.create().model(await O._Model.get(e)).urls([t]).query({}).perform();
   }
   /**
    * Performs an image upload
@@ -8473,8 +8482,8 @@ const A = class A {
    * file as public regardless of the schema.
    */
   static async uploader(t, e) {
-    return await st.upload({
-      baseUrl: A.clusterManager.toArray()[0].getNextReadURL(),
+    return await nt.upload({
+      baseUrl: O.clusterManager.toArray()[0].getNextReadURL(),
       image: t,
       modelName: e == null ? void 0 : e.modelName,
       attributeName: e == null ? void 0 : e.attributeName
@@ -8489,8 +8498,8 @@ const A = class A {
    * file as public regardless of the schema.
    */
   static async uploaderVideo(t, e) {
-    return await st.uploadVideo({
-      baseUrl: A.clusterManager.toArray()[0].getNextReadURL(),
+    return await nt.uploadVideo({
+      baseUrl: O.clusterManager.toArray()[0].getNextReadURL(),
       video: t,
       modelName: e == null ? void 0 : e.modelName,
       attributeName: e == null ? void 0 : e.attributeName
@@ -8505,8 +8514,8 @@ const A = class A {
    * file as public regardless of the schema.
    */
   static async uploaderFile(t, e) {
-    return await st.uploadFile({
-      baseUrl: A.clusterManager.toArray()[0].getNextReadURL(),
+    return await nt.uploadFile({
+      baseUrl: O.clusterManager.toArray()[0].getNextReadURL(),
       file: t,
       modelName: e == null ? void 0 : e.modelName,
       attributeName: e == null ? void 0 : e.attributeName
@@ -8521,7 +8530,7 @@ const A = class A {
   static async runController(t, e) {
     let r = t.startsWith("/") ? t.slice(1) : t;
     r.includes(".json") || (r += ".json");
-    const s = P.sanitizeBaseUrl(A.clusterManager.toArray()[0].getNextReadURL()), a = new URL(s).origin !== window.location.origin ? r.includes("?") ? "&enableCors=1" : "?enableCors=1" : "", i = z.create().url(s + r + a).method((e == null ? void 0 : e.method) ?? "GET").header("Accept", "application/json");
+    const s = P.sanitizeBaseUrl(O.clusterManager.toArray()[0].getNextReadURL()), a = new URL(s).origin !== window.location.origin ? r.includes("?") ? "&enableCors=1" : "?enableCors=1" : "", i = z.create().url(s + r + a).method((e == null ? void 0 : e.method) ?? "GET").header("Accept", "application/json");
     e != null && e.headers && i.headers(e.headers), (e == null ? void 0 : e.body) !== void 0 && i.body(e.body), e != null && e.signal && i.signal(e.signal);
     const o = await i.send(e == null ? void 0 : e.rawResponse);
     if (!(e != null && e.rawResponse) && o.error)
@@ -8542,7 +8551,7 @@ const A = class A {
       if (o < e.lastSaved + l)
         return e.users;
     }
-    const r = P.sanitizeBaseUrl(A.clusterManager.toArray()[0].getNextReadURL()), s = new URL(r).origin !== window.location.origin ? "?enableCors=1" : "", a = await z.create().url(r + `api/listProjectUsers/${t}.json${s}`).get();
+    const r = P.sanitizeBaseUrl(O.clusterManager.toArray()[0].getNextReadURL()), s = new URL(r).origin !== window.location.origin ? "?enableCors=1" : "", a = await z.create().url(r + `api/listProjectUsers/${t}.json${s}`).get();
     if (a.error)
       throw new Error(a.error);
     if (a.errors instanceof Array && a.errors.length > 0)
@@ -8561,7 +8570,7 @@ const A = class A {
     const t = S.getCurrentUser();
     if (t)
       return t;
-    const e = P.sanitizeBaseUrl(A.clusterManager.toArray()[0].getNextReadURL()), r = new URL(e).origin !== window.location.origin ? "?enableCors=1" : "", s = await z.create().url(e + "api/ping.json" + r).get();
+    const e = P.sanitizeBaseUrl(O.clusterManager.toArray()[0].getNextReadURL()), r = new URL(e).origin !== window.location.origin ? "?enableCors=1" : "", s = await z.create().url(e + "api/ping.json" + r).get();
     if (s.error)
       throw new Error(s.error);
     if (!s.userhash) {
@@ -8619,27 +8628,27 @@ const A = class A {
 /**
  * Cluster manager.
  */
-m(A, "clusterManager", new $e()), /**
+m(O, "clusterManager", new $e()), /**
 * Cache of loaded objects (model => (blitzID => object)).
 */
-m(A, "objects", /* @__PURE__ */ new Map()), /**
+m(O, "objects", /* @__PURE__ */ new Map()), /**
  * Options of the BlitzData.
  */
-m(A, "options"), /**
+m(O, "options"), /**
 * UI manager instance.
 */
-m(A, "ui"), /**
+m(O, "ui"), /**
  * Event listeners.
  */
-m(A, "listeners", /* @__PURE__ */ new Map()), /**
+m(O, "listeners", /* @__PURE__ */ new Map()), /**
  * Whether library initialized or not.
  */
-m(A, "initialized", !1), /**
+m(O, "initialized", !1), /**
  * Settles when the first sync pass completes. With `sync.background`
  * initialization returns immediately and apps await this instead.
  */
-m(A, "syncReady", Promise.resolve());
-let y = A;
+m(O, "syncReady", Promise.resolve());
+let y = O;
 class si {
   constructor(t = "blitzdata.oauth.tokens", e = typeof localStorage < "u" ? localStorage : null) {
     this._key = t, this._storage = e;
@@ -8676,7 +8685,7 @@ function Yt(n = 32) {
   const t = new Uint8Array(n);
   return crypto.getRandomValues(t), yr(t);
 }
-async function ni(n) {
+async function ai(n) {
   const t = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(n));
   return yr(new Uint8Array(t));
 }
@@ -8700,7 +8709,7 @@ function Vt(n) {
     signature: pr(t[2])
   };
 }
-function ai(n, t) {
+function ii(n, t) {
   const e = Math.floor((t.now ?? Date.now()) / 1e3), r = t.clockToleranceSeconds ?? 60;
   if (n.iss !== t.issuer)
     throw new Error(`id_token issuer mismatch: ${n.iss}`);
@@ -8711,7 +8720,7 @@ function ai(n, t) {
   if (t.nonce !== void 0 && n.nonce !== t.nonce)
     throw new Error("id_token nonce mismatch");
 }
-async function ii(n, t) {
+async function oi(n, t) {
   if (typeof crypto > "u" || !crypto.subtle)
     return !1;
   const e = (n.header.kid ? t.keys.find((s) => s.kid === n.header.kid) : t.keys[0]) ?? t.keys[0];
@@ -8732,7 +8741,7 @@ async function ii(n, t) {
   );
 }
 const Qt = "blitzdata.oauth.verifier", Xt = "blitzdata.oauth.state", Kt = "blitzdata.oauth.nonce";
-class li {
+class ui {
   constructor(t) {
     m(this, "_baseUrl");
     m(this, "_issuerOrigin");
@@ -8796,7 +8805,7 @@ class li {
       state: e,
       nonce: r,
       code_challenge_method: "S256",
-      code_challenge: await ni(t)
+      code_challenge: await ai(t)
     });
     location.href = `${this._baseUrl}blitz/o/oauth/authorize?${s}`;
   }
@@ -8900,9 +8909,9 @@ class li {
   async _validateIdToken(t, e) {
     var i;
     const r = Vt(t), s = await this._getDiscovery(), a = (s == null ? void 0 : s.issuer) ?? this._issuerOrigin;
-    if (ai(r.payload, { issuer: a, audience: this._clientId, nonce: e }), s) {
+    if (ii(r.payload, { issuer: a, audience: this._clientId, nonce: e }), s) {
       const o = await this._fetchJson(s.jwks_uri);
-      if ((i = o == null ? void 0 : o.keys) != null && i.length && !await ii(r, o))
+      if ((i = o == null ? void 0 : o.keys) != null && i.length && !await oi(r, o))
         throw new Error("id_token signature verification failed");
     }
     return r.payload;
@@ -8947,13 +8956,13 @@ export {
   Jr as ME_SENTINEL,
   ba as ManyForeignKeyType,
   lr as ManyType,
-  li as OAuthClient,
+  ui as OAuthClient,
   Ge as SYSTEM_ATTRIBUTES,
   he as TagSource,
   cr as TextType,
   ct as blitzhash,
   ot as blitzstamp,
-  jr as blitzstampFromDate,
-  ci as blitzstampToDate,
+  Fr as blitzstampFromDate,
+  li as blitzstampToDate,
   Ye as sleep
 };
